@@ -1,0 +1,32 @@
+{
+    "quiz_info": {
+        "titre": "Mon Premier Quiz Web",
+        "description": "Évaluation interactive en ligne",
+        "son_good": "",
+        "son_bad": "",
+        "musique": ""
+    },
+    "questions": [
+        {
+            "id": 1,
+            "consigne": "Quel langage est principalement utilisé pour le développement web front-end ?",
+            "type": "qcm",
+            "difficulte": "Facile",
+            "points": 2,
+            "tag": "Web",
+            "timer_secondes": 20,
+            "donnees": {
+                "options": [
+                    "Python",
+                    "JavaScript",
+                    "C++",
+                    "SQL"
+                ],
+                "reponses_correctes": [
+                    "JavaScript"
+                ]
+            },
+            "explication": "JavaScript est le standard du web pour dynamiser les pages côté client."
+        }
+    ]
+}

@@ -3,7 +3,7 @@
         "titre": "Cours AnaFi - Cas Manhattan",
         "description": "QCM lié au cas Manhattan dans la cadre du cours du M1",
         "musique": "musique/SilentCrafter - Activation.mp3",
-        "volume_musique": 0.4,
+        "volume_musique": 0.2,
         "son_good": "sons/sons_good/bonnereponse003.mp3",
         "son_bad": "sons/sons_bad/Mauvaiserep001.mp3",
         "volume_sons": 0.8

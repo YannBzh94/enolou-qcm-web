@@ -1,9 +1,9 @@
 import os
 import json
-import streamlit as time_mod
 import streamlit as st
 import time
 import qrcode
+import base64
 from io import BytesIO
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
@@ -21,22 +21,99 @@ DOSSIER_QUIZZES = "QCM"
 if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
 
-def jouer_audio_securise(chemin, autoplay=True, loop=False):
-    """Joue un fichier audio en détectant automatiquement son format MIME."""
+# --- FONCTIONS AUDIO DISCRETES & VOLUME ---
+def get_audio_base64(chemin):
+    """Convertit un fichier audio local en base64 pour une lecture invisible."""
     if chemin and os.path.exists(chemin):
-        ext = chemin.strip().lower().split('.')[-1]
-        mime_map = {
-            'mp3': 'audio/mpeg',
-            'wav': 'audio/wav',
-            'ogg': 'audio/ogg',
-            'm4a': 'audio/mp4',
-            'aac': 'audio/aac'
-        }
-        mime_type = mime_map.get(ext, 'audio/mpeg')
         try:
-            st.audio(chemin, format=mime_type, autoplay=autoplay, loop=loop)
+            with open(chemin, "rb") as f:
+                data = f.read()
+            ext = chemin.strip().lower().split('.')[-1]
+            mime_map = {
+                'mp3': 'audio/mpeg',
+                'wav': 'audio/wav',
+                'ogg': 'audio/ogg',
+                'm4a': 'audio/mp4',
+                'aac': 'audio/aac'
+            }
+            mime = mime_map.get(ext, 'audio/mpeg')
+            return f"data:{mime};base64,{base64.b64encode(data).decode()}"
         except Exception:
-            pass
+            return None
+    return None
+
+def gerer_musique_fond(chemin, volume=0.5):
+    """Gère la musique de fond en boucle, invisible et avec volume réglable."""
+    audio_data_uri = get_audio_base64(chemin)
+    if audio_data_uri:
+        html_code = f"""
+        <script>
+            var musicSrc = "{audio_data_uri}";
+            var targetVolume = {volume};
+            var existingAudio = document.getElementById('persistent-bg-music');
+            
+            if (!existingAudio) {{
+                var audio = document.createElement('audio');
+                audio.id = 'persistent-bg-music';
+                audio.src = musicSrc;
+                audio.loop = true;
+                audio.volume = targetVolume;
+                audio.style.display = 'none';
+                document.body.appendChild(audio);
+                audio.play().catch(e => console.log("Lecture automatique en attente d'interaction"));
+            }} else {{
+                existingAudio.volume = targetVolume;
+                if (existingAudio.src !== musicSrc) {{
+                    existingAudio.src = musicSrc;
+                    existingAudio.play().catch(e => console.log(e));
+                }}
+            }}
+        </script>
+        """
+        st.markdown(html_code, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <script>
+            var existingAudio = document.getElementById('persistent-bg-music');
+            if (existingAudio) {
+                existingAudio.pause();
+                existingAudio.remove();
+            }
+        </script>
+        """, unsafe_allow_html=True)
+
+def arreter_musique_fond():
+    """Stope et supprime la musique de fond."""
+    st.markdown("""
+    <script>
+        var existingAudio = document.getElementById('persistent-bg-music');
+        if (existingAudio) {
+            existingAudio.pause();
+            existingAudio.remove();
+        }
+    </script>
+    """, unsafe_allow_html=True)
+
+def jouer_effet_sonore(chemin, volume=0.8):
+    """Joue un effet sonore (bonne/mauvaise réponse) de manière invisible."""
+    audio_data_uri = get_audio_base64(chemin)
+    if audio_data_uri:
+        uid = int(time.time() * 1000)
+        html_code = f"""
+        <script>
+            var sfx = document.createElement('audio');
+            sfx.src = "{audio_data_uri}";
+            sfx.volume = {volume};
+            sfx.style.display = 'none';
+            document.body.appendChild(sfx);
+            sfx.play().then(() => {{
+                sfx.onended = function() {{
+                    sfx.remove();
+                }};
+            }}).catch(e => console.log("Erreur SFX", e));
+        </script>
+        """
+        st.markdown(html_code, unsafe_allow_html=True)
 
 # --- GESTION DE L'URL DIRECTE (via QR Code) ---
 query_params = st.query_params
@@ -59,6 +136,9 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
 # --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", ["👨‍🎓 Espace Étudiant (Passer un QCM)", "👨‍🏫 Espace Professeur (Créateur / Éditeur)"])
+
+if mode == "👨‍🎓 Espace Étudiant (Passer un QCM)":
+    arreter_musique_fond()
 
 if 'qcm_selectionne' not in st.session_state:
     st.session_state.qcm_selectionne = None
@@ -108,8 +188,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
         st.session_state.edit_titre = ""
         st.session_state.edit_desc = ""
         st.session_state.edit_musique = ""
+        st.session_state.edit_vol_musique = 0.5
         st.session_state.edit_son_good = ""
         st.session_state.edit_son_bad = ""
+        st.session_state.edit_vol_sons = 0.8
         st.session_state.edit_questions = []
         st.session_state.edit_q_index = None
         st.session_state.dernier_choix_edition = None
@@ -122,8 +204,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             st.session_state.edit_titre = "Mon Nouveau Quiz"
             st.session_state.edit_desc = ""
             st.session_state.edit_musique = ""
+            st.session_state.edit_vol_musique = 0.5
             st.session_state.edit_son_good = ""
             st.session_state.edit_son_bad = ""
+            st.session_state.edit_vol_sons = 0.8
             st.session_state.edit_questions = []
         else:
             chemin = os.path.join(DOSSIER_QUIZZES, choix_edition)
@@ -135,14 +219,16 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     st.session_state.edit_titre = info.get("titre", "")
                     st.session_state.edit_desc = info.get("description", "")
                     st.session_state.edit_musique = info.get("musique", "")
+                    st.session_state.edit_vol_musique = info.get("volume_musique", 0.5)
                     st.session_state.edit_son_good = info.get("son_good", "")
                     st.session_state.edit_son_bad = info.get("son_bad", "")
+                    st.session_state.edit_vol_sons = info.get("volume_sons", 0.8)
                     st.session_state.edit_questions = data.get("questions", [])
             except Exception:
                 pass
 
     with st.form("form_edition_qcm"):
-        st.subheader("1. Paramètres généraux et Audio")
+        st.subheader("1. Paramètres généraux, Audio et Volumes")
         nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
         titre_quiz = st.text_input("Titre affiché :", value=st.session_state.edit_titre)
         desc_quiz = st.text_area("Description :", value=st.session_state.edit_desc)
@@ -150,8 +236,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
             musique_path = st.text_input("Chemin musique de fond :", value=st.session_state.edit_musique)
+            vol_musique = st.slider("Volume de la musique :", min_value=0.0, max_value=1.0, value=float(st.session_state.edit_vol_musique), step=0.05)
         with col_m2:
             son_good_path = st.text_input("Son bonne réponse :", value=st.session_state.edit_son_good)
+            vol_sons = st.slider("Volume des effets sonores :", min_value=0.0, max_value=1.0, value=float(st.session_state.edit_vol_sons), step=0.05)
         with col_m3:
             son_bad_path = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
 
@@ -165,8 +253,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     "titre": titre_quiz,
                     "description": desc_quiz,
                     "musique": musique_path,
+                    "volume_musique": vol_musique,
                     "son_good": son_good_path,
-                    "son_bad": son_bad_path
+                    "son_bad": son_bad_path,
+                    "volume_sons": vol_sons
                 },
                 "questions": st.session_state.edit_questions
             }
@@ -198,8 +288,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                             "titre": st.session_state.edit_titre,
                             "description": st.session_state.edit_desc,
                             "musique": st.session_state.edit_musique,
+                            "volume_musique": st.session_state.edit_vol_musique,
                             "son_good": st.session_state.edit_son_good,
-                            "son_bad": st.session_state.edit_son_bad
+                            "son_bad": st.session_state.edit_son_bad,
+                            "volume_sons": st.session_state.edit_vol_sons
                         },
                         "questions": st.session_state.edit_questions
                     }
@@ -264,8 +356,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                         "titre": st.session_state.edit_titre,
                         "description": st.session_state.edit_desc,
                         "musique": st.session_state.edit_musique,
+                        "volume_musique": st.session_state.edit_vol_musique,
                         "son_good": st.session_state.edit_son_good,
-                        "son_bad": st.session_state.edit_son_bad
+                        "son_bad": st.session_state.edit_son_bad,
+                        "volume_sons": st.session_state.edit_vol_sons
                     },
                     "questions": st.session_state.edit_questions
                 }
@@ -312,10 +406,13 @@ else:
         questions = st.session_state.banque.get('questions', [])
         titre = quiz_info.get('titre', 'Évaluation QCM')
         description = quiz_info.get('description', '')
+        vol_musique = quiz_info.get('volume_musique', 0.5)
+        vol_sons = quiz_info.get('volume_sons', 0.8)
 
         st.title(f"🎓 {titre}")
 
         if st.button("⬅️ Changer de QCM"):
+            arreter_musique_fond()
             st.session_state.qcm_selectionne = None
             st.session_state.quiz_started = False
             st.query_params.clear()
@@ -324,16 +421,16 @@ else:
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
-            st.info("💡 Cliquez pour lancer l'évaluation (active le son et la musique).")
+            st.info("💡 Cliquez pour lancer l'évaluation (active le son et la musique en arrière-plan sans bandeau).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Lancement de la musique de fond avec le format sécurisé (MP3/WAV)
+            # Lancement invisible de la musique de fond avec le volume configuré
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                jouer_audio_securise(musique_path, autoplay=True, loop=True)
+                gerer_musique_fond(musique_path, vol_musique)
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
@@ -422,9 +519,9 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Lecture du son de validation (bonne/mauvaise réponse) via le format sécurisé
+                        # Lecture invisible du son de validation avec le volume réglé
                         if son_path and os.path.exists(son_path):
-                            jouer_audio_securise(son_path, autoplay=True)
+                            jouer_effet_sonore(son_path, vol_sons)
 
                         explication = q.get('explication', '')
                         if explication:
@@ -437,6 +534,7 @@ else:
                             st.session_state.question_start_time = time.time()
                             st.rerun()
             else:
+                arreter_musique_fond()
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")

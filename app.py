@@ -8,7 +8,6 @@ from io import BytesIO
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
 
-# Masquer les éléments superflus de l'interface Streamlit
 hide_streamlit_style = """
     <style>
     #MainMenu {visibility: hidden;}
@@ -60,7 +59,10 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
     if fichiers_existants:
         st.markdown("### 📱 Générateur de QR Code pour la classe")
         qcm_pour_qr = st.selectbox("Sélectionnez le QCM à transformer en QR Code :", fichiers_existants)
-        domaine_app = st.text_input("URL de votre application déployée (ex: https://votre-app.streamlit.app) :", value="")
+        domaine_app = st.text_input(
+            "URL de votre application déployée :", 
+            value="https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/"
+        )
         
         if domaine_app:
             url_complete = f"{domaine_app.strip('/')}/?qcm={qcm_pour_qr}"
@@ -93,10 +95,12 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
         st.session_state.edit_son_good = ""
         st.session_state.edit_son_bad = ""
         st.session_state.edit_questions = []
+        st.session_state.edit_q_index = None
         st.session_state.dernier_choix_edition = None
 
     if choix_edition != st.session_state.dernier_choix_edition:
         st.session_state.dernier_choix_edition = choix_edition
+        st.session_state.edit_q_index = None
         if choix_edition == "-- Créer un nouveau QCM --":
             st.session_state.edit_nom_fichier = "nouveau_qcm.json"
             st.session_state.edit_titre = "Mon Nouveau Quiz"
@@ -155,41 +159,75 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             st.success(f"QCM '{nom_fichier}' enregistré avec succès !")
 
     st.markdown("---")
-    st.subheader("2. Gestion des Questions et Documents associés")
+    st.subheader("2. Gestion, Modification et Ajout des Questions")
     
-    # Affichage des questions actuelles avec option de suppression
+    # Affichage de la liste des questions avec boutons Éditer et Supprimer
     if st.session_state.edit_questions:
         st.write(f"Nombre de questions actuelles : {len(st.session_state.edit_questions)}")
         for idx, q in enumerate(st.session_state.edit_questions):
-            col_q_info, col_q_del = st.columns([5, 1])
+            col_q_info, col_q_edit, col_q_del = st.columns([4, 1, 1])
             with col_q_info:
-                st.text(f"Q{idx+1}: {q.get('consigne', '')[:50]}... ({q.get('points', 10)} pts)")
+                st.text(f"Q{idx+1}: {q.get('consigne', '')[:40]}... ({q.get('points', 10)} pts)")
+            with col_q_edit:
+                if st.button("✏️ Éditer", key=f"edit_q_{idx}"):
+                    st.session_state.edit_q_index = idx
+                    st.rerun()
             with col_q_del:
                 if st.button("❌ Supprimer", key=f"del_q_{idx}"):
+                    if st.session_state.edit_q_index == idx:
+                        st.session_state.edit_q_index = None
                     st.session_state.edit_questions.pop(idx)
+                    # Sauvegarde automatique après suppression
+                    chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
+                    donnees_globales = {
+                        "quiz_info": {
+                            "titre": st.session_state.edit_titre,
+                            "description": st.session_state.edit_desc,
+                            "musique": st.session_state.edit_musique,
+                            "son_good": st.session_state.edit_son_good,
+                            "son_bad": st.session_state.edit_son_bad
+                        },
+                        "questions": st.session_state.edit_questions
+                    }
+                    with open(chemin_complet, "w", encoding="utf-8") as f:
+                        json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
                     st.rerun()
 
+    # Formulaire dynamique d'ajout ou de modification de question
+    is_editing = st.session_state.edit_q_index is not None
+    current_q_data = st.session_state.edit_questions[st.session_state.edit_q_index] if is_editing else {}
+
     with st.form("form_ajout_question"):
-        st.markdown("#### Ajouter une nouvelle question")
-        consigne_q = st.text_area("Consigne de la question :")
-        points_q = st.number_input("Points :", min_value=1, value=10)
-        timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
+        if is_editing:
+            st.markdown(f"#### ✏️ Modifier la question {st.session_state.edit_q_index + 1}")
+        else:
+            st.markdown("#### ➕ Ajouter une nouvelle question")
+
+        consigne_q = st.text_area("Consigne de la question :", value=current_q_data.get('consigne', ''))
+        points_q = st.number_input("Points :", min_value=1, value=current_q_data.get('points', 10))
+        timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=current_q_data.get('timer_secondes', 30))
         
-        options_input = st.text_area("Options de réponse (une par ligne) :", value="Option A\nOption B\nOption C")
-        reponse_correcte = st.text_input("Réponse exacte (doit correspondre exactement à l'une des options) :")
-        explication_q = st.text_area("Explication pédagogique :", value="")
+        default_opts = "\n".join(current_q_data.get('donnees', {}).get('options', ["Option A", "Option B", "Option C"]))
+        options_input = st.text_area("Options de réponse (une par ligne) :", value=default_opts)
+        
+        reps_actuelles = current_q_data.get('donnees', {}).get('reponses_correctes', [""])
+        def_rep = reps_actuelles[0] if reps_actuelles else ""
+        reponse_correcte = st.text_input("Réponse exacte (doit correspondre exactement à l'une des options) :", value=def_rep)
+        
+        explication_q = st.text_area("Explication pédagogique :", value=current_q_data.get('explication', ''))
         
         st.markdown("##### Documents associés à la question (chemins relatifs)")
-        doc_texte_q = st.text_area("Texte de référence (optionnel) :", value="")
-        img_path_q = st.text_input("Chemin de l'image (ex: QCM/image.png ou media/schema.png) :", value="")
-        pdf_path_q = st.text_input("Chemin du PDF joint (ex: QCM/document.pdf) :", value="")
+        doc_texte_q = st.text_area("Texte de référence (optionnel) :", value=current_q_data.get('document_texte', ''))
+        img_path_q = st.text_input("Chemin de l'image (ex: QCM/image.png ou media/schema.png) :", value=current_q_data.get('media', {}).get('image', ''))
+        pdf_path_q = st.text_input("Chemin du PDF joint (ex: QCM/document.pdf) :", value=current_q_data.get('document_appui', ''))
 
-        submitted_q = st.form_submit_button("➕ Ajouter cette question à la liste")
+        submitted_q = st.form_submit_button("💾 Enregistrer les modifications" if is_editing else "➕ Ajouter cette question à la liste")
+        
         if submitted_q:
             options_liste = [opt.strip() for opt in options_input.split("\n") if opt.strip()]
             if consigne_q and options_liste and reponse_correcte:
                 nouvelle_q = {
-                    "id": len(st.session_state.edit_questions) + 1,
+                    "id": (st.session_state.edit_q_index + 1) if is_editing else (len(st.session_state.edit_questions) + 1),
                     "consigne": consigne_q,
                     "type": "qcm",
                     "points": points_q,
@@ -200,9 +238,13 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     "media": {"image": img_path_q},
                     "document_appui": pdf_path_q
                 }
-                st.session_state.edit_questions.append(nouvelle_q)
                 
-                # Sauvegarde automatique de la liste mise à jour dans le fichier JSON en cours
+                if is_editing:
+                    st.session_state.edit_questions[st.session_state.edit_q_index] = nouvelle_q
+                    st.session_state.edit_q_index = None
+                else:
+                    st.session_state.edit_questions.append(nouvelle_q)
+                
                 chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
                 donnees_globales = {
                     "quiz_info": {
@@ -216,9 +258,15 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                 }
                 with open(chemin_complet, "w", encoding="utf-8") as f:
                     json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
-                st.success("Question ajoutée et sauvegardée avec succès ! Rechargez la page si nécessaire.")
+                st.success("Question enregistrée et sauvegardée avec succès !")
+                st.rerun()
             else:
                 st.warning("Veuillez remplir la consigne, au moins une option et la réponse exacte.")
+
+    if is_editing:
+        if st.button("❌ Annuler l'édition"):
+            st.session_state.edit_q_index = None
+            st.rerun()
 
 # ==========================================
 # ESPACE ÉTUDIANT : PASSER UN QCM
@@ -270,7 +318,6 @@ else:
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Lancement de la musique de fond globale
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
                 try:
@@ -291,27 +338,22 @@ else:
                 donnees = q.get('donnees', {})
                 options = donnees.get('options', [])
                 
-                # Barre de progression
                 st.progress((q_id) / len(questions) if len(questions) > 0 else 0)
                 
-                # Disposition en 2 colonnes : Documents à gauche (3 parts), QCM à droite (2 parts)
                 col_docs, col_qcm = st.columns([3, 2], gap="large")
 
                 with col_docs:
                     st.markdown("### 📄 Documents de référence")
                     
-                    # 1. Texte de référence
                     doc_texte = q.get('document_texte')
                     if doc_texte:
                         st.info(doc_texte)
                         
-                    # 2. Image de référence
                     media = q.get('media', {})
                     img_path = media.get('image')
                     if img_path and os.path.exists(img_path):
                         st.image(img_path, use_container_width=True)
 
-                    # 3. Document PDF joint en téléchargement
                     doc_appui = q.get('document_appui')
                     if doc_appui and os.path.exists(doc_appui):
                         with open(doc_appui, "rb") as pdf_file:
@@ -373,7 +415,6 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Lecture du son de validation (bonne/mauvaise réponse)
                         if son_path and os.path.exists(son_path):
                             try:
                                 with open(son_path, "rb") as f:

@@ -129,13 +129,13 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
         
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
-            musique_path = st.text_input("Chemin musique de fond (ex: media/music.mp3) :", value=st.session_state.edit_musique)
+            musique_path = st.text_input("Chemin musique de fond :", value=st.session_state.edit_musique)
         with col_m2:
-            son_good_path = st.text_input("Son bonne réponse (ex: media/good.mp3) :", value=st.session_state.edit_son_good)
+            son_good_path = st.text_input("Son bonne réponse :", value=st.session_state.edit_son_good)
         with col_m3:
-            son_bad_path = st.text_input("Son mauvaise réponse (ex: media/bad.mp3) :", value=st.session_state.edit_son_bad)
+            son_bad_path = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
 
-        submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres du QCM", type="primary")
+        submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux", type="primary")
         if submitted_meta:
             if not nom_fichier.endswith(".json"):
                 nom_fichier += ".json"
@@ -152,7 +152,73 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             }
             with open(chemin_complet, "w", encoding="utf-8") as f:
                 json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
-            st.success(f"QCM '{nom_fichier}' sauvegardé avec succès !")
+            st.success(f"QCM '{nom_fichier}' enregistré avec succès !")
+
+    st.markdown("---")
+    st.subheader("2. Gestion des Questions et Documents associés")
+    
+    # Affichage des questions actuelles avec option de suppression
+    if st.session_state.edit_questions:
+        st.write(f"Nombre de questions actuelles : {len(st.session_state.edit_questions)}")
+        for idx, q in enumerate(st.session_state.edit_questions):
+            col_q_info, col_q_del = st.columns([5, 1])
+            with col_q_info:
+                st.text(f"Q{idx+1}: {q.get('consigne', '')[:50]}... ({q.get('points', 10)} pts)")
+            with col_q_del:
+                if st.button("❌ Supprimer", key=f"del_q_{idx}"):
+                    st.session_state.edit_questions.pop(idx)
+                    st.rerun()
+
+    with st.form("form_ajout_question"):
+        st.markdown("#### Ajouter une nouvelle question")
+        consigne_q = st.text_area("Consigne de la question :")
+        points_q = st.number_input("Points :", min_value=1, value=10)
+        timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
+        
+        options_input = st.text_area("Options de réponse (une par ligne) :", value="Option A\nOption B\nOption C")
+        reponse_correcte = st.text_input("Réponse exacte (doit correspondre exactement à l'une des options) :")
+        explication_q = st.text_area("Explication pédagogique :", value="")
+        
+        st.markdown("##### Documents associés à la question (chemins relatifs)")
+        doc_texte_q = st.text_area("Texte de référence (optionnel) :", value="")
+        img_path_q = st.text_input("Chemin de l'image (ex: QCM/image.png ou media/schema.png) :", value="")
+        pdf_path_q = st.text_input("Chemin du PDF joint (ex: QCM/document.pdf) :", value="")
+
+        submitted_q = st.form_submit_button("➕ Ajouter cette question à la liste")
+        if submitted_q:
+            options_liste = [opt.strip() for opt in options_input.split("\n") if opt.strip()]
+            if consigne_q and options_liste and reponse_correcte:
+                nouvelle_q = {
+                    "id": len(st.session_state.edit_questions) + 1,
+                    "consigne": consigne_q,
+                    "type": "qcm",
+                    "points": points_q,
+                    "timer_secondes": timer_q,
+                    "donnees": {"options": options_liste, "reponses_correctes": [reponse_correcte]},
+                    "explication": explication_q,
+                    "document_texte": doc_texte_q,
+                    "media": {"image": img_path_q},
+                    "document_appui": pdf_path_q
+                }
+                st.session_state.edit_questions.append(nouvelle_q)
+                
+                # Sauvegarde automatique de la liste mise à jour dans le fichier JSON en cours
+                chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
+                donnees_globales = {
+                    "quiz_info": {
+                        "titre": st.session_state.edit_titre,
+                        "description": st.session_state.edit_desc,
+                        "musique": st.session_state.edit_musique,
+                        "son_good": st.session_state.edit_son_good,
+                        "son_bad": st.session_state.edit_son_bad
+                    },
+                    "questions": st.session_state.edit_questions
+                }
+                with open(chemin_complet, "w", encoding="utf-8") as f:
+                    json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
+                st.success("Question ajoutée et sauvegardée avec succès ! Rechargez la page si nécessaire.")
+            else:
+                st.warning("Veuillez remplir la consigne, au moins une option et la réponse exacte.")
 
 # ==========================================
 # ESPACE ÉTUDIANT : PASSER UN QCM
@@ -225,6 +291,7 @@ else:
                 donnees = q.get('donnees', {})
                 options = donnees.get('options', [])
                 
+                # Barre de progression
                 st.progress((q_id) / len(questions) if len(questions) > 0 else 0)
                 
                 # Disposition en 2 colonnes : Documents à gauche (3 parts), QCM à droite (2 parts)
@@ -238,11 +305,9 @@ else:
                     if doc_texte:
                         st.info(doc_texte)
                         
-                    # 2. Image de référence (A4 ou Media image)
-                    doc_img = q.get('document_image_a4')
+                    # 2. Image de référence
                     media = q.get('media', {})
-                    img_path = doc_img if (doc_img and os.path.exists(doc_img)) else media.get('image')
-                    
+                    img_path = media.get('image')
                     if img_path and os.path.exists(img_path):
                         st.image(img_path, use_container_width=True)
 

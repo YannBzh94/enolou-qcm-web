@@ -3,7 +3,6 @@ import json
 import streamlit as st
 import time
 import qrcode
-import base64
 from io import BytesIO
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
@@ -13,6 +12,13 @@ hide_streamlit_style = """
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    /* Masquage total des bandeaux audio de Streamlit */
+    [data-testid="stAudio"] {
+        display: none !important;
+    }
+    audio {
+        display: none !important;
+    }
     </style>
 """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
@@ -21,99 +27,32 @@ DOSSIER_QUIZZES = "QCM"
 if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
 
-# --- FONCTIONS AUDIO DISCRETES & VOLUME ---
-def get_audio_base64(chemin):
-    """Convertit un fichier audio local en base64 pour une lecture invisible."""
+def jouer_audio_cache(chemin, autoplay=True, loop=False, volume=1.0):
+    """Joue un fichier audio nativement (compatible mobile/ordi) avec volume et masqué."""
     if chemin and os.path.exists(chemin):
-        try:
-            with open(chemin, "rb") as f:
-                data = f.read()
-            ext = chemin.strip().lower().split('.')[-1]
-            mime_map = {
-                'mp3': 'audio/mpeg',
-                'wav': 'audio/wav',
-                'ogg': 'audio/ogg',
-                'm4a': 'audio/mp4',
-                'aac': 'audio/aac'
-            }
-            mime = mime_map.get(ext, 'audio/mpeg')
-            return f"data:{mime};base64,{base64.b64encode(data).decode()}"
-        except Exception:
-            return None
-    return None
-
-def gerer_musique_fond(chemin, volume=0.5):
-    """Gère la musique de fond en boucle, invisible et avec volume réglable."""
-    audio_data_uri = get_audio_base64(chemin)
-    if audio_data_uri:
-        html_code = f"""
-        <script>
-            var musicSrc = "{audio_data_uri}";
-            var targetVolume = {volume};
-            var existingAudio = document.getElementById('persistent-bg-music');
-            
-            if (!existingAudio) {{
-                var audio = document.createElement('audio');
-                audio.id = 'persistent-bg-music';
-                audio.src = musicSrc;
-                audio.loop = true;
-                audio.volume = targetVolume;
-                audio.style.display = 'none';
-                document.body.appendChild(audio);
-                audio.play().catch(e => console.log("Lecture automatique en attente d'interaction"));
-            }} else {{
-                existingAudio.volume = targetVolume;
-                if (existingAudio.src !== musicSrc) {{
-                    existingAudio.src = musicSrc;
-                    existingAudio.play().catch(e => console.log(e));
-                }}
-            }}
-        </script>
-        """
-        st.markdown(html_code, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <script>
-            var existingAudio = document.getElementById('persistent-bg-music');
-            if (existingAudio) {
-                existingAudio.pause();
-                existingAudio.remove();
-            }
-        </script>
-        """, unsafe_allow_html=True)
-
-def arreter_musique_fond():
-    """Stope et supprime la musique de fond."""
-    st.markdown("""
-    <script>
-        var existingAudio = document.getElementById('persistent-bg-music');
-        if (existingAudio) {
-            existingAudio.pause();
-            existingAudio.remove();
+        ext = chemin.strip().lower().split('.')[-1]
+        mime_map = {
+            'mp3': 'audio/mpeg',
+            'wav': 'audio/wav',
+            'ogg': 'audio/ogg',
+            'm4a': 'audio/mp4',
+            'aac': 'audio/aac'
         }
-    </script>
-    """, unsafe_allow_html=True)
-
-def jouer_effet_sonore(chemin, volume=0.8):
-    """Joue un effet sonore (bonne/mauvaise réponse) de manière invisible."""
-    audio_data_uri = get_audio_base64(chemin)
-    if audio_data_uri:
-        uid = int(time.time() * 1000)
-        html_code = f"""
-        <script>
-            var sfx = document.createElement('audio');
-            sfx.src = "{audio_data_uri}";
-            sfx.volume = {volume};
-            sfx.style.display = 'none';
-            document.body.appendChild(sfx);
-            sfx.play().then(() => {{
-                sfx.onended = function() {{
-                    sfx.remove();
-                }};
-            }}).catch(e => console.log("Erreur SFX", e));
-        </script>
-        """
-        st.markdown(html_code, unsafe_allow_html=True)
+        mime_type = mime_map.get(ext, 'audio/mpeg')
+        try:
+            st.audio(chemin, format=mime_type, autoplay=autoplay, loop=loop)
+            # Ajustement dynamique du volume sur l'élément audio généré
+            st.markdown(f"""
+            <script>
+                setTimeout(() => {{
+                    document.querySelectorAll('audio').forEach(el => {{
+                        el.volume = {volume};
+                    }});
+                }}, 100);
+            </script>
+            """, unsafe_allow_html=True)
+        except Exception:
+            pass
 
 # --- GESTION DE L'URL DIRECTE (via QR Code) ---
 query_params = st.query_params
@@ -132,13 +71,14 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.answered = False
         st.session_state.last_result = None
+        st.session_state.music_already_played = False
 
 # --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", ["👨‍🎓 Espace Étudiant (Passer un QCM)", "👨‍🏫 Espace Professeur (Créateur / Éditeur)"])
 
 if mode == "👨‍🎓 Espace Étudiant (Passer un QCM)":
-    arreter_musique_fond()
+    st.session_state.music_already_played = False
 
 if 'qcm_selectionne' not in st.session_state:
     st.session_state.qcm_selectionne = None
@@ -400,6 +340,7 @@ else:
                 st.session_state.quiz_started = False
                 st.session_state.answered = False
                 st.session_state.last_result = None
+                st.session_state.music_already_played = False
                 st.rerun()
     else:
         quiz_info = st.session_state.banque.get('quiz_info', {})
@@ -412,25 +353,28 @@ else:
         st.title(f"🎓 {titre}")
 
         if st.button("⬅️ Changer de QCM"):
-            arreter_musique_fond()
             st.session_state.qcm_selectionne = None
             st.session_state.quiz_started = False
+            st.session_state.music_already_played = False
             st.query_params.clear()
             st.rerun()
 
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
-            st.info("💡 Cliquez pour lancer l'évaluation (active le son et la musique en arrière-plan sans bandeau).")
+            st.info("💡 Cliquez sur le bouton ci-dessous pour démarrer l'évaluation (active la musique et le son).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
+                st.session_state.music_already_played = False
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Lancement invisible de la musique de fond avec le volume configuré
+            # Gestion de la musique de fond (jouée en boucle et sans redémarrer à chaque question)
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                gerer_musique_fond(musique_path, vol_musique)
+                do_autoplay = not st.session_state.get('music_already_played', False)
+                jouer_audio_cache(musique_path, autoplay=do_autoplay, loop=True, volume=vol_musique)
+                st.session_state.music_already_played = True
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
@@ -519,9 +463,9 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Lecture invisible du son de validation avec le volume réglé
+                        # Lecture invisible et masquée du son de validation avec le volume réglé
                         if son_path and os.path.exists(son_path):
-                            jouer_effet_sonore(son_path, vol_sons)
+                            jouer_audio_cache(son_path, autoplay=True, loop=False, volume=vol_sons)
 
                         explication = q.get('explication', '')
                         if explication:
@@ -534,7 +478,7 @@ else:
                             st.session_state.question_start_time = time.time()
                             st.rerun()
             else:
-                arreter_musique_fond()
+                st.session_state.music_already_played = False
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")
@@ -546,4 +490,5 @@ else:
                     st.session_state.quiz_started = False
                     st.session_state.answered = False
                     st.session_state.last_result = None
+                    st.session_state.music_already_played = False
                     st.rerun()

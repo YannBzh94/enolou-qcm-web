@@ -35,7 +35,7 @@
         },
         {
             "id": 2,
-            "consigne": "Ouvrez le fichier PDF joint en haut de l'écran puis identifiez le composant B.",
+            "consigne": "Quelle est la seule équipe française à avoir gagné la ligue des champions deux fois",
             "type": "qcm",
             "points": 50,
             "timer_secondes": 15,

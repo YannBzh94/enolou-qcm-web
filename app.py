@@ -264,19 +264,16 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             }
             contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
             
-            # Enregistrement local
             chemin_complet = os.path.join(DOSSIER_QUIZZES, nom_fichier)
             with open(chemin_complet, "w", encoding="utf-8") as f:
                 f.write(contenu_json)
             
-            # Synchronisation automatique sur GitHub si le token est configuré
             succes_gh = sauvegarder_fichier_github(f"QCM/{nom_fichier}", contenu_json)
             if succes_gh:
                 st.success(f"Paramètres enregistrés et mis à jour directement sur GitHub avec succès ! 🎉")
             else:
                 st.success(f"Paramètres enregistrés localement ! (Utilisez le bouton de téléchargement ci-dessous pour mettre à jour GitHub)")
 
-    # Bouton de secours / téléchargement direct
     if 'edit_nom_fichier' in st.session_state:
         donnees_a_telecharger = {
             "quiz_info": {
@@ -422,28 +419,7 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
 else:
     if not st.session_state.qcm_selectionne:
         st.title("🎓 Portail des Évaluations - Enolou")
-        st.write("Veuillez sélectionner le QCM à lancer :")
-        
-        fichiers_json = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith('.json')]
-        if not fichiers_json:
-            st.warning("Aucun QCM disponible dans le dossier.")
-        else:
-            choix_fichier = st.selectbox("Liste des QCM :", fichiers_json)
-            if st.button("Lancer ce QCM", type="primary"):
-                chemin_complet = os.path.join(DOSSIER_QUIZZES, choix_fichier)
-                with open(chemin_complet, 'r', encoding='utf-8') as f:
-                    banque = json.load(f)
-                st.session_state.banque = banque if isinstance(banque, dict) else {"quiz_info": {}, "questions": banque}
-                st.session_state.qcm_selectionne = choix_fichier
-                st.session_state.current_idx = 0
-                st.session_state.score_total = 0
-                st.session_state.max_points = 0
-                st.session_state.quiz_started = False
-                st.session_state.answered = False
-                st.session_state.last_result = None
-                if 'music_active_path' in st.session_state:
-                    del st.session_state.music_active_path
-                st.rerun()
+        st.warning("🔒 **Accès restreint :** Veuillez scanner le QR code ou utiliser le lien direct fourni par votre professeur pour accéder à votre QCM.")
     else:
         quiz_info = st.session_state.banque.get('quiz_info', {})
         questions = st.session_state.banque.get('questions', [])
@@ -453,14 +429,6 @@ else:
         vol_sons = quiz_info.get('volume_sons', 0.8)
 
         st.title(f"🎓 {titre}")
-
-        if st.button("⬅️ Changer de QCM"):
-            if 'music_active_path' in st.session_state:
-                del st.session_state.music_active_path
-            st.session_state.qcm_selectionne = None
-            st.session_state.quiz_started = False
-            st.query_params.clear()
-            st.rerun()
 
         if not st.session_state.quiz_started:
             if description:
@@ -485,8 +453,6 @@ else:
                 
                 donnees = q.get('donnees', {})
                 options = donnees.get('options', [])
-                
-                st.progress((q_id) / len(questions) if len(questions) > 0 else 0)
                 
                 col_docs, col_qcm = st.columns([3, 2], gap="large")
 
@@ -516,7 +482,32 @@ else:
 
                 with col_qcm:
                     st.subheader(f"Question {q_id + 1} sur {len(questions)}")
-                    st.caption(f"⏱️ Temps conseillé : {timer_sec}s | 🏆 Valeur : {points} pts")
+                    st.caption(f"🏆 Valeur : {points} pts")
+                    
+                    # --- COMPTE À REBOURS NUMÉRIQUE FLUIDE ---
+                    temps_ecoule = int(time.time() - st.session_state.question_start_time)
+                    temps_restant_initial = max(0, timer_sec - temps_ecoule)
+                    
+                    st.markdown(f"""
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 15px; background-color: #ffe6e6; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #ff4b4b;">
+                        ⏱️ Temps restant : <span id="countdown_timer">{temps_restant_initial}</span> secondes
+                    </div>
+                    <script>
+                        let timeLeft = {temps_restant_initial};
+                        const timerElem = document.getElementById('countdown_timer');
+                        if (timerElem) {{
+                            const timerId = setInterval(() => {{
+                                timeLeft--;
+                                if (timeLeft >= 0) {{
+                                    timerElem.innerText = timeLeft;
+                                }} else {{
+                                    clearInterval(timerId);
+                                }}
+                            }}, 1000);
+                        }}
+                    </script>
+                    """, unsafe_allow_html=True)
+
                     st.markdown(f"**{consigne}**")
 
                     choix = st.radio("Sélectionnez votre réponse :", options, key=f"radio_q_{q_id}", index=None, disabled=st.session_state.answered)

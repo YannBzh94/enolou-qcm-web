@@ -35,12 +35,10 @@ def jouer_musique_fond(chemin, volume=0.5):
         mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
         mime_type = mime_map.get(ext, 'audio/mpeg')
         
-        # On n'injecte st.audio qu'une seule fois pour éviter qu'elle ne redémarre à chaque question
         if 'music_active_path' not in st.session_state or st.session_state.music_active_path != chemin:
             st.session_state.music_active_path = chemin
             st.audio(chemin, format=mime_type, autoplay=True, loop=True)
         
-        # Ajustement du volume ciblé spécifiquement sur la musique de fond (1ère balise audio)
         st.markdown(f"""
         <script>
             setTimeout(() => {{
@@ -61,7 +59,6 @@ def jouer_effet_sonore(chemin, volume=0.8):
         
         st.audio(chemin, format=mime_type, autoplay=True, loop=False)
         
-        # Ajustement du volume ciblé sur l'effet sonore (dernière balise audio ajoutée)
         st.markdown(f"""
         <script>
             setTimeout(() => {{
@@ -209,6 +206,17 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
         if submitted_meta:
             if not nom_fichier.endswith(".json"):
                 nom_fichier += ".json"
+            
+            # Mise à jour des variables de session pour les garder en mémoire
+            st.session_state.edit_nom_fichier = nom_fichier
+            st.session_state.edit_titre = titre_quiz
+            st.session_state.edit_desc = desc_quiz
+            st.session_state.edit_musique = musique_path
+            st.session_state.edit_vol_musique = vol_musique
+            st.session_state.edit_son_good = son_good_path
+            st.session_state.edit_son_bad = son_bad_path
+            st.session_state.edit_vol_sons = vol_sons
+
             chemin_complet = os.path.join(DOSSIER_QUIZZES, nom_fichier)
             donnees_globales = {
                 "quiz_info": {
@@ -224,7 +232,29 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             }
             with open(chemin_complet, "w", encoding="utf-8") as f:
                 json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
-            st.success(f"QCM '{nom_fichier}' enregistré avec succès !")
+            st.success(f"Paramètres enregistrés !")
+
+    # Bouton de téléchargement direct pour mettre à jour GitHub facilement
+    if 'edit_nom_fichier' in st.session_state:
+        donnees_a_telecharger = {
+            "quiz_info": {
+                "titre": st.session_state.edit_titre,
+                "description": st.session_state.edit_desc,
+                "musique": st.session_state.edit_musique,
+                "volume_musique": st.session_state.edit_vol_musique,
+                "son_good": st.session_state.edit_son_good,
+                "son_bad": st.session_state.edit_son_bad,
+                "volume_sons": st.session_state.edit_vol_sons
+            },
+            "questions": st.session_state.edit_questions
+        }
+        st.download_button(
+            label=f"📥 Télécharger le fichier JSON mis à jour ({st.session_state.edit_nom_fichier}) pour le mettre sur GitHub",
+            data=json.dumps(donnees_a_telecharger, ensure_ascii=False, indent=4),
+            file_name=st.session_state.edit_nom_fichier,
+            mime="application/json",
+            type="secondary"
+        )
 
     st.markdown("---")
     st.subheader("2. Gestion, Modification et Ajout des Questions")
@@ -327,7 +357,7 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                 }
                 with open(chemin_complet, "w", encoding="utf-8") as f:
                     json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
-                st.success("Question enregistrée et sauvegardée avec succès !")
+                st.success("Question enregistrée avec succès !")
                 st.rerun()
             else:
                 st.warning("Veuillez remplir la consigne, au moins une option et la réponse exacte.")
@@ -392,7 +422,6 @@ else:
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Lancement de la musique de fond en continu (ne redémarre pas lors des changements de questions)
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
                 jouer_musique_fond(musique_path, vol_musique)
@@ -484,7 +513,6 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Lecture de l'effet sonore avec son volume dédié (n'affecte pas la musique)
                         if son_path and os.path.exists(son_path):
                             jouer_effet_sonore(son_path, vol_sons)
 

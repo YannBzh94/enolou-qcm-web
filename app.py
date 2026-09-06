@@ -1,5 +1,6 @@
 import os
 import json
+import streamlit as time_mod
 import streamlit as st
 import time
 import qrcode
@@ -19,6 +20,23 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 DOSSIER_QUIZZES = "QCM"
 if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
+
+def jouer_audio_securise(chemin, autoplay=True, loop=False):
+    """Joue un fichier audio en détectant automatiquement son format MIME."""
+    if chemin and os.path.exists(chemin):
+        ext = chemin.strip().lower().split('.')[-1]
+        mime_map = {
+            'mp3': 'audio/mpeg',
+            'wav': 'audio/wav',
+            'ogg': 'audio/ogg',
+            'm4a': 'audio/mp4',
+            'aac': 'audio/aac'
+        }
+        mime_type = mime_map.get(ext, 'audio/mpeg')
+        try:
+            st.audio(chemin, format=mime_type, autoplay=autoplay, loop=loop)
+        except Exception:
+            pass
 
 # --- GESTION DE L'URL DIRECTE (via QR Code) ---
 query_params = st.query_params
@@ -312,13 +330,10 @@ else:
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Utilisation du composant natif Streamlit pour la musique de fond
+            # Lancement de la musique de fond avec le format sécurisé (MP3/WAV)
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                try:
-                    st.audio(musique_path, autoplay=True, loop=True)
-                except Exception:
-                    pass
+                jouer_audio_securise(musique_path, autoplay=True, loop=True)
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
@@ -407,12 +422,9 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Utilisation du composant natif Streamlit pour jouer le son de validation
+                        # Lecture du son de validation (bonne/mauvaise réponse) via le format sécurisé
                         if son_path and os.path.exists(son_path):
-                            try:
-                                st.audio(son_path, autoplay=True)
-                            except Exception:
-                                pass
+                            jouer_audio_securise(son_path, autoplay=True)
 
                         explication = q.get('explication', '')
                         if explication:

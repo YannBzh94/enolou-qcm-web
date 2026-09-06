@@ -37,9 +37,7 @@
             "id": 2,
             "consigne": "Ouvrez le fichier PDF joint en haut de l'écran puis identifiez le composant B.",
             "type": "qcm",
-            "difficulte": "Moyen",
             "points": 50,
-            "tag": "Général",
             "timer_secondes": 15,
             "donnees": {
                 "options": [
@@ -51,7 +49,12 @@
                     "Microprocesseur principal"
                 ]
             },
-            "explication": "Le composant B est repéré en page 2 de la fiche technique."
+            "explication": "Le composant B est repéré en page 2 de la fiche technique.",
+            "document_texte": "",
+            "media": {
+                "image": "docs/bg_main.jpg"
+            },
+            "document_appui": "docs/mcfc_financial_report 2019 (full).pdf"
         }
     ]
 }

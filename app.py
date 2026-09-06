@@ -27,32 +27,52 @@ DOSSIER_QUIZZES = "QCM"
 if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
 
-def jouer_audio_cache(chemin, autoplay=True, loop=False, volume=1.0):
-    """Joue un fichier audio nativement (compatible mobile/ordi) avec volume et masqué."""
+# --- FONCTIONS AUDIO INDÉPENDANTES ET PERSISTANTES ---
+def jouer_musique_fond(chemin, volume=0.5):
+    """Joue la musique de fond en continu sans la redémarrer et gère son volume dédié."""
     if chemin and os.path.exists(chemin):
         ext = chemin.strip().lower().split('.')[-1]
-        mime_map = {
-            'mp3': 'audio/mpeg',
-            'wav': 'audio/wav',
-            'ogg': 'audio/ogg',
-            'm4a': 'audio/mp4',
-            'aac': 'audio/aac'
-        }
+        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
         mime_type = mime_map.get(ext, 'audio/mpeg')
-        try:
-            st.audio(chemin, format=mime_type, autoplay=autoplay, loop=loop)
-            # Ajustement dynamique du volume sur l'élément audio généré
-            st.markdown(f"""
-            <script>
-                setTimeout(() => {{
-                    document.querySelectorAll('audio').forEach(el => {{
-                        el.volume = {volume};
-                    }});
-                }}, 100);
-            </script>
-            """, unsafe_allow_html=True)
-        except Exception:
-            pass
+        
+        # On n'injecte st.audio qu'une seule fois pour éviter qu'elle ne redémarre à chaque question
+        if 'music_active_path' not in st.session_state or st.session_state.music_active_path != chemin:
+            st.session_state.music_active_path = chemin
+            st.audio(chemin, format=mime_type, autoplay=True, loop=True)
+        
+        # Ajustement du volume ciblé spécifiquement sur la musique de fond (1ère balise audio)
+        st.markdown(f"""
+        <script>
+            setTimeout(() => {{
+                const audios = document.querySelectorAll('audio');
+                if (audios.length > 0) {{
+                    audios[0].volume = {volume};
+                }}
+            }}, 100);
+        </script>
+        """, unsafe_allow_html=True)
+
+def jouer_effet_sonore(chemin, volume=0.8):
+    """Joue un effet sonore (bonne/mauvaise réponse) et règle son volume sans toucher à la musique."""
+    if chemin and os.path.exists(chemin):
+        ext = chemin.strip().lower().split('.')[-1]
+        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
+        mime_type = mime_map.get(ext, 'audio/mpeg')
+        
+        st.audio(chemin, format=mime_type, autoplay=True, loop=False)
+        
+        # Ajustement du volume ciblé sur l'effet sonore (dernière balise audio ajoutée)
+        st.markdown(f"""
+        <script>
+            setTimeout(() => {{
+                const audios = document.querySelectorAll('audio');
+                if (audios.length > 0) {{
+                    const sfx = audios[audios.length - 1];
+                    sfx.volume = {volume};
+                }}
+            }}, 100);
+        </script>
+        """, unsafe_allow_html=True)
 
 # --- GESTION DE L'URL DIRECTE (via QR Code) ---
 query_params = st.query_params
@@ -71,14 +91,16 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.answered = False
         st.session_state.last_result = None
-        st.session_state.music_already_played = False
+        if 'music_active_path' in st.session_state:
+            del st.session_state.music_active_path
 
 # --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", ["👨‍🎓 Espace Étudiant (Passer un QCM)", "👨‍🏫 Espace Professeur (Créateur / Éditeur)"])
 
 if mode == "👨‍🎓 Espace Étudiant (Passer un QCM)":
-    st.session_state.music_already_played = False
+    if 'music_active_path' in st.session_state:
+        del st.session_state.music_active_path
 
 if 'qcm_selectionne' not in st.session_state:
     st.session_state.qcm_selectionne = None
@@ -340,7 +362,8 @@ else:
                 st.session_state.quiz_started = False
                 st.session_state.answered = False
                 st.session_state.last_result = None
-                st.session_state.music_already_played = False
+                if 'music_active_path' in st.session_state:
+                    del st.session_state.music_active_path
                 st.rerun()
     else:
         quiz_info = st.session_state.banque.get('quiz_info', {})
@@ -353,28 +376,26 @@ else:
         st.title(f"🎓 {titre}")
 
         if st.button("⬅️ Changer de QCM"):
+            if 'music_active_path' in st.session_state:
+                del st.session_state.music_active_path
             st.session_state.qcm_selectionne = None
             st.session_state.quiz_started = False
-            st.session_state.music_already_played = False
             st.query_params.clear()
             st.rerun()
 
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
-            st.info("💡 Cliquez sur le bouton ci-dessous pour démarrer l'évaluation (active la musique et le son).")
+            st.info("💡 Cliquez sur le bouton ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
-                st.session_state.music_already_played = False
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            # Gestion de la musique de fond (jouée en boucle et sans redémarrer à chaque question)
+            # Lancement de la musique de fond en continu (ne redémarre pas lors des changements de questions)
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                do_autoplay = not st.session_state.get('music_already_played', False)
-                jouer_audio_cache(musique_path, autoplay=do_autoplay, loop=True, volume=vol_musique)
-                st.session_state.music_already_played = True
+                jouer_musique_fond(musique_path, vol_musique)
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
@@ -463,9 +484,9 @@ else:
                         else:
                             st.error(res_msg)
 
-                        # Lecture invisible et masquée du son de validation avec le volume réglé
+                        # Lecture de l'effet sonore avec son volume dédié (n'affecte pas la musique)
                         if son_path and os.path.exists(son_path):
-                            jouer_audio_cache(son_path, autoplay=True, loop=False, volume=vol_sons)
+                            jouer_effet_sonore(son_path, vol_sons)
 
                         explication = q.get('explication', '')
                         if explication:
@@ -478,7 +499,8 @@ else:
                             st.session_state.question_start_time = time.time()
                             st.rerun()
             else:
-                st.session_state.music_already_played = False
+                if 'music_active_path' in st.session_state:
+                    del st.session_state.music_active_path
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")
@@ -490,5 +512,6 @@ else:
                     st.session_state.quiz_started = False
                     st.session_state.answered = False
                     st.session_state.last_result = None
-                    st.session_state.music_already_played = False
+                    if 'music_active_path' in st.session_state:
+                        del st.session_state.music_active_path
                     st.rerun()

@@ -1,6 +1,7 @@
 import os
 import json
 import streamlit as st
+import streamlit.components.v1 as components
 import time
 import qrcode
 import base64
@@ -42,7 +43,6 @@ def sauvegarder_fichier_github(chemin_relatif, contenu_str):
                 "Accept": "application/vnd.github+json"
             }
             
-            # Récupérer le SHA existant du fichier (requis par l'API GitHub pour écraser/mettre à jour)
             resp = requests.get(url, headers=headers)
             sha = resp.json().get("sha") if resp.status_code == 200 else None
             
@@ -484,12 +484,12 @@ else:
                     st.subheader(f"Question {q_id + 1} sur {len(questions)}")
                     st.caption(f"🏆 Valeur : {points} pts")
                     
-                    # --- COMPTE À REBOURS NUMÉRIQUE FLUIDE ---
+                    # --- COMPTE À REBOURS NUMÉRIQUE FLUIDE (VIA COMPOSANT HTML) ---
                     temps_ecoule = int(time.time() - st.session_state.question_start_time)
                     temps_restant_initial = max(0, timer_sec - temps_ecoule)
                     
-                    st.markdown(f"""
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 15px; background-color: #ffe6e6; padding: 8px 12px; border-radius: 6px; border-left: 5px solid #ff4b4b;">
+                    components.html(f"""
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px; border-left: 5px solid #ff4b4b; font-family: sans-serif;">
                         ⏱️ Temps restant : <span id="countdown_timer">{temps_restant_initial}</span> secondes
                     </div>
                     <script>
@@ -497,8 +497,8 @@ else:
                         const timerElem = document.getElementById('countdown_timer');
                         if (timerElem) {{
                             const timerId = setInterval(() => {{
-                                timeLeft--;
-                                if (timeLeft >= 0) {{
+                                if (timeLeft > 0) {{
+                                    timeLeft--;
                                     timerElem.innerText = timeLeft;
                                 }} else {{
                                     clearInterval(timerId);
@@ -506,7 +506,7 @@ else:
                             }}, 1000);
                         }}
                     </script>
-                    """, unsafe_allow_html=True)
+                    """, height=55)
 
                     st.markdown(f"**{consigne}**")
 

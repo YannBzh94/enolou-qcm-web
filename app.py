@@ -3,6 +3,8 @@ import json
 import streamlit as st
 import time
 import qrcode
+import base64
+import requests
 from io import BytesIO
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
@@ -26,6 +28,38 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 DOSSIER_QUIZZES = "QCM"
 if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
+
+# --- FONCTION DE SYNCHRONISATION AUTOMATIQUE AVEC GITHUB ---
+def sauvegarder_fichier_github(chemin_relatif, contenu_str):
+    """Pousse le fichier JSON directement sur GitHub si le token est configuré dans les secrets Streamlit."""
+    try:
+        if "GITHUB_TOKEN" in st.secrets:
+            token = st.secrets["GITHUB_TOKEN"]
+            owner_repo = "YannBzh94/enolou-qcm-web"  # Votre dépôt GitHub
+            url = f"https://api.github.com/repos/{owner_repo}/contents/{chemin_relatif}"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json"
+            }
+            
+            # Récupérer le SHA existant du fichier (requis par l'API GitHub pour écraser/mettre à jour)
+            resp = requests.get(url, headers=headers)
+            sha = resp.json().get("sha") if resp.status_code == 200 else None
+            
+            content_base64 = base64.b64encode(contenu_str.encode('utf-8')).decode('utf-8')
+            payload = {
+                "message": f"Mise à jour automatique de {chemin_relatif} via l'application Enolou",
+                "content": content_base64,
+                "branch": "main"
+            }
+            if sha:
+                payload["sha"] = sha
+                
+            put_resp = requests.put(url, headers=headers, json=payload)
+            return put_resp.status_code in [200, 201]
+    except Exception as e:
+        print(f"Erreur synchro GitHub: {e}")
+    return False
 
 # --- FONCTIONS AUDIO INDÉPENDANTES ET PERSISTANTES ---
 def jouer_musique_fond(chemin, volume=0.5):
@@ -207,7 +241,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             if not nom_fichier.endswith(".json"):
                 nom_fichier += ".json"
             
-            # Mise à jour des variables de session pour les garder en mémoire
             st.session_state.edit_nom_fichier = nom_fichier
             st.session_state.edit_titre = titre_quiz
             st.session_state.edit_desc = desc_quiz
@@ -217,7 +250,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             st.session_state.edit_son_bad = son_bad_path
             st.session_state.edit_vol_sons = vol_sons
 
-            chemin_complet = os.path.join(DOSSIER_QUIZZES, nom_fichier)
             donnees_globales = {
                 "quiz_info": {
                     "titre": titre_quiz,
@@ -230,11 +262,21 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                 },
                 "questions": st.session_state.edit_questions
             }
+            contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+            
+            # Enregistrement local
+            chemin_complet = os.path.join(DOSSIER_QUIZZES, nom_fichier)
             with open(chemin_complet, "w", encoding="utf-8") as f:
-                json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
-            st.success(f"Paramètres enregistrés !")
+                f.write(contenu_json)
+            
+            # Synchronisation automatique sur GitHub si le token est configuré
+            succes_gh = sauvegarder_fichier_github(f"QCM/{nom_fichier}", contenu_json)
+            if succes_gh:
+                st.success(f"Paramètres enregistrés et mis à jour directement sur GitHub avec succès ! 🎉")
+            else:
+                st.success(f"Paramètres enregistrés localement ! (Utilisez le bouton de téléchargement ci-dessous pour mettre à jour GitHub)")
 
-    # Bouton de téléchargement direct pour mettre à jour GitHub facilement
+    # Bouton de secours / téléchargement direct
     if 'edit_nom_fichier' in st.session_state:
         donnees_a_telecharger = {
             "quiz_info": {
@@ -249,7 +291,7 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
             "questions": st.session_state.edit_questions
         }
         st.download_button(
-            label=f"📥 Télécharger le fichier JSON mis à jour ({st.session_state.edit_nom_fichier}) pour le mettre sur GitHub",
+            label=f"📥 Télécharger le fichier JSON mis à jour ({st.session_state.edit_nom_fichier}) pour GitHub (si pas de Token)",
             data=json.dumps(donnees_a_telecharger, ensure_ascii=False, indent=4),
             file_name=st.session_state.edit_nom_fichier,
             mime="application/json",
@@ -274,7 +316,7 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     if st.session_state.edit_q_index == idx:
                         st.session_state.edit_q_index = None
                     st.session_state.edit_questions.pop(idx)
-                    chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
+                    
                     donnees_globales = {
                         "quiz_info": {
                             "titre": st.session_state.edit_titre,
@@ -287,8 +329,12 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                         },
                         "questions": st.session_state.edit_questions
                     }
+                    contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+                    chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
                     with open(chemin_complet, "w", encoding="utf-8") as f:
-                        json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
+                        f.write(contenu_json)
+                    
+                    sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
                     st.rerun()
 
     is_editing = st.session_state.edit_q_index is not None
@@ -342,7 +388,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                 else:
                     st.session_state.edit_questions.append(nouvelle_q)
                 
-                chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
                 donnees_globales = {
                     "quiz_info": {
                         "titre": st.session_state.edit_titre,
@@ -355,8 +400,12 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     },
                     "questions": st.session_state.edit_questions
                 }
+                contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+                chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
                 with open(chemin_complet, "w", encoding="utf-8") as f:
-                    json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
+                    f.write(contenu_json)
+                
+                sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
                 st.success("Question enregistrée avec succès !")
                 st.rerun()
             else:

@@ -2,7 +2,6 @@ import os
 import json
 import streamlit as st
 import time
-import base64
 import qrcode
 from io import BytesIO
 
@@ -38,7 +37,6 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.answered = False
         st.session_state.last_result = None
-        st.session_state.sound_trigger = 0
 
 # --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
@@ -161,7 +159,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
     st.markdown("---")
     st.subheader("2. Gestion, Modification et Ajout des Questions")
     
-    # Affichage de la liste des questions avec boutons Éditer et Supprimer
     if st.session_state.edit_questions:
         st.write(f"Nombre de questions actuelles : {len(st.session_state.edit_questions)}")
         for idx, q in enumerate(st.session_state.edit_questions):
@@ -177,7 +174,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                     if st.session_state.edit_q_index == idx:
                         st.session_state.edit_q_index = None
                     st.session_state.edit_questions.pop(idx)
-                    # Sauvegarde automatique après suppression
                     chemin_complet = os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier)
                     donnees_globales = {
                         "quiz_info": {
@@ -193,7 +189,6 @@ if mode == "👨‍🏫 Espace Professeur (Créateur / Éditeur)":
                         json.dump(donnees_globales, f, ensure_ascii=False, indent=4)
                     st.rerun()
 
-    # Formulaire dynamique d'ajout ou de modification de question
     is_editing = st.session_state.edit_q_index is not None
     current_q_data = st.session_state.edit_questions[st.session_state.edit_q_index] if is_editing else {}
 
@@ -293,7 +288,6 @@ else:
                 st.session_state.quiz_started = False
                 st.session_state.answered = False
                 st.session_state.last_result = None
-                st.session_state.sound_trigger = 0
                 st.rerun()
     else:
         quiz_info = st.session_state.banque.get('quiz_info', {})
@@ -318,12 +312,11 @@ else:
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
+            # Utilisation du composant natif Streamlit pour la musique de fond
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
                 try:
-                    with open(musique_path, "rb") as f:
-                        b64_music = base64.b64encode(f.read()).decode()
-                    st.markdown(f'<audio autoplay loop src="data:audio/mp3;base64,{b64_music}"></audio>', unsafe_allow_html=True)
+                    st.audio(musique_path, autoplay=True, loop=True)
                 except Exception:
                     pass
 
@@ -403,7 +396,6 @@ else:
                                 st.session_state.score_total += points_gagnes
                                 st.session_state.max_points += points
                                 st.session_state.answered = True
-                                st.session_state.sound_trigger += 1
                                 st.rerun()
                     else:
                         res_type, res_msg, son_path = st.session_state.last_result
@@ -415,11 +407,10 @@ else:
                         else:
                             st.error(res_msg)
 
+                        # Utilisation du composant natif Streamlit pour jouer le son de validation
                         if son_path and os.path.exists(son_path):
                             try:
-                                with open(son_path, "rb") as f:
-                                    b64_sound = base64.b64encode(f.read()).decode()
-                                st.markdown(f'<audio autoplay src="data:audio/mp3;base64,{b64_sound}" id="sound_{st.session_state.sound_trigger}"></audio>', unsafe_allow_html=True)
+                                st.audio(son_path, autoplay=True)
                             except Exception:
                                 pass
 

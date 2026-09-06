@@ -13,9 +13,7 @@
             "id": 1,
             "consigne": "Quelles affirmation sont exactes",
             "type": "qcm",
-            "difficulte": "Moyen",
             "points": 10,
-            "tag": "Général",
             "timer_secondes": 22,
             "donnees": {
                 "options": [
@@ -30,11 +28,10 @@
             },
             "explication": "On compare les fonds propres à l'endettement financier",
             "document_texte": "Voici l'écran de synthèse extrait du système de la banque\n\nIl résume le compte de résultat et le bilan de la banque",
-            "document_image_a4": "docs/CasManhattan.png",
-            "document_appui": "docs/Cas Manhattan.pdf",
             "media": {
                 "image": "docs/Manhattan.png"
-            }
+            },
+            "document_appui": "docs/Cas Manhattan.pdf"
         },
         {
             "id": 2,

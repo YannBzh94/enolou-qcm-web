@@ -49,12 +49,12 @@
                     "Microprocesseur principal"
                 ]
             },
-            "explication": "Le composant B est repéré en page 2 de la fiche technique.",
-            "document_texte": "",
+            "explication": "PSG bien sûr 2025 à Munich et 2026 à Budapest !",
+            "document_texte": "Ici c'est Paris",
             "media": {
-                "image": "docs/bg_main.jpg"
+                "image": "docs/PSGback2back.jpg"
             },
-            "document_appui": "docs/mcfc_financial_report 2019 (full).pdf"
+            "document_appui": ""
         }
     ]
 }

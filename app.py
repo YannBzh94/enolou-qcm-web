@@ -107,42 +107,30 @@ def jouer_effet_sonore(chemin, volume=0.8):
         </script>
         """, unsafe_allow_html=True)
 
-# --- EXPORT EXCEL POUR LES SESSIONS ---
-def generer_excel_session(sess_data):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        summary_data = []
-        details_data = []
+# --- EXPORT TABLEUR COMPATIBLE EXCEL (CSV UTF-8 SANS DÉPENDANCE OPENPYXL) ---
+def generer_csv_session(sess_data):
+    summary_data = []
+    
+    for nom, info in sess_data.get("students", {}).items():
+        summary_data.append({
+            "Étudiant": nom,
+            "Score Total": info.get("score", 0),
+            "Score Max": info.get("max_points", 0),
+            "Statut": "Terminé" if info.get("finished", False) else "En cours"
+        })
         
-        for nom, info in sess_data.get("students", {}).items():
+        for ans in info.get("answers_detail", []):
             summary_data.append({
-                "Étudiant": nom,
-                "Score Total": info.get("score", 0),
-                "Score Max": info.get("max_points", 0),
-                "Statut": "Terminé" if info.get("finished", False) else "En cours"
+                "Étudiant": f"   -> Q{ans.get('q_num')}: {ans.get('consigne')}",
+                "Score Total": f"Réponse: {ans.get('reponse')}",
+                "Score Max": f"Correct: {'Oui' if ans.get('correct') else 'Non'}",
+                "Statut": f"Pts: {ans.get('points')}"
             })
             
-            for ans in info.get("answers_detail", []):
-                details_data.append({
-                    "Étudiant": nom,
-                    "Question N°": ans.get("q_num"),
-                    "Consigne": ans.get("consigne"),
-                    "Réponse Étudiant": ans.get("reponse"),
-                    "Correct ?": "Oui" if ans.get("correct") else "Non",
-                    "Points": ans.get("points")
-                })
-        
-        df_summary = pd.DataFrame(summary_data)
-        df_summary.to_excel(writer, sheet_name="Synthèse Notes", index=False)
-        
-        if details_data:
-            df_details = pd.DataFrame(details_data)
-            df_details.to_excel(writer, sheet_name="Détails par question", index=False)
-            
-    output.seek(0)
-    return output
+    df = pd.DataFrame(summary_data)
+    return df.to_csv(index=False, sep=';', encoding='utf-8-sig').encode('utf-8-sig')
 
-# --- GESTION DES URLS (QR Code Solo ou Session Collective) ---
+# --- GESTION DES URLS ---
 query_params = st.query_params
 url_qcm = query_params.get("qcm")
 url_session = query_params.get("session")
@@ -191,7 +179,7 @@ if mode == "👨‍🏫 Espace Professeur":
             qcm_collectif = st.selectbox("Sélectionnez le QCM :", fichiers_existants, key="sel_collec_qcm")
             type_mode_collec = st.radio("Mode de session :", [
                 "🎮 Mode Battle (Synchronisé, rapidité, podium & cuillère de bois)", 
-                "📝 Mode Examen (Synchro au départ, autonomie & export Excel)"
+                "📝 Mode Examen (Synchro au départ, autonomie & export tableur)"
             ], key="type_mode_collec")
 
             domaine_app = st.text_input(
@@ -276,14 +264,13 @@ if mode == "👨‍🏫 Espace Professeur":
                                 json.dump(s_data, f, ensure_ascii=False, indent=4)
                             st.rerun()
 
-                    # Export Excel pour le mode Examen ou fin de session
                     if s_data["status"] in ["started", "ended"]:
-                        excel_data = generer_excel_session(s_data)
+                        csv_data = generer_csv_session(s_data)
                         st.download_button(
-                            label="📥 Télécharger le rapport Excel des notes (.xlsx)",
-                            data=excel_data,
-                            file_name=f"resultats_{sess_choisie}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            label="📥 Télécharger le rapport des notes (.csv compatible Excel)",
+                            data=csv_data,
+                            file_name=f"resultats_{sess_choisie}.csv",
+                            mime="text/csv"
                         )
 
                     if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":
@@ -463,7 +450,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
-                # Recharger l'état de la session
                 with open(chemin_sess, 'r', encoding='utf-8') as f:
                     sess_data = json.load(f)
                 status_sess = sess_data.get("status", "waiting")
@@ -473,7 +459,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
 
                 if status_sess == "waiting":
                     st.info("⏳ En attente du lancement par le professeur...")
-                    # Script de rafraîchissement auto en attente (toutes les 3 secondes)
                     components.html("""
                     <script>
                         setTimeout(() => { window.location.reload(); }, 3000);
@@ -489,6 +474,11 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                 elif status_sess == "started":
                     questions_list = sess_data["questions"]
 
+                    # Gestion de la musique de fond collective
+                    musique_path = quiz_info.get('musique')
+                    if musique_path and os.path.exists(musique_path):
+                        jouer_musique_fond(musique_path, vol_musique)
+
                     # ==========================================
                     # MODE BATTLE (Synchrone & Rythmé)
                     # ==========================================
@@ -496,21 +486,18 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                         current_global_idx = sess_data.get("current_global_idx", 0)
                         in_transition = sess_data.get("in_transition", False)
 
-                        # Vérification de la transition de 5 secondes
                         if in_transition:
                             trans_start = sess_data.get("transition_start_time", time.time())
                             elapsed_trans = time.time() - trans_start
                             remaining_trans = max(0, 5 - int(elapsed_trans))
 
                             if remaining_trans == 0:
-                                # Passer à la question suivante ou terminer
                                 sess_data["current_global_idx"] += 1
                                 sess_data["in_transition"] = False
                                 if sess_data["current_global_idx"] >= len(questions_list):
                                     sess_data["status"] = "ended"
                                 else:
                                     sess_data["question_start_time"] = time.time()
-                                    # Réinitialiser le statut de réponse pour tous les étudiants
                                     for s_name in sess_data["students"]:
                                         sess_data["students"][s_name]["answered_current"] = False
                                         sess_data["students"][s_name]["last_result"] = None
@@ -544,7 +531,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 elapsed_q = int(time.time() - q_start)
                                 temps_restant = max(0, timer_sec - elapsed_q)
 
-                                # Vérifier si le temps est écoulé ou si tout le monde a répondu
                                 all_answered = True
                                 if len(sess_data["students"]) > 0:
                                     for s_info in sess_data["students"].values():
@@ -555,14 +541,12 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     all_answered = False
 
                                 if temps_restant == 0 or all_answered:
-                                    # Déclencher la transition de 5 secondes
                                     sess_data["in_transition"] = True
                                     sess_data["transition_start_time"] = time.time()
                                     with open(chemin_sess, 'w', encoding='utf-8') as f:
                                         json.dump(sess_data, f, ensure_ascii=False, indent=4)
                                     st.rerun()
 
-                                # Affichage de la question Battle
                                 st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
                                 st.markdown(f"""
                                 <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">

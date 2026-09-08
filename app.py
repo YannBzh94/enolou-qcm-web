@@ -65,36 +65,62 @@ def sauvegarder_fichier_github(chemin_relatif, contenu_str):
         print(f"Erreur synchro GitHub: {e}")
     return False
 
-# --- FONCTIONS AUDIO INDÉPENDANTES ET PERSISTANTES ---
-def jouer_musique_fond(chemin, volume=0.5):
-    if chemin and os.path.exists(chemin):
+def supprimer_fichier_github(chemin_relatif):
+    try:
+        if "GITHUB_TOKEN" in st.secrets:
+            token = st.secrets["GITHUB_TOKEN"]
+            owner_repo = "YannBzh94/enolou-qcm-web"
+            url = f"https://api.github.com/repos/{owner_repo}/contents/{chemin_relatif}"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json"
+            }
+            resp = requests.get(url, headers=headers)
+            if resp.status_code == 200:
+                sha = resp.json().get("sha")
+                payload = {
+                    "message": f"Suppression de {chemin_relatif} via l'application Enolou",
+                    "sha": sha,
+                    "branch": "main"
+                }
+                requests.delete(url, headers=headers, json=payload)
+    except Exception as e:
+        print(f"Erreur suppression GitHub: {e}")
+
+# --- FONCTIONS AUDIO ROBUSTES ---
+def get_base64_audio(chemin):
+    if os.path.exists(chemin):
         ext = chemin.strip().lower().split('.')[-1]
         mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
-        mime_type = mime_map.get(ext, 'audio/mpeg')
-        
-        if 'music_active_path' not in st.session_state or st.session_state.music_active_path != chemin:
-            st.session_state.music_active_path = chemin
-            st.audio(chemin, format=mime_type, autoplay=True, loop=True)
-        
-        st.markdown(f"""
-        <script>
-            setTimeout(() => {{
-                const audios = document.querySelectorAll('audio');
-                if (audios.length > 0) {{
-                    audios[0].volume = {volume};
+        mime = mime_map.get(ext, 'audio/mpeg')
+        with open(chemin, "rb") as f:
+            data = base64.b64encode(f.read()).decode("utf-8")
+        return f"data:{mime};base64,{data}"
+    return None
+
+def jouer_musique_fond_robuste(chemin, volume=0.5):
+    if chemin and os.path.exists(chemin):
+        b64 = get_base64_audio(chemin)
+        if b64:
+            st.markdown(f"""
+            <audio id="bg_audio" autoplay loop style="display:none;">
+                <source src="{b64}" type="audio/mpeg">
+            </audio>
+            <script>
+                const audio = document.getElementById('bg_audio');
+                if (audio) {{
+                    audio.volume = {volume};
+                    audio.play().catch(e => console.log("Autoplay bloqué par le navigateur:", e));
                 }}
-            }}, 100);
-        </script>
-        """, unsafe_allow_html=True)
+            </script>
+            """, unsafe_allow_html=True)
 
 def jouer_effet_sonore(chemin, volume=0.8):
     if chemin and os.path.exists(chemin):
         ext = chemin.strip().lower().split('.')[-1]
         mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
         mime_type = mime_map.get(ext, 'audio/mpeg')
-        
         st.audio(chemin, format=mime_type, autoplay=True, loop=False)
-        
         st.markdown(f"""
         <script>
             setTimeout(() => {{
@@ -107,10 +133,9 @@ def jouer_effet_sonore(chemin, volume=0.8):
         </script>
         """, unsafe_allow_html=True)
 
-# --- EXPORT TABLEUR COMPATIBLE EXCEL (CSV UTF-8 SANS DÉPENDANCE OPENPYXL) ---
+# --- EXPORT TABLEUR COMPATIBLE EXCEL ---
 def generer_csv_session(sess_data):
     summary_data = []
-    
     for nom, info in sess_data.get("students", {}).items():
         summary_data.append({
             "Étudiant": nom,
@@ -118,7 +143,6 @@ def generer_csv_session(sess_data):
             "Score Max": info.get("max_points", 0),
             "Statut": "Terminé" if info.get("finished", False) else "En cours"
         })
-        
         for ans in info.get("answers_detail", []):
             summary_data.append({
                 "Étudiant": f"   -> Q{ans.get('q_num')}: {ans.get('consigne')}",
@@ -126,7 +150,6 @@ def generer_csv_session(sess_data):
                 "Score Max": f"Correct: {'Oui' if ans.get('correct') else 'Non'}",
                 "Statut": f"Pts: {ans.get('points')}"
             })
-            
     df = pd.DataFrame(summary_data)
     return df.to_csv(index=False, sep=';', encoding='utf-8-sig').encode('utf-8-sig')
 
@@ -212,6 +235,8 @@ if mode == "👨‍🏫 Espace Professeur":
                 with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
                     json.dump(session_data, f, ensure_ascii=False, indent=4)
                 
+                # Sélection automatique de la nouvelle session dans le menu déroulant
+                st.session_state["sel_session_piloter"] = session_id
                 st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
                 st.rerun()
 
@@ -219,7 +244,11 @@ if mode == "👨‍🏫 Espace Professeur":
             if sessions_existantes:
                 st.markdown("---")
                 st.markdown("### 📊 Suivi / Consultation des Sessions")
-                sess_choisie = st.selectbox("Sélectionnez une session à piloter :", sessions_existantes)
+                
+                if "sel_session_piloter" not in st.session_state or st.session_state["sel_session_piloter"] not in sessions_existantes:
+                    st.session_state["sel_session_piloter"] = sessions_existantes[0]
+                
+                sess_choisie = st.selectbox("Sélectionnez une session à piloter :", sessions_existantes, key="sel_session_piloter")
                 
                 chemin_sess = os.path.join(DOSSIER_SESSIONS, f"{sess_choisie}.json")
                 if os.path.exists(chemin_sess):
@@ -285,6 +314,23 @@ if mode == "👨‍🏫 Espace Professeur":
                                 dernier = finis_tries[-1]
                                 st.markdown(f"**🥄 Cuillère de bois :** {dernier['name']} ({dernier['score']} pts)")
 
+                    st.markdown("---")
+                    col_del1, col_del2 = st.columns(2)
+                    with col_del1:
+                        if st.button(f"🗑️ Supprimer cette session ({sess_choisie})"):
+                            os.remove(chemin_sess)
+                            st.success(f"Session {sess_choisie} supprimée.")
+                            st.rerun()
+                    with col_del2:
+                        if st.button("🔥 Purger toutes les sessions"):
+                            for f_s in os.listdir(DOSSIER_SESSIONS):
+                                if f_s.endswith('.json'):
+                                    os.remove(os.path.join(DOSSIER_SESSIONS, f_s))
+                            st.success("Toutes les sessions ont été purgées.")
+                            st.rerun()
+        else:
+            st.info("Aucun QCM disponible pour lancer une session.")
+
     with tab_gen:
         st.subheader("Générateur de QR Code Solo & Éditeur")
         if fichiers_existants:
@@ -297,7 +343,19 @@ if mode == "👨‍🏫 Espace Professeur":
                 img_qr.save(buffered, format="PNG")
                 st.image(buffered.getvalue(), caption=f"QR Code Solo : {qcm_pour_qr}", width=200)
 
-        choix_edition = st.selectbox("Éditer un QCM existant :", ["-- Créer un nouveau QCM --"] + fichiers_existants)
+        choix_edition = st.selectbox("Éditer ou supprimer un QCM :", ["-- Créer un nouveau QCM --"] + fichiers_existants)
+        
+        if choix_edition != "-- Créer un nouveau QCM --":
+            if st.button(f"🗑️ Supprimer définitivement le QCM '{choix_edition}'", type="secondary"):
+                chemin_qcm = os.path.join(DOSSIER_QUIZZES, choix_edition)
+                if os.path.exists(chemin_qcm):
+                    os.remove(chemin_qcm)
+                    supprimer_fichier_github(f"QCM/{choix_edition}")
+                st.success(f"QCM {choix_edition} supprimé avec succès !")
+                if st.session_state.get('qcm_selectionne') == choix_edition:
+                    st.session_state.qcm_selectionne = None
+                st.rerun()
+
         if 'edit_nom_fichier' not in st.session_state:
             st.session_state.edit_nom_fichier = "nouveau_qcm.json"
             st.session_state.edit_titre = ""
@@ -450,7 +508,11 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
-                # Utilisation d'un fragment avec actualisation native (run_every=2) pour garantir le rafraîchissement fluide sur mobile
+                # Lancement de la musique de fond de manière globale (en dehors du fragment pour éviter les redémarrages intempestifs)
+                musique_path = quiz_info.get('musique')
+                if status_sess == "started" and musique_path and os.path.exists(musique_path):
+                    jouer_musique_fond_robuste(musique_path, vol_musique)
+
                 @st.fragment(run_every=2)
                 def rendu_session_etudiant():
                     if not os.path.exists(chemin_sess):
@@ -475,10 +537,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
 
                     elif cur_status == "started":
                         questions_list = current_sess_data["questions"]
-
-                        musique_path = quiz_info.get('musique')
-                        if musique_path and os.path.exists(musique_path):
-                            jouer_musique_fond(musique_path, vol_musique)
 
                         # ==========================================
                         # MODE BATTLE (Synchrone & Rythmé)
@@ -708,7 +766,7 @@ else:
         else:
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                jouer_musique_fond(musique_path, vol_musique)
+                jouer_musique_fond_robuste(musique_path, vol_musique)
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]

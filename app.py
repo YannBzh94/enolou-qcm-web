@@ -1,13 +1,14 @@
 import os
 import json
 import random
-import streamlit as st
-import streamlit.components.v1 as components
 import time
 import qrcode
 import base64
 import requests
 from io import BytesIO
+import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
 
@@ -106,6 +107,41 @@ def jouer_effet_sonore(chemin, volume=0.8):
         </script>
         """, unsafe_allow_html=True)
 
+# --- EXPORT EXCEL POUR LES SESSIONS ---
+def generer_excel_session(sess_data):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        summary_data = []
+        details_data = []
+        
+        for nom, info in sess_data.get("students", {}).items():
+            summary_data.append({
+                "Étudiant": nom,
+                "Score Total": info.get("score", 0),
+                "Score Max": info.get("max_points", 0),
+                "Statut": "Terminé" if info.get("finished", False) else "En cours"
+            })
+            
+            for ans in info.get("answers_detail", []):
+                details_data.append({
+                    "Étudiant": nom,
+                    "Question N°": ans.get("q_num"),
+                    "Consigne": ans.get("consigne"),
+                    "Réponse Étudiant": ans.get("reponse"),
+                    "Correct ?": "Oui" if ans.get("correct") else "Non",
+                    "Points": ans.get("points")
+                })
+        
+        df_summary = pd.DataFrame(summary_data)
+        df_summary.to_excel(writer, sheet_name="Synthèse Notes", index=False)
+        
+        if details_data:
+            df_details = pd.DataFrame(details_data)
+            df_details.to_excel(writer, sheet_name="Détails par question", index=False)
+            
+    output.seek(0)
+    return output
+
 # --- GESTION DES URLS (QR Code Solo ou Session Collective) ---
 query_params = st.query_params
 url_qcm = query_params.get("qcm")
@@ -125,12 +161,8 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.answered = False
         st.session_state.last_result = None
 
-# Aiguillage automatique de l'index du menu selon l'URL scannée
-default_mode_idx = 0
-if url_session:
-    default_mode_idx = 1
+default_mode_idx = 1 if url_session else 0
 
-# --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", [
     "👨‍🎓 Espace Étudiant (Solo)", 
@@ -138,30 +170,28 @@ mode = st.sidebar.radio("Choisissez le mode :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-if mode == "👨‍🎓 Espace Étudiant (Solo)":
-    if 'music_active_path' in st.session_state:
-        del st.session_state.music_active_path
+if mode == "👨‍🎓 Espace Étudiant (Solo)" and 'music_active_path' in st.session_state:
+    del st.session_state.music_active_path
 
 if 'qcm_selectionne' not in st.session_state:
     st.session_state.qcm_selectionne = None
 
 # ==========================================
-# 👨‍🏫 ESPACE PROFESSEUR (Édition + Sessions Collectives)
+# 👨‍🏫 ESPACE PROFESSEUR
 # ==========================================
 if mode == "👨‍🏫 Espace Professeur":
     st.title("👨‍🏫 Espace Professeur - Gestion & Sessions Collectives")
     
     tab_gen, tab_sess = st.tabs(["📝 Éditeur & QR Codes Solo", "🌐 Gestion des Sessions Collectives"])
-
     fichiers_existants = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith('.json')]
 
     with tab_sess:
-        st.subheader("Lancer un Quiz en mode Collectif (Battle ou Examen)")
+        st.subheader("Lancer un Quiz en mode Collectif")
         if fichiers_existants:
-            qcm_collectif = st.selectbox("Sélectionnez le QCM pour la session collective :", fichiers_existants, key="sel_collec_qcm")
+            qcm_collectif = st.selectbox("Sélectionnez le QCM :", fichiers_existants, key="sel_collec_qcm")
             type_mode_collec = st.radio("Mode de session :", [
-                "🎮 Mode Battle (Classement en direct, rapidité & podium final + cuillère de bois)", 
-                "📝 Mode Examen (Questions aléatoires par étudiant & stockage des notes)"
+                "🎮 Mode Battle (Synchronisé, rapidité, podium & cuillère de bois)", 
+                "📝 Mode Examen (Synchro au départ, autonomie & export Excel)"
             ], key="type_mode_collec")
 
             domaine_app = st.text_input(
@@ -182,6 +212,10 @@ if mode == "👨‍🏫 Espace Professeur":
                     "qcm_filename": qcm_collectif,
                     "mode": mode_interne,
                     "status": "waiting",
+                    "current_global_idx": 0,
+                    "question_start_time": 0,
+                    "in_transition": False,
+                    "transition_start_time": 0,
                     "quiz_info": qcm_data.get("quiz_info", {}),
                     "questions": qcm_data.get("questions", []),
                     "students": {}
@@ -190,7 +224,7 @@ if mode == "👨‍🏫 Espace Professeur":
                 with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
                     json.dump(session_data, f, ensure_ascii=False, indent=4)
                 
-                st.session_state.active_teacher_session = session_id
+                st.success("Session créée avec succès !")
                 st.rerun()
 
             sessions_existantes = [f.replace('.json', '') for f in os.listdir(DOSSIER_SESSIONS) if f.endswith('.json')]
@@ -205,30 +239,32 @@ if mode == "👨‍🏫 Espace Professeur":
                         s_data = json.load(f)
                     
                     url_session_complete = f"{domaine_app.strip('/')}/?session={sess_choisie}"
-                    st.write(f"**Lien de connexion pour les étudiants :** [{url_session_complete}]({url_session_complete})")
+                    st.write(f"**Lien étudiants :** [{url_session_complete}]({url_session_complete})")
                     
                     img_qr = qrcode.make(url_session_complete)
                     buffered = BytesIO()
                     img_qr.save(buffered, format="PNG")
-                    st.image(buffered.getvalue(), caption=f"QR Code Session : {s_data['quiz_info'].get('titre', '')}", width=220)
+                    st.image(buffered.getvalue(), caption=f"QR Code Session : {s_data['quiz_info'].get('titre', '')}", width=200)
 
-                    st.markdown(f"**Mode :** `{s_data['mode'].upper()}` | **Statut actuel :** `{s_data['status'].upper()}`")
+                    st.markdown(f"**Mode :** `{s_data['mode'].upper()}` | **Statut :** `{s_data['status'].upper()}`")
                     
                     etudiants = s_data.get("students", {})
                     st.markdown(f"#### 👥 Étudiants inscrits ({len(etudiants)}) :")
                     if etudiants:
-                        noms_inscrits = list(etudiants.keys())
-                        st.success(", ".join(noms_inscrits))
+                        st.success(", ".join(etudiants.keys()))
                     else:
-                        st.info("En attente d'inscription des étudiants...")
+                        st.info("En attente d'inscription...")
 
                     col_btn1, col_btn2, col_btn3 = st.columns(3)
                     with col_btn1:
-                        if st.button("🔄 Rafraîchir la liste"):
+                        if st.button("🔄 Rafraîchir l'écran"):
                             st.rerun()
                     with col_btn2:
-                        if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session pour tous", type="primary"):
+                        if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session", type="primary"):
                             s_data["status"] = "started"
+                            s_data["current_global_idx"] = 0
+                            s_data["question_start_time"] = time.time()
+                            s_data["in_transition"] = False
                             with open(chemin_sess, 'w', encoding='utf-8') as f:
                                 json.dump(s_data, f, ensure_ascii=False, indent=4)
                             st.success("Session lancée !")
@@ -240,34 +276,27 @@ if mode == "👨‍🏫 Espace Professeur":
                                 json.dump(s_data, f, ensure_ascii=False, indent=4)
                             st.rerun()
 
+                    # Export Excel pour le mode Examen ou fin de session
                     if s_data["status"] in ["started", "ended"]:
-                        st.markdown("### 🏆 Résultats en direct / finaux")
-                        if etudiants:
-                            table_resultats = []
-                            for nom, info in etudiants.items():
-                                table_resultats.append({
-                                    "Nom": nom,
-                                    "Score": info.get("score", 0),
-                                    "Total Max": info.get("max_points", 0),
-                                    "Statut": "Terminé ✅" if info.get("finished", False) else "En cours ⏱️"
-                                })
-                            st.table(table_resultats)
+                        excel_data = generer_excel_session(s_data)
+                        st.download_button(
+                            label="📥 Télécharger le rapport Excel des notes (.xlsx)",
+                            data=excel_data,
+                            file_name=f"resultats_{sess_choisie}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
 
-                            if s_data["mode"] == "battle":
-                                finis = [info for info in etudiants.values() if info.get("finished", False)]
-                                if finis:
-                                    finis_tries = sorted(finis, key=lambda x: x["score"], reverse=True)
-                                    st.markdown("---")
-                                    st.markdown("### 🥇 PODIUM BATTLE & CUILLÈRE DE BOIS")
-                                    if len(finis_tries) >= 1:
-                                        st.markdown(f"**🥇 1er :** {finis_tries[0]['name']} ({finis_tries[0]['score']} pts)")
-                                    if len(finis_tries) >= 2:
-                                        st.markdown(f"**🥈 2ème :** {finis_tries[1]['name']} ({finis_tries[1]['score']} pts)")
-                                    if len(finis_tries) >= 3:
-                                        st.markdown(f"**🥉 3ème :** {finis_tries[2]['name']} ({finis_tries[2]['score']} pts)")
-                                    if len(finis_tries) >= 4:
-                                        dernier = finis_tries[-1]
-                                        st.markdown(f"**🥄 Cuillère de bois :** {dernier['name']} ({dernier['score']} pts) - Courage pour la prochaine ! 💪")
+                    if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":
+                        finis = [info for info in etudiants.values() if info.get("finished", False) or info.get("score", 0) >= 0]
+                        if finis:
+                            finis_tries = sorted(finis, key=lambda x: x["score"], reverse=True)
+                            st.markdown("### 🏆 Podium Battle en direct")
+                            for idx, f_info in enumerate(finis_tries[:3]):
+                                medailles = ["🥇", "🥈", "🥉"]
+                                st.markdown(f"**{medailles[idx]} {f_info['name']}** : {f_info['score']} pts")
+                            if len(finis_tries) >= 4:
+                                dernier = finis_tries[-1]
+                                st.markdown(f"**🥄 Cuillère de bois :** {dernier['name']} ({dernier['score']} pts)")
 
     with tab_gen:
         st.subheader("Générateur de QR Code Solo & Éditeur")
@@ -286,18 +315,11 @@ if mode == "👨‍🏫 Espace Professeur":
             st.session_state.edit_nom_fichier = "nouveau_qcm.json"
             st.session_state.edit_titre = ""
             st.session_state.edit_desc = ""
-            st.session_state.edit_musique = ""
-            st.session_state.edit_vol_musique = 0.5
-            st.session_state.edit_son_good = ""
-            st.session_state.edit_son_bad = ""
-            st.session_state.edit_vol_sons = 0.8
             st.session_state.edit_questions = []
-            st.session_state.edit_q_index = None
             st.session_state.dernier_choix_edition = None
 
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
-            st.session_state.edit_q_index = None
             if choix_edition == "-- Créer un nouveau QCM --":
                 st.session_state.edit_nom_fichier = "nouveau_qcm.json"
                 st.session_state.edit_titre = "Mon Nouveau Quiz"
@@ -387,7 +409,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
     st.title("🌐 Portail Collectif - Enolou")
 
     if not url_session:
-        st.info("💡 Veuillez utiliser le lien ou scanner le QR code fourni par votre professeur pour rejoindre une session collective (Battle ou Examen).")
+        st.info("💡 Veuillez scanner le QR code fourni par votre professeur pour rejoindre une session collective.")
         code_saisi = st.text_input("Ou entrez l'identifiant de la session (ex: sess_1725800000) :")
         if code_saisi:
             st.query_params["session"] = code_saisi
@@ -404,6 +426,8 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
             mode_sess = sess_data.get("mode", "battle")
             status_sess = sess_data.get("status", "waiting")
             titre_quiz = quiz_info.get("titre", "Quiz Collectif")
+            vol_musique = quiz_info.get('volume_musique', 0.5)
+            vol_sons = quiz_info.get('volume_sons', 0.8)
 
             st.subheader(f"Session : {titre_quiz} (Mode : {mode_sess.upper()})")
 
@@ -431,7 +455,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 "last_result": None,
                                 "finished": False,
                                 "question_order": indices_questions,
-                                "question_start_time": time.time()
+                                "answers_detail": []
                             }
                             with open(chemin_sess, 'w', encoding='utf-8') as f:
                                 json.dump(sess_data, f, ensure_ascii=False, indent=4)
@@ -439,6 +463,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
+                # Recharger l'état de la session
                 with open(chemin_sess, 'r', encoding='utf-8') as f:
                     sess_data = json.load(f)
                 status_sess = sess_data.get("status", "waiting")
@@ -447,131 +472,245 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                 st.write(f"Connecté en tant que : **{st.session_state.collec_student_name}**")
 
                 if status_sess == "waiting":
-                    st.info("⏳ En attente du lancement de la session par le professeur...")
-                    if st.button("🔄 Actualiser le statut"):
+                    st.info("⏳ En attente du lancement par le professeur...")
+                    # Script de rafraîchissement auto en attente (toutes les 3 secondes)
+                    components.html("""
+                    <script>
+                        setTimeout(() => { window.location.reload(); }, 3000);
+                    </script>
+                    """, height=0)
+                    if st.button("🔄 Actualiser"):
                         st.rerun()
+
                 elif status_sess == "ended":
-                    st.warning("🛑 Cette session est maintenant terminée par le professeur.")
+                    st.warning("🛑 Cette session est maintenant terminée.")
                     st.markdown(f"### Votre Score final : {student_info.get('score', 0)} / {student_info.get('max_points', 0)}")
+
                 elif status_sess == "started":
                     questions_list = sess_data["questions"]
-                    question_order = student_info.get("question_order", list(range(len(questions_list))))
-                    current_idx_student = student_info.get("current_idx", 0)
 
-                    if current_idx_student < len(question_order):
-                        reel_idx = question_order[current_idx_student]
-                        q = questions_list[reel_idx]
-                        
-                        consigne = q.get('consigne', '')
-                        points = q.get('points', 10)
-                        timer_sec = q.get('timer_secondes', 30)
-                        options = q.get('donnees', {}).get('options', [])
+                    # ==========================================
+                    # MODE BATTLE (Synchrone & Rythmé)
+                    # ==========================================
+                    if mode_sess == "battle":
+                        current_global_idx = sess_data.get("current_global_idx", 0)
+                        in_transition = sess_data.get("in_transition", False)
 
-                        st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)}")
-                        st.caption(f"🏆 Valeur de base : {points} pts ({'Mode Battle (Rapidité)' if mode_sess=='battle' else 'Mode Examen'})")
+                        # Vérification de la transition de 5 secondes
+                        if in_transition:
+                            trans_start = sess_data.get("transition_start_time", time.time())
+                            elapsed_trans = time.time() - trans_start
+                            remaining_trans = max(0, 5 - int(elapsed_trans))
 
-                        if "q_start_time" not in st.session_state:
-                            st.session_state.q_start_time = time.time()
-
-                        temps_ecoule = int(time.time() - st.session_state.q_start_time)
-                        temps_restant_initial = max(0, timer_sec - temps_ecoule)
-
-                        components.html(f"""
-                        <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px; border-left: 5px solid #ff4b4b; font-family: sans-serif;">
-                            ⏱️ Temps restant : <span id="countdown_timer">{temps_restant_initial}</span> secondes
-                        </div>
-                        <script>
-                            let timeLeft = {temps_restant_initial};
-                            const timerElem = document.getElementById('countdown_timer');
-                            if (timerElem) {{
-                                const timerId = setInterval(() => {{
-                                    if (timeLeft > 0) {{
-                                        timeLeft--;
-                                        timerElem.innerText = timeLeft;
-                                    }} else {{
-                                        clearInterval(timerId);
-                                    }}
-                                }}, 1000);
-                            }}
-                        </script>
-                        """, height=55)
-
-                        st.markdown(f"**{consigne}**")
-                        choix = st.radio("Sélectionnez votre réponse :", options, key=f"collec_radio_{current_idx_student}", index=None, disabled=student_info.get("answered", False))
-
-                        if not student_info.get("answered", False):
-                            if st.button("Valider la réponse", type="primary"):
-                                if choix is None:
-                                    st.warning("Veuillez sélectionner une option.")
+                            if remaining_trans == 0:
+                                # Passer à la question suivante ou terminer
+                                sess_data["current_global_idx"] += 1
+                                sess_data["in_transition"] = False
+                                if sess_data["current_global_idx"] >= len(questions_list):
+                                    sess_data["status"] = "ended"
                                 else:
-                                    elapsed = time.time() - st.session_state.q_start_time
-                                    reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
-                                    est_correct = choix in reponses_correctes
+                                    sess_data["question_start_time"] = time.time()
+                                    # Réinitialiser le statut de réponse pour tous les étudiants
+                                    for s_name in sess_data["students"]:
+                                        sess_data["students"][s_name]["answered_current"] = False
+                                        sess_data["students"][s_name]["last_result"] = None
+                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                    json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                st.rerun()
+                            else:
+                                st.info(f"⏸️ Fin de la manche ! Question suivante dans **{remaining_trans} secondes**...")
+                                components.html("""
+                                <script>
+                                    setTimeout(() => { window.location.reload(); }, 1000);
+                                </script>
+                                """, height=0)
+                        else:
+                            if current_global_idx >= len(questions_list):
+                                student_info["finished"] = True
+                                sess_data["students"][st.session_state.collec_student_name] = student_info
+                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                    json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                st.balloons()
+                                st.success("🎉 Battle terminée !")
+                                st.markdown(f"### 🏆 Score : {student_info['score']} / {student_info['max_points']} pts")
+                            else:
+                                q = questions_list[current_global_idx]
+                                consigne = q.get('consigne', '')
+                                points = q.get('points', 10)
+                                timer_sec = q.get('timer_secondes', 30)
+                                options = q.get('donnees', {}).get('options', [])
 
-                                    points_gagnes = 0
-                                    if est_correct:
-                                        if mode_sess == "battle":
-                                            if elapsed <= timer_sec:
-                                                ratio_temps = (timer_sec - elapsed) / timer_sec
-                                                points_gagnes = int(points * (0.5 + 0.5 * ratio_temps))
-                                                msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
-                                            else:
-                                                points_gagnes = points // 2
-                                                msg = f"Bonne réponse mais hors temps (+{points_gagnes} pts) ⏱️"
+                                q_start = sess_data.get("question_start_time", time.time())
+                                elapsed_q = int(time.time() - q_start)
+                                temps_restant = max(0, timer_sec - elapsed_q)
+
+                                # Vérifier si le temps est écoulé ou si tout le monde a répondu
+                                all_answered = True
+                                if len(sess_data["students"]) > 0:
+                                    for s_info in sess_data["students"].values():
+                                        if not s_info.get("answered_current", False):
+                                            all_answered = False
+                                            break
+                                else:
+                                    all_answered = False
+
+                                if temps_restant == 0 or all_answered:
+                                    # Déclencher la transition de 5 secondes
+                                    sess_data["in_transition"] = True
+                                    sess_data["transition_start_time"] = time.time()
+                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                        json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                    st.rerun()
+
+                                # Affichage de la question Battle
+                                st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
+                                st.markdown(f"""
+                                <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">
+                                    ⏱️ Temps restant : {temps_restant} secondes
+                                </div>
+                                """, unsafe_allow_html=True)
+
+                                components.html("""
+                                <script>
+                                    setTimeout(() => { window.location.reload(); }, 1000);
+                                </script>
+                                """, height=0)
+
+                                st.markdown(f"**{consigne}**")
+                                already_answered = student_info.get("answered_current", False)
+                                choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
+
+                                if not already_answered:
+                                    if st.button("Valider la réponse", type="primary"):
+                                        if choix is None:
+                                            st.warning("Veuillez sélectionner une option.")
                                         else:
-                                            points_gagnes = points
-                                            msg = f"Réponse enregistrée (+{points} pts) ✅"
-                                        student_info["last_result"] = ("success", msg)
-                                    else:
-                                        student_info["last_result"] = ("error", "Mauvaise réponse ❌")
+                                            reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                                            est_correct = choix in reponses_correctes
+                                            
+                                            points_gagnes = 0
+                                            if est_correct:
+                                                ratio_temps = (timer_sec - elapsed_q) / timer_sec if timer_sec > 0 else 1
+                                                points_gagnes = int(points * (0.5 + 0.5 * max(0, ratio_temps)))
+                                                res_msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
+                                                res_type = "success"
+                                                if quiz_info.get('son_good'):
+                                                    jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
+                                            else:
+                                                res_msg = "Mauvaise réponse ❌"
+                                                res_type = "error"
+                                                if quiz_info.get('son_bad'):
+                                                    jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
 
-                                    student_info["score"] += points_gagnes
-                                    student_info["answered"] = True
-                                    
+                                            student_info["score"] += points_gagnes
+                                            student_info["answered_current"] = True
+                                            student_info["last_result"] = (res_type, res_msg)
+                                            student_info["answers_detail"].append({
+                                                "q_num": current_global_idx + 1,
+                                                "consigne": consigne,
+                                                "reponse": choix,
+                                                "correct": est_correct,
+                                                "points": points_gagnes
+                                            })
+
+                                            sess_data["students"][st.session_state.collec_student_name] = student_info
+                                            with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                                json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                            st.rerun()
+                                else:
+                                    res_type, res_msg = student_info.get("last_result", ("info", "Réponse enregistrée."))
+                                    if res_type == "success":
+                                        st.success(res_msg)
+                                    else:
+                                        st.error(res_msg)
+                                    st.info("⏳ En attente des autres participants pour la question suivante...")
+
+                    # ==========================================
+                    # MODE EXAMAN (Autonome après départ simultané)
+                    # ==========================================
+                    else:
+                        question_order = student_info.get("question_order", list(range(len(questions_list))))
+                        current_idx_student = student_info.get("current_idx", 0)
+
+                        if current_idx_student < len(question_order):
+                            reel_idx = question_order[current_idx_student]
+                            q = questions_list[reel_idx]
+                            
+                            consigne = q.get('consigne', '')
+                            points = q.get('points', 10)
+                            timer_sec = q.get('timer_secondes', 30)
+                            options = q.get('donnees', {}).get('options', [])
+
+                            st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)} (Mode Examen)")
+                            st.markdown(f"**{consigne}**")
+
+                            choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=student_info.get("answered", False))
+
+                            if not student_info.get("answered", False):
+                                if st.button("Valider la réponse", type="primary"):
+                                    if choix is None:
+                                        st.warning("Veuillez sélectionner une option.")
+                                    else:
+                                        reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                                        est_correct = choix in reponses_correctes
+                                        points_gagnes = points if est_correct else 0
+
+                                        if est_correct:
+                                            student_info["last_result"] = ("success", f"Réponse enregistrée (+{points} pts) ✅")
+                                            if quiz_info.get('son_good'):
+                                                jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
+                                        else:
+                                            student_info["last_result"] = ("error", "Réponse enregistrée ❌")
+                                            if quiz_info.get('son_bad'):
+                                                jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
+
+                                        student_info["score"] += points_gagnes
+                                        student_info["answered"] = True
+                                        student_info["answers_detail"].append({
+                                            "q_num": current_idx_student + 1,
+                                            "consigne": consigne,
+                                            "reponse": choix,
+                                            "correct": est_correct,
+                                            "points": points_gagnes
+                                        })
+
+                                        sess_data["students"][st.session_state.collec_student_name] = student_info
+                                        with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                            json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                        st.rerun()
+                            else:
+                                res_type, res_msg = student_info.get("last_result", ("info", ""))
+                                if res_type == "success":
+                                    st.success(res_msg)
+                                else:
+                                    st.error(res_msg)
+
+                                if st.button("Question suivante ➡️", type="primary"):
+                                    student_info["current_idx"] += 1
+                                    student_info["answered"] = False
+                                    student_info["last_result"] = None
                                     sess_data["students"][st.session_state.collec_student_name] = student_info
                                     with open(chemin_sess, 'w', encoding='utf-8') as f:
                                         json.dump(sess_data, f, ensure_ascii=False, indent=4)
                                     st.rerun()
                         else:
-                            res_type, res_msg = student_info.get("last_result", ("info", ""))
-                            if res_type == "success":
-                                st.success(res_msg)
-                            else:
-                                st.error(res_msg)
+                            student_info["finished"] = True
+                            sess_data["students"][st.session_state.collec_student_name] = student_info
+                            with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                json.dump(sess_data, f, ensure_ascii=False, indent=4)
 
-                            explication = q.get('explication', '')
-                            if explication:
-                                st.caption(f"💡 *Explication : {explication}*")
-
-                            if st.button("Question suivante ➡️", type="primary"):
-                                student_info["current_idx"] += 1
-                                student_info["answered"] = False
-                                student_info["last_result"] = None
-                                if "q_start_time" in st.session_state:
-                                    del st.session_state.q_start_time
-                                
-                                sess_data["students"][st.session_state.collec_student_name] = student_info
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(sess_data, f, ensure_ascii=False, indent=4)
-                                st.rerun()
-                    else:
-                        student_info["finished"] = True
-                        sess_data["students"][st.session_state.collec_student_name] = student_info
-                        with open(chemin_sess, 'w', encoding='utf-8') as f:
-                            json.dump(sess_data, f, ensure_ascii=False, indent=4)
-
-                        st.balloons()
-                        st.success("🎉 Vous avez terminé l'évaluation collective !")
-                        st.markdown(f"### 🏆 Votre Score : {student_info['score']} / {student_info['max_points']} points")
-                        st.info("Attendez que le professeur clôture la session pour découvrir le classement final.")
+                            st.balloons()
+                            st.success("🎉 Vous avez terminé l'examen !")
+                            st.markdown(f"### 🏆 Votre Score : {student_info['score']} / {student_info['max_points']} points")
+                            st.info("Vos résultats ont été enregistrés et transmis au professeur.")
 
 # ==========================================
-# 👨‍🎓 ESPACE ÉTUDIANT : MODE SOLO (Standard)
+# 👨‍🎓 ESPACE ÉTUDIANT : MODE SOLO
 # ==========================================
 else:
     if not st.session_state.qcm_selectionne:
         st.title("🎓 Portail des Évaluations - Enolou")
-        st.warning("🔒 **Accès restreint :** Veuillez scanner le QR code ou utiliser le lien direct fourni par votre professeur pour accéder à votre QCM en mode Solo.")
+        st.warning("🔒 **Accès restreint :** Veuillez scanner le QR code fourni par votre professeur pour accéder à votre QCM en mode Solo.")
     else:
         quiz_info = st.session_state.banque.get('quiz_info', {})
         questions = st.session_state.banque.get('questions', [])
@@ -585,7 +724,7 @@ else:
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
-            st.info("💡 Cliquez sur le bouton ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
+            st.info("💡 Cliquez ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.question_start_time = time.time()

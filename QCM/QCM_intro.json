@@ -1,0 +1,224 @@
+{
+  "qcm": [
+    {
+      "id": 1,
+      "question": "Que vise l'analyse financière selon sa chronologie globale ?[cite: 4]",
+      "options": [
+        "A) Uniquement comprendre le passé[cite: 4]",
+        "B) Comprendre le passé, diagnostiquer le présent et prévoir l'avenir[cite: 4]",
+        "C) Uniquement prévoir l'avenir sans analyser l'historique[cite: 4]"
+      ],
+      "correct_answer": "B",
+      "explanation": "L'analyse financière englobe la compréhension du passé, le diagnostic du présent et la prévision de l'avenir[cite: 4]."
+    },
+    {
+      "id": 2,
+      "question": "L'évaluation d'une entreprise est-elle une science exacte ?[cite: 4]",
+      "options": [
+        "A) Oui, elle repose sur l'application stricte de formules mathématiques figées[cite: 4]",
+        "B) Non, c'est une mission d'opinion et un jugement fondé sur une démarche rigoureuse[cite: 4]",
+        "C) Oui, elle se base entièrement sur l'intuition et l'évaluation au jugé[cite: 4]"
+      ],
+      "correct_answer": "B",
+      "explanation": "L'évaluation n'est pas une science exacte ni une valeur au jugé ; c'est un jugement et une mission d'opinion issus d'une démarche cohérente[cite: 4]."
+    },
+    {
+      "id": 3,
+      "question": "Parmi les motifs suivants, lequel justifie la réalisation d'une évaluation d'entreprise ?[cite: 4]",
+      "options": [
+        "A) Une fusion, un apport, une vente ou une succession-donation[cite: 4]",
+        "B) Le calcul obligatoire de la taxe d'habitation[cite: 4]",
+        "C) La modification exclusive de la grille salariale interne[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Les objectifs d'une évaluation incluent la fusion, l'apport, la vente, la succession-donation ou la valorisation d'actifs immobilisés[cite: 4]."
+    },
+    {
+      "id": 4,
+      "question": "Qui sont les acteurs ou tiers intéressés par une évaluation financière ?[cite: 4]",
+      "options": [
+        "A) Uniquement les salariés de l'entreprise[cite: 4]",
+        "B) Les dirigeants, actionnaires, investisseurs, banquiers, clients et fournisseurs[cite: 4]",
+        "C) Exclusivement les concurrents directs[cite: 4]"
+      ],
+      "correct_answer": "B",
+      "explanation": "Plusieurs parties prenantes s'intéressent à l'évaluation pour diverses raisons : dirigeants, actionnaires, acheteurs, partenaires financiers et clients/fournisseurs[cite: 4]."
+    },
+    {
+      "id": 5,
+      "question": "Quels diagnostics composent le diagnostic global d'une entreprise ?[cite: 4]",
+      "options": [
+        "A) Juridique, comptable et financier, industriel, commercial et RH[cite: 4]",
+        "B) Uniquement comptable et marketing[cite: 4]",
+        "C) Fiscal, publicitaire et logistique[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Le diagnostic global regroupe les volets juridique, comptable et financier, industriel, commercial et RH[cite: 4]."
+    },
+    {
+      "id": 6,
+      "question": "Quel document fait partie des éléments juridiques essentiels à obtenir ?[cite: 4]",
+      "options": [
+        "A) Le Kbis, la liste des associés et les PV d'AG[cite: 4]",
+        "B) Le catalogue de produits et les licences commerciales[cite: 4]",
+        "C) L'organigramme et la pyramide des âges[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Les documents juridiques comprennent notamment le Kbis, la liste des associés et les procès-verbaux d'assemblées générales[cite: 4]."
+    },
+    {
+      "id": 7,
+      "question": "Quel est l'objectif principal de la phase de 'prise de connaissance' ?[cite: 4]",
+      "options": [
+        "A) Identifier les secteurs sensibles et les zones à risque[cite: 4]",
+        "B) Valider définitivement le résultat net comptable sans analyse[cite: 4]",
+        "C) Rédiger les bulletins de paie[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "La prise de connaissance permet d'identifier les secteurs sensibles, c'est-à-dire les zones à risque, et de bien cerner le contexte[cite: 4]."
+    },
+    {
+      "id": 8,
+      "question": "Quelles sont les conséquences potentielles d'une mauvaise prise de connaissance ?[cite: 4]",
+      "options": [
+        "A) Une augmentation immédiate de la rentabilité[cite: 4]",
+        "B) Faire des erreurs, passer à côté de pistes et manquer de pertinence[cite: 4]",
+        "C) Une précision accrue des prévisions financières[cite: 4]"
+      ],
+      "correct_answer": "B",
+      "explanation": "Une mauvaise prise de connaissance conduit à commettre des erreurs d'analyse, à être trop descriptif, à manquer de pertinence et à passer à côté de pistes importantes[cite: 4]."
+    },
+    {
+      "id": 9,
+      "question": "Quel outil de synthèse est mobilisé à l'issue des différents diagnostics ?[cite: 4]",
+      "options": [
+        "A) L'analyse SWOT (Forces/Faiblesses, Menaces/Opportunités)[cite: 4]",
+        "B) Le tableau de bord logistique[cite: 4]",
+        "C) Le diagramme de Gantt des congés payés[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "L'évaluateur réalise une synthèse formalisée sous forme de SWOT croisant l'interne (forces/faiblesses) et l'externe (menaces/opportunités)[cite: 4]."
+    },
+    {
+      "id": 10,
+      "question": "Le diagnostic financier est-il une fin en soi ?[cite: 3]",
+      "options": [
+        "A) Oui, c'est l'unique objectif de l'analyse d'entreprise[cite: 3]",
+        "B) Non, ce n'est ni une simple étude de chiffres et ratios ni une fin en soi[cite: 3]",
+        "C) Oui, car il offre une vision totalement statique et figée[cite: 3]"
+      ],
+      "correct_answer": "B",
+      "explanation": "Le diagnostic financier n'est en aucun cas une simple étude de chiffres et ratios, une vision statique ou une fin en soi[cite: 3]."
+    },
+    {
+      "id": 11,
+      "question": "Que vise le principe 'substance over form' lors des retraitements comptables ?[cite: 3]",
+      "options": [
+        "A) S'approcher le plus près d'une réalité économique[cite: 3]",
+        "B) Respecter strictement la forme juridique apparente sans ajustement[cite: 3]",
+        "C) Supprimer l'ensemble des dettes à long terme[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Les retraitements et reclassements basés sur 'substance over form' permettent de s'approcher au plus près de la réalité économique[cite: 3]."
+    },
+    {
+      "id": 12,
+      "question": "Quel élément fait partie des non-valeurs à éliminer lors de l'analyse du bilan ?[cite: 3]",
+      "options": [
+        "A) Les dettes fournisseurs[cite: 3]",
+        "B) Les frais de R&D ou frais d'établissement[cite: 3]",
+        "C) Le chiffre d'affaires net[cite: 3]"
+      ],
+      "correct_answer": "B",
+      "explanation": "Les frais de R&D, les frais d'établissement et le capital souscrit non appelé constituent des non-valeurs à éliminer[cite: 3]."
+    },
+    {
+      "id": 13,
+      "question": "Quels postes du compte de résultat font l'objet de retraitements fréquents ?[cite: 3]",
+      "options": [
+        "A) La sous-traitance, les intérimaires, le crédit-bail et les locations[cite: 3]",
+        "B) Uniquement les dividendes versés aux actionnaires[cite: 3]",
+        "C) Les produits exceptionnels de cession[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Les exemples de retraitements du compte de résultat incluent la sous-traitance, les intérimaires, le crédit-bail et les locations[cite: 3]."
+    },
+    {
+      "id": 14,
+      "question": "Par quoi la lecture des comptes et les choix politiques de l'entreprise sont-ils influencés ?[cite: 3]",
+      "options": [
+        "A) Les décisions de gestion des dirigeants, la fiscalité et la présentation aux tiers[cite: 3]",
+        "B) Uniquement par la météo et la saisonnalité[cite: 3]",
+        "C) Par les lois de l'éducation nationale[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "La lecture des comptes est influencée par les décisions de gestion des dirigeants, les impératifs de présentation aux tiers (actionnaires, banques) et la fiscalité[cite: 3]."
+    },
+    {
+      "id": 15,
+      "question": "Quels sont les principaux objectifs recherchés à travers les techniques de 'window-dressing' ?[cite: 3]",
+      "options": [
+        "A) Réduire la taille du bilan et/ou réduire le coût des financements[cite: 3]",
+        "B) Augmenter artificiellement le nombre de salariés[cite: 3]",
+        "C) Alourdir la structure fiscale de l'entreprise[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Le window-dressing a pour principaux objectifs de réduire la taille du bilan et/ou de réduire le coût des financements[cite: 3]."
+    },
+    {
+      "id": 16,
+      "question": "Parmi les techniques suivantes, laquelle est associée au window-dressing ou à la déconsolidation ?[cite: 3]",
+      "options": [
+        "A) La titrisation et l'affacturage[cite: 3]",
+        "B) L'augmentation du capital social en numéraire[cite: 3]",
+        "C) L'inventaire physique annuel des stocks[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "La titrisation, l'affacturage, le crédit-bail et le sale & lease-back sont des techniques de window-dressing et de déconsolidation[cite: 3]."
+    },
+    {
+      "id": 17,
+      "question": "Quel est l'impact du crédit-bail dans les comptes sociaux sur la structure du bilan ?[cite: 3]",
+      "options": [
+        "A) Une baisse du montant des actifs et une baisse de la dette nette / ratio d'endettement[cite: 3]",
+        "B) Une augmentation massive des capitaux propres[cite: 3]",
+        "C) Aucun impact comptable[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "L'impact du crédit-bail dans les comptes sociaux se traduit par une baisse du montant des actifs (patrimoine) et une baisse du montant de la dette nette[cite: 3]."
+    },
+    {
+      "id": 18,
+      "question": "Dans le cas pratique 'Manhattan' présenté dans le support, quelle est l'activité de l'entreprise ?[cite: 3]",
+      "options": [
+        "A) Fabrication de meubles de bureau[cite: 3]",
+        "B) Restauration rapide[cite: 3]",
+        "C) Édition de logiciels informatiques[cite: 3]"
+      ],
+      "correct_answer": "A",
+      "explanation": "L'activité de la société Manhattan dans le support est la fabrication de meubles de bureau (Fab meubles de bureau)[cite: 3]."
+    },
+    {
+      "id": 19,
+      "question": "Quelles sources d'informations externes sont mobilisées lors de la prise de connaissance sectorielle ?[cite: 4]",
+      "options": [
+        "A) Les études sectorielles et les syndicats professionnels[cite: 4]",
+        "B) Les conversations privées des clients[cite: 4]",
+        "C) Les archives judiciaires personnelles[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Pour appréhender les tendances du marché, l'évaluateur s'appuie notamment sur les études sectorielles et les syndicats professionnels[cite: 4]."
+    },
+    {
+      "id": 20,
+      "question": "À quelles périodes temporelles peut s'appliquer l'évaluation d'un actif ou d'une société ?[cite: 4]",
+      "options": [
+        "A) Passée, présente ou future (à venir)[cite: 4]",
+        "B) Exclusivement au siècle dernier[cite: 4]",
+        "C) Uniquement le jour de la liquidation judiciaire[cite: 4]"
+      ],
+      "correct_answer": "A",
+      "explanation": "Une évaluation peut porter sur des données ou une situation passée, présente ou future[cite: 4]."
+    }
+  ]
+}

@@ -1,242 +1,431 @@
-[
-  {
-    "id": 1,
-    "question": "Qu'est-ce que le bilan comptable en France ?",
-    "options": {
-      "A": "Un récapitulatif des produits et des charges de l'exercice.",
-      "B": "Une photographie du patrimoine de l'entreprise à une date de clôture donnée.",
-      "C": "Un tableau détaillant exclusivement les mouvements de trésorerie.",
-      "D": "Un registre juridique des actionnaires de l'entreprise."
-    },
-    "reponse_correcte": "B",
-    "explication": "Le bilan est un état de synthèse qui décrit la situation patrimoniale de l'entreprise (ce qu'elle possède et ce qu'elle doit) à un instant T (généralement à la fin de l'exercice)."
+{
+  "quiz_info": {
+    "titre": "Le Bilan Comptable en France",
+    "description": "QCM complet de 20 questions sur les principes, la structure et l'équilibre du bilan en comptabilité française.",
+    "son_good": "sons/sons_good/bonnereponse003.mp3",
+    "son_bad": "sons/sons_bad/Mauvaiserep001.mp3",
+    "musique": "musique/Scott Buckley - Call To Adventure.mp3"
   },
-  {
-    "id": 2,
-    "question": "Comment se divise fondamentalement la structure d'un bilan comptable ?",
-    "options": {
-      "A": "En Recettes et Dépenses",
-      "B": "En Actif et en Passif",
-      "C": "En Exploitation et en Financier",
-      "D": "En Investissements et en Trésorerie"
+  "questions": [
+    {
+      "id": 1,
+      "consigne": "Qu'est-ce que le bilan comptable en France ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un récapitulatif des produits et des charges de l'exercice.",
+          "Une photographie du patrimoine de l'entreprise à une date de clôture donnée.",
+          "Un tableau détaillant exclusivement les mouvements de trésorerie.",
+          "Un registre juridique des actionnaires de l'entreprise."
+        ],
+        "reponses_correctes": [
+          "Une photographie du patrimoine de l'entreprise à une date de clôture donnée."
+        ]
+      },
+      "explication": "Le bilan est un état de synthèse qui décrit la situation patrimoniale de l'entreprise (ce qu'elle possède et ce qu'elle doit) à un instant T (généralement à la fin de l'exercice)."
     },
-    "reponse_correcte": "B",
-    "explication": "Le bilan s'articule en deux parties indissociables : l'Actif (l'emploi des fonds, ce que l'entreprise possède) et le Passif (l'origine des fonds, d'où vient l'argent)."
-  },
-  {
-    "id": 3,
-    "question": "Que représente l'Actif du bilan ?",
-    "options": {
-      "A": "Les ressources financières et les dettes de l'entreprise.",
-      "B": "Les emplois économiques, c'est-à-dire ce que l'entreprise possède et utilise pour son activité.",
-      "C": "Uniquement les bénéfices réalisés.",
-      "D": "Les charges payées d'avance."
+    {
+      "id": 2,
+      "consigne": "Comment se divise fondamentalement la structure d'un bilan comptable ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "En Recettes et Dépenses",
+          "En Actif et en Passif",
+          "En Exploitation et en Financier",
+          "En Investissements et en Trésorerie"
+        ],
+        "reponses_correctes": [
+          "En Actif et en Passif"
+        ]
+      },
+      "explication": "Le bilan s'articule en deux parties indissociables : l'Actif (l'emploi des fonds, ce que l'entreprise possède) et le Passif (l'origine des fonds, d'où vient l'argent)."
     },
-    "reponse_correcte": "B",
-    "explication": "L'actif regroupe tous les éléments ayant une valeur économique positive pour l'entreprise (biens immobiliers, machines, stocks, créances, liquidités)."
-  },
-  {
-    "id": 4,
-    "question": "Que représente le Passif du bilan ?",
-    "options": {
-      "A": "Les origines des fonds ou ressources de financement de l'entreprise (capitaux propres et dettes).",
-      "B": "Les biens matériels de l'entreprise.",
-      "C": "Les pertes accumulées uniquement.",
-      "D": "Les clients qui doivent de l'argent à l'entreprise."
+    {
+      "id": 3,
+      "consigne": "Que représente l'Actif du bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les ressources financières et les dettes de l'entreprise.",
+          "Les emplois économiques, c'est-à-dire ce que l'entreprise possède et utilise pour son activité.",
+          "Uniquement les bénéfices réalisés.",
+          "Les charges payées d'avance."
+        ],
+        "reponses_correctes": [
+          "Les emplois économiques, c'est-à-dire ce que l'entreprise possède et utilise pour son activité."
+        ]
+      },
+      "explication": "L'actif regroupe tous les éléments ayant une valeur économique positive pour l'entreprise (biens immobiliers, machines, stocks, créances, liquidités)."
     },
-    "reponse_correcte": "A",
-    "explication": "Le passif indique comment l'actif a été financé, soit par l'apport des actionnaires/bénéfices (capitaux propres), soit par des emprunts et dettes (tiers)."
-  },
-  {
-    "id": 5,
-    "question": "Quelle est la règle d'équilibre mathématique fondamentale du bilan ?",
-    "options": {
-      "A": "Total de l'Actif = Total du Passif",
-      "B": "Total de l'Actif = Capitaux Propres - Dettes",
-      "C": "Actif Circulant = Passif Circulant x 2",
-      "D": "Résultat Net = Total de l'Actif"
+    {
+      "id": 4,
+      "consigne": "Que représente le Passif du bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les origines des fonds ou ressources de financement de l'entreprise (capitaux propres et dettes).",
+          "Les biens matériels de l'entreprise.",
+          "Les pertes accumulées uniquement.",
+          "Les clients qui doivent de l'argent à l'entreprise."
+        ],
+        "reponses_correctes": [
+          "Les origines des fonds ou ressources de financement de l'entreprise (capitaux propres et dettes)."
+        ]
+      },
+      "explication": "Le passif indique comment l'actif a été financé, soit par l'apport des actionnaires/bénéfices (capitaux propres), soit par des emprunts et dettes (tiers)."
     },
-    "reponse_correcte": "A",
-    "explication": "Le bilan est toujours équilibré : chaque euro d'actif possédé par l'entreprise trouve nécessairement son origine de financement au passif, d'où l'égalité Actif = Passif."
-  },
-  {
-    "id": 6,
-    "question": "Comment se décompose principalement l'Actif du bilan en France ?",
-    "options": {
-      "A": "En Actif fixe et Actif variable",
-      "B": "En Actif immobilisé et Actif circulant",
-      "C": "En Actif brut et Actif net d'impôt",
-      "D": "En Actif court terme et Actif très long terme"
+    {
+      "id": 5,
+      "consigne": "Quelle est la règle d'équilibre mathématique fondamentale du bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Total de l'Actif = Total du Passif",
+          "Total de l'Actif = Capitaux Propres - Dettes",
+          "Actif Circulant = Passif Circulant x 2",
+          "Résultat Net = Total de l'Actif"
+        ],
+        "reponses_correctes": [
+          "Total de l'Actif = Total du Passif"
+        ]
+      },
+      "explication": "Le bilan est toujours équilibré : chaque euro d'actif possédé par l'entreprise trouve nécessairement son origine de financement au passif, d'où l'égalité Actif = Passif."
     },
-    "reponse_correcte": "B",
-    "explication": "L'actif se sépare entre l'actif immobilisé (biens durables destinés à rester durablement dans l'entreprise) et l'actif circulant (éléments liés au cycle d'exploitation ou à courte durée de vie)."
-  },
-  {
-    "id": 7,
-    "question": "Lequel de ces éléments est une immobilisation incorporelle ?",
-    "options": {
-      "A": "Un camion de livraison",
-      "B": "Un stock de marchandises",
-      "C": "Un logiciel informatique ou un brevet",
-      "D": "Un compte bancaire"
+    {
+      "id": 6,
+      "consigne": "Comment se décompose principalement l'Actif du bilan en France ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "En Actif fixe et Actif variable",
+          "En Actif immobilisé et Actif circulant",
+          "En Actif brut et Actif net d'impôt",
+          "En Actif court terme et Actif très long terme"
+        ],
+        "reponses_correctes": [
+          "En Actif immobilisé et Actif circulant"
+        ]
+      },
+      "explication": "L'actif se sépare entre l'actif immobilisé (biens durables destinés à rester durablement dans l'entreprise) et l'actif circulant (éléments liés au cycle d'exploitation ou à courte durée de vie)."
     },
-    "reponse_correcte": "C",
-    "explication": "Les immobilisations incorporelles n'ont pas de substance physique (logiciels, brevets, marques, fonds de commerce)."
-  },
-  {
-    "id": 8,
-    "question": "Où classe-t-on les machines de production et les terrains dans le bilan ?",
-    "options": {
-      "A": "Dans les immobilisations corporelles",
-      "B": "Dans l'actif circulant",
-      "C": "Dans les capitaux propres",
-      "D": "Dans les dettes financières"
+    {
+      "id": 7,
+      "consigne": "Lequel de ces éléments est une immobilisation incorporelle ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un camion de livraison",
+          "Un stock de marchandises",
+          "Un logiciel informatique ou un brevet",
+          "Un compte bancaire"
+        ],
+        "reponses_correctes": [
+          "Un logiciel informatique ou un brevet"
+        ]
+      },
+      "explication": "Les immobilisations incorporelles n'ont pas de substance physique (logiciels, brevets, marques, fonds de commerce)."
     },
-    "reponse_correcte": "A",
-    "explication": "Les biens physiques durables détenus par l'entreprise (terrains, constructions, installations techniques, machines, matériel de transport) constituent les immobilisations corporelles."
-  },
-  {
-    "id": 9,
-    "question": "Que trouve-t-on dans l'Actif circulant d'une entreprise ?",
-    "options": {
-      "A": "Le capital social et les réserves",
-      "B": "Les emprunts bancaires à 7 ans",
-      "C": "Les stocks, les créances clients et les disponibilités (trésorerie)",
-      "D": "Les immobilisations amortissables"
+    {
+      "id": 8,
+      "consigne": "Où classe-t-on les machines de production et les terrains dans le bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Dans les immobilisations corporelles",
+          "Dans l'actif circulant",
+          "Dans les capitaux propres",
+          "Dans les dettes financières"
+        ],
+        "reponses_correctes": [
+          "Dans les immobilisations corporelles"
+        ]
+      },
+      "explication": "Les biens physiques durables détenus par l'entreprise (terrains, constructions, installations techniques, machines, matériel de transport) constituent les immobilisations corporelles."
     },
-    "reponse_correcte": "C",
-    "explication": "L'actif circulant comprend les éléments qui ont vocation à changer rapidement au cours du cycle d'exploitation (stocks, créances clients) ainsi que les liquidités en banque ou en caisse."
-  },
-  {
-    "id": 10,
-    "question": "Comment sont classés les postes à l'Actif du bilan en France ?",
-    "options": {
-      "A": "Par ordre de liquidité croissante (des moins liquides aux plus liquides)",
-      "B": "Par ordre alphabétique",
-      "C": "Par ordre de valeur décroissante uniquement",
-      "D": "Du plus liquide au moins liquide"
+    {
+      "id": 9,
+      "consigne": "Que trouve-t-on dans l'Actif circulant d'une entreprise ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Le capital social et les réserves",
+          "Les emprunts bancaires à 7 ans",
+          "Les stocks, les créances clients et les disponibilités (trésorerie)",
+          "Les immobilisations amortissables"
+        ],
+        "reponses_correctes": [
+          "Les stocks, les créances clients et les disponibilités (trésorerie)"
+        ]
+      },
+      "explication": "L'actif circulant comprend les éléments qui ont vocation à changer rapidement au cours du cycle d'exploitation (stocks, créances clients) ainsi que les liquidités en banque ou en caisse."
     },
-    "reponse_correcte": "A",
-    "explication": "En France, les actifs sont présentés par ordre de liquidité croissante : on commence par les actifs les moins liquides (immobilisations) pour finir par les plus liquides (disponibilités en banque/caisse)."
-  },
-  {
-    "id": 11,
-    "question": "Que regroupe la rubrique des 'Capitaux propres' au passif du bilan ?",
-    "options": {
-      "A": "Les emprunts contractés auprès des banques",
-      "B": "Les dettes envers les fournisseurs et l'État",
-      "C": "Le capital social, les réserves, le report à nouveau et le résultat de l'exercice",
-      "D": "Les provisions pour risques et charges"
+    {
+      "id": 10,
+      "consigne": "Comment sont classés les postes à l'Actif du bilan en France ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Bilan",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Par ordre de liquidité croissante (des moins liquides aux plus liquides)",
+          "Par ordre alphabétique",
+          "Par ordre de valeur décroissante uniquement",
+          "Du plus liquide au moins liquide"
+        ],
+        "reponses_correctes": [
+          "Par ordre de liquidité croissante (des moins liquides aux plus liquides)"
+        ]
+      },
+      "explication": "En France, les actifs sont présentés par ordre de liquidité croissante : on commence par les actifs les moins liquides (immobilisations) pour finir par les plus liquides (disponibilités en banque/caisse)."
     },
-    "reponse_correcte": "C",
-    "explication": "Les capitaux propres représentent les ressources permanentes appartenant aux actionnaires ou associées (ressources internes et apports), incluant le capital, les réserves et les bénéfices non distribués."
-  },
-  {
-    "id": 12,
-    "question": "Où se situent les emprunts bancaires à long terme dans le bilan ?",
-    "options": {
-      "A": "Dans les capitaux propres",
-      "B": "Dans les dettes financières (ou passifs financiers)",
-      "C": "Dans l'actif circulant",
-      "D": "Dans les charges d'exploitation"
+    {
+      "id": 11,
+      "consigne": "Que regroupe la rubrique des 'Capitaux propres' au passif du bilan ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Les emprunts contractés auprès des banques",
+          "Les dettes envers les fournisseurs et l'État",
+          "Le capital social, les réserves, le report à nouveau et le résultat de l'exercice",
+          "Les provisions pour risques et charges"
+        ],
+        "reponses_correctes": [
+          "Le capital social, les réserves, le report à nouveau et le résultat de l'exercice"
+        ]
+      },
+      "explication": "Les capitaux propres représentent les ressources permanentes appartenant aux actionnaires ou associés (ressources internes et apports), incluant le capital, les réserves et les bénéfices non distribués."
     },
-    "reponse_correcte": "B",
-    "explication": "Les emprunts et dettes auprès des établissements de crédit constituent des dettes financières figurant au passif du bilan."
-  },
-  {
-    "id": 13,
-    "question": "Où classe-t-on les dettes envers les fournisseurs et les dettes fiscales et sociales ?",
-    "options": {
-      "A": "Dans les capitaux propres",
-      "B": "Dans les immobilisations financières",
-      "C": "Dans le passif circulant (ou dettes d'exploitation/diverses)",
-      "D": "À l'actif du bilan"
+    {
+      "id": 12,
+      "consigne": "Où se situent les emprunts bancaires à long terme dans le bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Dans les capitaux propres",
+          "Dans les dettes financières (ou passifs financiers)",
+          "Dans l'actif circulant",
+          "Dans les charges d'exploitation"
+        ],
+        "reponses_correctes": [
+          "Dans les dettes financières (ou passifs financiers)"
+        ]
+      },
+      "explication": "Les emprunts et dettes auprès des établissements de crédit constituent des dettes financières figurant au passif du bilan."
     },
-    "reponse_correcte": "C",
-    "explication": "Les dettes nées du cycle d'exploitation (fournisseurs, personnel, organismes sociaux, État) font partie du passif circulant."
-  },
-  {
-    "id": 14,
-    "question": "Comment sont classés les postes au Passif du bilan en France ?",
-    "options": {
-      "A": "Par ordre d'exigibilité croissante (des capitaux propres, non exigibles, aux dettes à court terme, très exigibles)",
-      "B": "Par ordre alphabétique",
-      "C": "Par ordre d'exigibilité décroissante",
-      "D": "Uniquement par montant décroissant"
+    {
+      "id": 13,
+      "consigne": "Où classe-t-on les dettes envers les fournisseurs et les dettes fiscales et sociales ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Dans les capitaux propres",
+          "Dans les immobilisations financières",
+          "Dans le passif circulant (ou dettes d'exploitation/diverses)",
+          "À l'actif du bilan"
+        ],
+        "reponses_correctes": [
+          "Dans le passif circulant (ou dettes d'exploitation/diverses)"
+        ]
+      },
+      "explication": "Les dettes nées du cycle d'exploitation (fournisseurs, personnel, organismes sociaux, État) font partie du passif circulant."
     },
-    "reponse_correcte": "A",
-    "explication": "Au passif, les ressources sont classées par exigibilité croissante : du moins exigible (capitaux propres qui ne se 'remboursent' pas de la même manière) jusqu'aux dettes à court terme les plus exigibles."
-  },
-  {
-    "id": 15,
-    "question": "Quel est l'impact d'une dotation aux amortissements sur la valeur d'un actif au bilan ?",
-    "options": {
-      "A": "Elle augmente la valeur brute de l'immobilisation.",
-      "B": "Elle vient en déduction de la valeur brute pour afficher une valeur nette comptable (VNC) plus faible.",
-      "C": "Elle n'a aucun impact sur le bilan, uniquement sur le compte de résultat.",
-      "D": "Elle majore les capitaux propres."
+    {
+      "id": 14,
+      "consigne": "Comment sont classés les postes au Passif du bilan en France ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Bilan",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Par ordre d'exigibilité croissante (des capitaux propres, non exigibles, aux dettes à court terme, très exigibles)",
+          "Par ordre alphabétique",
+          "Par ordre d'exigibilité décroissante",
+          "Uniquement par montant décroissant"
+        ],
+        "reponses_correctes": [
+          "Par ordre d'exigibilité croissante (des capitaux propres, non exigibles, aux dettes à court terme, très exigibles)"
+        ]
+      },
+      "explication": "Au passif, les ressources sont classées par exigibilité croissante : du moins exigible (capitaux propres qui ne se 'remboursent' pas de la même manière) jusqu'aux dettes à court terme les plus exigibles."
     },
-    "reponse_correcte": "B",
-    "explication": "L'amortissement constate la perte de valeur du bien. À l'actif, on présente la valeur brute diminuée des amortissements cumulés pour obtenir la valeur nette."
-  },
-  {
-    "id": 16,
-    "question": "Que sont les 'provisions pour risques et charges' inscrites au passif du bilan ?",
-    "options": {
-      "A": "Des économies placées en banque pour le futur.",
-      "B": "Des passifs dont l'échéance ou le montant n'est pas fixé de façon certaine, destinés à couvrir des risques ou des charges probables.",
-      "C": "Des dettes certaines payées en retard.",
-      "D": "Une fraction du capital social bloquée."
+    {
+      "id": 15,
+      "consigne": "Quel est l'impact d'une dotation aux amortissements sur la valeur d'un actif au bilan ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Elle augmente la valeur brute de l'immobilisation.",
+          "Elle vient en déduction de la valeur brute pour afficher une valeur nette comptable (VNC) plus faible.",
+          "Elle n'a aucun impact sur le bilan, uniquement sur le compte de résultat.",
+          "Elle majore les capitaux propres."
+        ],
+        "reponses_correctes": [
+          "Elle vient en déduction de la valeur brute pour afficher une valeur nette comptable (VNC) plus faible."
+        ]
+      },
+      "explication": "L'amortissement constate la perte de valeur du bien. À l'actif, on présente la valeur brute diminuée des amortissements cumulés pour obtenir la valeur nette."
     },
-    "reponse_correcte": "B",
-    "explication": "Les provisions pour risques et charges constatent une diminution de l'actif net par la reconnaissance d'un passif éventuel ou d'une charge future probable (ex: litige prud'homal)."
-  },
-  {
-    "id": 17,
-    "question": "Quelles classes du Plan Comptable Général (PCG) français regroupent les comptes du bilan ?",
-    "options": {
-      "A": "Les classes 1 à 5",
-      "B": "Les classes 6 et 7",
-      "C": "La classe 8 uniquement",
-      "D": "Toutes les classes de 1 à 8"
+    {
+      "id": 16,
+      "consigne": "Que sont les 'provisions pour risques et charges' inscrites au passif du bilan ?",
+      "type": "qcm",
+      "difficulte": "Difficile",
+      "points": 15,
+      "tag": "Bilan",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "Des économies placées en banque pour le futur.",
+          "Des passifs dont l'échéance ou le montant n'est pas fixé de façon certaine, destinés à couvrir des risques ou des charges probables.",
+          "Des dettes certaines payées en retard.",
+          "Une fraction du capital social bloquée."
+        ],
+        "reponses_correctes": [
+          "Des passifs dont l'échéance ou le montant n'est pas fixé de façon certaine, destinés à couvrir des risques ou des charges probables."
+        ]
+      },
+      "explication": "Les provisions pour risques et charges constatent une diminution de l'actif net par la reconnaissance d'un passif éventuel ou d'une charge future probable (ex: litige prud'homal)."
     },
-    "reponse_correcte": "A",
-    "explication": "Dans le PCG, les classes 1 à 5 concernent les comptes de situation (le bilan) : Classe 1 (Capitaux), Classe 2 (Immobilisations), Classe 3 (Stocks), Classe 4 (Tiers), Classe 5 (Financiers/Trésorerie). Les classes 6 et 7 concernent le compte de résultat."
-  },
-  {
-    "id": 18,
-    "question": "Que se passe-t-il au bilan lorsqu'une entreprise réalise un bénéfice net au cours de l'exercice ?",
-    "options": {
-      "A": "Le bénéfice vient augmenter les capitaux propres de l'entreprise.",
-      "B": "Le bénéfice est automatiquement ajouté à l'actif sous forme de stock.",
-      "C": "Le bénéfice réduit mécaniquement le montant total du passif.",
-      "D": "Le bilan n'est pas modifié."
+    {
+      "id": 17,
+      "consigne": "Quelles classes du Plan Comptable Général (PCG) français regroupent les comptes du bilan ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les classes 1 à 5",
+          "Les classes 6 et 7",
+          "La classe 8 uniquement",
+          "Toutes les classes de 1 à 8"
+        ],
+        "reponses_correctes": [
+          "Les classes 1 à 5"
+        ]
+      },
+      "explication": "Dans le PCG, les classes 1 à 5 concernent les comptes de situation (le bilan) : Classe 1 (Capitaux), Classe 2 (Immobilisations), Classe 3 (Stocks), Classe 4 (Tiers), Classe 5 (Financiers/Trésorerie)."
     },
-    "reponse_correcte": "A",
-    "explication": "Le résultat de l'exercice (bénéfice) s'intègre dans les capitaux propres (en attente d'affectation ou en report à nouveau/réserves), ce qui accroît la valeur nette globale de l'entreprise."
-  },
-  {
-    "id": 19,
-    "question": "Qu'appelle-t-on le Fonds de Roulement Net Global (FRNG) calculé à partir du bilan ?",
-    "options": {
-      "A": "La différence entre l'actif circulant et le passif circulant.",
-      "B": "L'excédent des ressources stables (capitaux propres + dettes long terme) sur les emplois stables (actif immobilisé).",
-      "C": "La somme des liquidités en banque.",
-      "D": "Le montant total des dettes fournisseurs."
+    {
+      "id": 18,
+      "consigne": "Que se passe-t-il au bilan lorsqu'une entreprise réalise un bénéfice net au cours de l'exercice ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Le bénéfice vient augmenter les capitaux propres de l'entreprise.",
+          "Le bénéfice est automatiquement ajouté à l'actif sous forme de stock.",
+          "Le bénéfice réduit mécaniquement le montant total du passif.",
+          "Le bilan n'est pas modifié."
+        ],
+        "reponses_correctes": [
+          "Le bénéfice vient augmenter les capitaux propres de l'entreprise."
+        ]
+      },
+      "explication": "Le résultat de l'exercice (bénéfice) s'intègre dans les capitaux propres (en attente d'affectation ou en report à nouveau/réserves), ce qui accroît la valeur nette globale de l'entreprise."
     },
-    "reponse_correcte": "B",
-    "explication": "Le FRNG mesure la part des investissements à long terme (actif immobilisé) qui est financée par des ressources durables et stables (capitaux propres et emprunts à long terme)."
-  },
-  {
-    "id": 20,
-    "question": "Si le total de l'actif d'une entreprise est de 500 000 € et ses dettes totales (passif exigible) s'élèvent à 300 000 €, à combien s'élèvent ses capitaux propres ?",
-    "options": {
-      "A": "800 000 €",
-      "B": "500 000 €",
-      "C": "200 000 €",
-      "D": "300 000 €"
+    {
+      "id": 19,
+      "consigne": "Qu'appelle-t-on le Fonds de Roulement Net Global (FRNG) calculé à partir du bilan ?",
+      "type": "qcm",
+      "difficulte": "Difficile",
+      "points": 15,
+      "tag": "Bilan",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "La différence entre l'actif circulant et le passif circulant.",
+          "L'excédent des ressources stables (capitaux propres + dettes long terme) sur les emplois stables (actif immobilisé).",
+          "La somme des liquidités en banque.",
+          "Le montant total des dettes fournisseurs."
+        ],
+        "reponses_correctes": [
+          "L'excédent des ressources stables (capitaux propres + dettes long terme) sur les emplois stables (actif immobilisé)."
+        ]
+      },
+      "explication": "Le FRNG mesure la part des investissements à long terme (actif immobilisé) qui est financée par des ressources durables et stables (capitaux propres et emprunts à long terme)."
     },
-    "reponse_correcte": "C",
-    "explication": "Puisque Total Actif = Total Passif (Capitaux propres + Dettes), alors Capitaux propres = Total Actif - Dettes = 500 000 - 300 000 = 200 000 €."
-  }
-]
+    {
+      "id": 20,
+      "consigne": "Si le total de l'actif d'une entreprise est de 500 000 € et ses dettes totales (passif exigible) s'élèvent à 300 000 €, à combien s'élèvent ses capitaux propres ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Bilan",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "800 000 €",
+          "500 000 €",
+          "200 000 €",
+          "300 000 €"
+        ],
+        "reponses_correctes": [
+          "200 000 €"
+        ]
+      },
+      "explication": "Puisque Total Actif = Total Passif (Capitaux propres + Dettes), alors Capitaux propres = Total Actif - Dettes = 500 000 - 300 000 = 200 000 €."
+    }
+  ]
+}

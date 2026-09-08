@@ -1,242 +1,431 @@
-[
-  {
-    "id": 1,
-    "question": "Qu'est-ce que le compte de résultat en comptabilité française ?",
-    "options": {
-      "A": "Un état de synthèse qui décrit le patrimoine de l'entreprise à une date donnée.",
-      "B": "Un état de synthèse qui récapitule les produits et les charges de l'exercice pour déterminer le résultat net.",
-      "C": "Un tableau des flux de trésorerie uniquement.",
-      "D": "Un registre des clients et des fournisseurs."
-    },
-    "reponse_correcte": "B",
-    "explication": "Le compte de résultat résume l'activité de l'entreprise sur une période (l'exercice comptable) en confrontant l'ensemble de ses produits et de ses charges."
+{
+  "quiz_info": {
+    "titre": "Le Compte de Résultat en France",
+    "description": "QCM complet de 20 questions sur les principes, la structure et les mécanismes du compte de résultat en comptabilité française.",
+    "son_good": "sons/sons_good/bonnereponse003.mp3",
+    "son_bad": "sons/sons_bad/Mauvaiserep001.mp3",
+    "musique": "musique/Scott Buckley - Call To Adventure.mp3"
   },
-  {
-    "id": 2,
-    "question": "Quelle est la différence fondamentale entre le bilan et le compte de résultat ?",
-    "options": {
-      "A": "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période.",
-      "B": "Le bilan ne concerne que les banques, le compte de résultat concerne l'État.",
-      "C": "Il n'y a aucune différence, ce sont les mêmes documents.",
-      "D": "Le compte de résultat est établi en début d'exercice et le bilan en fin d'exercice."
+  "questions": [
+    {
+      "id": 1,
+      "consigne": "Qu'est-ce que le compte de résultat en comptabilité française ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un état de synthèse qui décrit le patrimoine de l'entreprise à une date donnée.",
+          "Un état de synthèse qui récapitule les produits et les charges de l'exercice pour déterminer le résultat net.",
+          "Un tableau des flux de trésorerie uniquement.",
+          "Un registre des clients et des fournisseurs."
+        ],
+        "reponses_correctes": [
+          "Un état de synthèse qui récapitule les produits et les charges de l'exercice pour déterminer le résultat net."
+        ]
+      },
+      "explication": "Le compte de résultat résume l'activité de l'entreprise sur une période (l'exercice comptable) en confrontant l'ensemble de ses produits et de ses charges."
     },
-    "reponse_correcte": "A",
-    "explication": "Le bilan présente l'actif et le passif à la clôture (photographie), alors que le compte de résultat cumule les flux de l'exercice (film)."
-  },
-  {
-    "id": 3,
-    "question": "Qu'appelle-t-on un 'produit' dans le compte de résultat ?",
-    "options": {
-      "A": "Un bien matériel acheté pour être revendu.",
-      "B": "Un flux qui appauvrit l'entreprise.",
-      "C": "Un flux qui enrichit l'entreprise (augmentation de l'actif ou diminution du passif).",
-      "D": "Le stock de marchandises non vendues."
+    {
+      "id": 2,
+      "consigne": "Quelle est la différence fondamentale entre le bilan et le compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période.",
+          "Le bilan ne concerne que les banques, le compte de résultat concerne l'État.",
+          "Il n'y a aucune différence, ce sont les mêmes documents.",
+          "Le compte de résultat est établi en début d'exercice et le bilan en fin d'exercice."
+        ],
+        "reponses_correctes": [
+          "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période."
+        ]
+      },
+      "explication": "Le bilan présente l'actif et le passif à la clôture (photographie), alors que le compte de résultat cumule les flux de l'exercice (film)."
     },
-    "reponse_correcte": "C",
-    "explication": "Les produits constituent des ressources qui enrichissent l'entreprise au cours de l'exercice (ventes, prestations, subventions, etc.)."
-  },
-  {
-    "id": 4,
-    "question": "Qu'appelle-t-on une 'charge' dans le compte de résultat ?",
-    "options": {
-      "A": "Un flux qui appauvrit l'entreprise (consommation de ressources).",
-      "B": "Un investissement à long terme amortissable.",
-      "C": "Un apport en capital des actionnaires.",
-      "D": "Un emprunt bancaire à rembourser."
+    {
+      "id": 3,
+      "consigne": "Qu'appelle-t-on un 'produit' dans le compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un bien matériel acheté pour être revendu.",
+          "Un flux qui appauvrit l'entreprise.",
+          "Un flux qui enrichit l'entreprise (augmentation de l'actif ou diminution du passif).",
+          "Le stock de marchandises non vendues."
+        ],
+        "reponses_correctes": [
+          "Un flux qui enrichit l'entreprise (augmentation de l'actif ou diminution du passif)."
+        ]
+      },
+      "explication": "Les produits constituent des ressources qui enrichissent l'entreprise au cours de l'exercice (ventes, prestations, subventions, etc.)."
     },
-    "reponse_correcte": "A",
-    "explication": "Les charges représentent les consommations de biens et services nécessaires à l'activité, ou des pertes, qui diminuent le résultat de l'entreprise."
-  },
-  {
-    "id": 5,
-    "question": "Comment calcule-t-on le résultat net de l'exercice ?",
-    "options": {
-      "A": "Total de l'Actif - Total du Passif",
-      "B": "Total des Produits - Total des Charges",
-      "C": "Capitaux propres + Dettes",
-      "D": "Chiffre d'affaires - Achats de marchandises"
+    {
+      "id": 4,
+      "consigne": "Qu'appelle-t-on une 'charge' dans le compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un flux qui appauvrit l'entreprise (consommation de ressources).",
+          "Un investissement à long terme amortissable.",
+          "Un apport en capital des actionnaires.",
+          "Un emprunt bancaire à rembourser."
+        ],
+        "reponses_correctes": [
+          "Un flux qui appauvrit l'entreprise (consommation de ressources)."
+        ]
+      },
+      "explication": "Les charges représentent les consommations de biens et services nécessaires à l'activité, ou des pertes, qui diminuent le résultat de l'entreprise."
     },
-    "reponse_correcte": "B",
-    "explication": "Le résultat net correspond strictement à la différence globale entre l'ensemble des produits et l'ensemble des charges de l'exercice."
-  },
-  {
-    "id": 6,
-    "question": "Le compte de résultat français (selon le Plan Comptable Général) est traditionnellement structuré en combien de grands niveaux principaux avant le résultat net ?",
-    "options": {
-      "A": "1 (Exploitation uniquement)",
-      "B": "2 (Exploitation et Financier)",
-      "C": "3 (Exploitation, Financier, et Exceptionnel)",
-      "D": "4 (Exploitation, Financier, Exceptionnel et Fiscal)"
+    {
+      "id": 5,
+      "consigne": "Comment calcule-t-on le résultat net de l'exercice ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Total de l'Actif - Total du Passif",
+          "Total des Produits - Total des Charges",
+          "Capitaux propres + Dettes",
+          "Chiffre d'affaires - Achats de marchandises"
+        ],
+        "reponses_correctes": [
+          "Total des Produits - Total des Charges"
+        ]
+      },
+      "explication": "Le résultat net correspond strictement à la différence globale entre l'ensemble des produits et l'ensemble des charges de l'exercice."
     },
-    "reponse_correcte": "C",
-    "explication": "Le PCG distingue historiquement le résultat d'exploitation, le résultat financier et le résultat exceptionnel, dont la somme conduit au résultat net."
-  },
-  {
-    "id": 7,
-    "question": "Parmi ces éléments, lequel constitue un produit d'exploitation ?",
-    "options": {
-      "A": "Les intérêts reçus d'un placement bancaire.",
-      "B": "Le chiffre d'affaires réalisé par la vente de marchandises ou de services.",
-      "C": "Une amende payée pour infraction au code de la route.",
-      "D": "La vente d'une immobilisation corporelle avec plus-value."
+    {
+      "id": 6,
+      "consigne": "Le compte de résultat français (selon le Plan Comptable Général) est traditionnellement structuré en combien de grands niveaux principaux avant le résultat net ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "1 (Exploitation uniquement)",
+          "2 (Exploitation et Financier)",
+          "3 (Exploitation, Financier, et Exceptionnel)",
+          "4 (Exploitation, Financier, Exceptionnel et Fiscal)"
+        ],
+        "reponses_correctes": [
+          "3 (Exploitation, Financier, et Exceptionnel)"
+        ]
+      },
+      "explication": "Le PCG distingue historiquement le résultat d'exploitation, le résultat financier et le résultat exceptionnel, dont la somme conduit au résultat net."
     },
-    "reponse_correcte": "B",
-    "explication": "Le chiffre d'affaires issu de l'activité courante et normale de l'entreprise est le principal produit d'exploitation."
-  },
-  {
-    "id": 8,
-    "question": "Où classe-t-on les charges de personnel (salaires et charges sociales) dans le compte de résultat ?",
-    "options": {
-      "A": "Dans les charges financières.",
-      "B": "Dans les charges exceptionnelles.",
-      "C": "Dans les charges d'exploitation.",
-      "D": "En diminution du capital social."
+    {
+      "id": 7,
+      "consigne": "Parmi ces éléments, lequel constitue un produit d'exploitation ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les intérêts reçus d'un placement bancaire.",
+          "Le chiffre d'affaires réalisé par la vente de marchandises ou de services.",
+          "Une amende payée pour infraction au code de la route.",
+          "La vente d'une immobilisation corporelle avec plus-value."
+        ],
+        "reponses_correctes": [
+          "Le chiffre d'affaires réalisé par la vente de marchandises ou de services."
+        ]
+      },
+      "explication": "Le chiffre d'affaires issu de l'activité courante et normale de l'entreprise est le principal produit d'exploitation."
     },
-    "reponse_correcte": "C",
-    "explication": "Les salaires et cotisations sociales sont directement liés à l'exploitation courante de l'entreprise et constituent des charges d'exploitation."
-  },
-  {
-    "id": 9,
-    "question": "Quel type d'élément trouve-t-on dans le résultat financier ?",
-    "options": {
-      "A": "Les achats de matières premières.",
-      "B": "Les dotations aux amortissements des machines.",
-      "C": "Les intérêts d'emprunts payés à la banque et les agios.",
-      "D": "Les impôts sur les sociétés."
+    {
+      "id": 8,
+      "consigne": "Où classe-t-on les charges de personnel (salaires et charges sociales) dans le compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Dans les charges financières.",
+          "Dans les charges exceptionnelles.",
+          "Dans les charges d'exploitation.",
+          "En diminution du capital social."
+        ],
+        "reponses_correctes": [
+          "Dans les charges d'exploitation."
+        ]
+      },
+      "explication": "Les salaires et cotisations sociales sont directement liés à l'exploitation courante de l'entreprise et constituent des charges d'exploitation."
     },
-    "reponse_correcte": "C",
-    "explication": "Le résultat financier regroupe les produits et charges liés à la politique financière (intérêts d'emprunts, revenus de placements, gains ou pertes de change)."
-  },
-  {
-    "id": 10,
-    "question": "Qu'est-ce que la 'Valeur Ajoutée' (VA) calculée dans les Soldes Intermédiaires de Gestion (SIG) ?",
-    "options": {
-      "A": "La marge brute réalisée sur la revente en l'état de marchandises.",
-      "B": "La richesse créée par l'entreprise grâce à son activité propre, après déduction des consommations en provenance de tiers.",
-      "C": "Le bénéfice net distribuable aux actionnaires.",
-      "D": "Le total des ventes de l'entreprise."
+    {
+      "id": 9,
+      "consigne": "Quel type d'élément trouve-t-on dans le résultat financier ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les achats de matières premières.",
+          "Les dotations aux amortissements des machines.",
+          "Les intérêts d'emprunts payés à la banque et les agios.",
+          "Les impôts sur les sociétés."
+        ],
+        "reponses_correctes": [
+          "Les intérêts d'emprunts payés à la banque et les agios."
+        ]
+      },
+      "explication": "Le résultat financier regroupe les produits et charges liés à la politique financière (intérêts d'emprunts, revenus de placements, gains ou pertes de change)."
     },
-    "reponse_correcte": "B",
-    "explication": "La valeur ajoutée mesure la création de richesse de l'entreprise en soustrayant les consommations intermédiaires (achats externes) de la production de l'exercice et de la marge commerciale."
-  },
-  {
-    "id": 11,
-    "question": "Que représente l'EBE (Excédent Brut d'Exploitation) ?",
-    "options": {
-      "A": "Le bénéfice net de l'entreprise après impôts.",
-      "B": "La ressource de trésorerie potentielle générée par l'exploitation avant prise en compte des amortissements et de la politique financière.",
-      "C": "Le montant total des impôts payés par l'entreprise.",
-      "D": "La valeur des stocks finaux."
+    {
+      "id": 10,
+      "consigne": "Qu'est-ce que la 'Valeur Ajoutée' (VA) calculée dans les Soldes Intermédiaires de Gestion (SIG) ?",
+      "type": "qcm",
+      "difficulte": "Difficile",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "La marge brute réalisée sur la revente en l'état de marchandises.",
+          "La richesse créée par l'entreprise grâce à son activité propre, après déduction des consommations en provenance de tiers.",
+          "Le bénéfice net distribuable aux actionnaires.",
+          "Le total des ventes de l'entreprise."
+        ],
+        "reponses_correctes": [
+          "La richesse créée par l'entreprise grâce à son activité propre, après déduction des consommations en provenance de tiers."
+        ]
+      },
+      "explication": "La valeur ajoutée mesure la création de richesse de l'entreprise en soustrayant les consommations intermédiaires (achats externes) de la production de l'exercice et de la marge commerciale."
     },
-    "reponse_correcte": "B",
-    "explication": "L'EBE est un indicateur clé de performance économique indépendant de la politique d'investissement (amortissements) et de financement."
-  },
-  {
-    "id": 12,
-    "question": "Quel est l'impact d'une dotation aux amortissements sur le compte de résultat ?",
-    "options": {
-      "A": "C'est un produit qui augmente le résultat.",
-      "B": "C'est une charge (généralement d'exploitation) qui diminue le résultat.",
-      "C": "Cela n'a aucun impact sur le compte de résultat, uniquement sur le bilan.",
-      "D": "C'est un flux financier pur."
+    {
+      "id": 11,
+      "consigne": "Que représente l'EBE (Excédent Brut d'Exploitation) ?",
+      "type": "qcm",
+      "difficulte": "Difficile",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "Le bénéfice net de l'entreprise après impôts.",
+          "La ressource de trésorerie potentielle générée par l'exploitation avant prise en compte des amortissements et de la politique financière.",
+          "Le montant total des impôts payés par l'entreprise.",
+          "La valeur des stocks finaux."
+        ],
+        "reponses_correctes": [
+          "La ressource de trésorerie potentielle générée par l'exploitation avant prise en compte des amortissements et de la politique financière."
+        ]
+      },
+      "explication": "L'EBE est un indicateur clé de performance économique indépendant de la politique d'investissement (amortissements) et de financement."
     },
-    "reponse_correcte": "B",
-    "explication": "L'amortissement constate la dépréciation d'une immobilisation ; il est comptabilisé en charge, ce qui réduit le résultat de l'exercice."
-  },
-  {
-    "id": 13,
-    "question": "Qu'est-ce que le principe d'indépendance des exercices rattaché au compte de résultat ?",
-    "options": {
-      "A": "On enregistre les charges et les produits au moment des flux de trésorerie effectifs (encaissement/décaissement).",
-      "B": "On rattache à un exercice uniquement les produits et les charges qui le concernent effectivement, indépendamment de leur date de paiement.",
-      "C": "L'entreprise peut choisir l'année où elle déclare ses impôts.",
-      "D": "Les exercices comptables doivent obligatoirement durer exactement 365 jours."
+    {
+      "id": 12,
+      "consigne": "Quel est l'impact d'une dotation aux amortissements sur le compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "C'est un produit qui augmente le résultat.",
+          "C'est une charge (généralement d'exploitation) qui diminue le résultat.",
+          "Cela n'a aucun impact sur le compte de résultat, uniquement sur le bilan.",
+          "C'est un flux financier pur."
+        ],
+        "reponses_correctes": [
+          "C'est une charge (généralement d'exploitation) qui diminue le résultat."
+        ]
+      },
+      "explication": "L'amortissement constate la dépréciation d'une immobilisation ; il est comptabilisé en charge, ce qui réduit le résultat de l'exercice."
     },
-    "reponse_correcte": "B",
-    "explication": "C'est le principe de la comptabilité d'engagement : les produits et charges sont rattachés à la période où ils se sont réellement produits (via les comptes de régularisation)."
-  },
-  {
-    "id": 14,
-    "question": "Comment traite-t-on l'impôt sur les sociétés (IS) dans le compte de résultat français ?",
-    "options": {
-      "A": "C'est une charge d'exploitation classique.",
-      "B": "C'est une charge financière.",
-      "C": "C'est un poste spécifique situé après le résultat courant avant impôts, qui mène au résultat net.",
-      "D": "Ce n'apparaît pas dans le compte de résultat mais directement au bilan."
+    {
+      "id": 13,
+      "consigne": "Qu'est-ce que le principe d'indépendance des exercices rattaché au compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "On enregistre les charges et les produits au moment des flux de trésorerie effectifs (encaissement/décaissement).",
+          "On rattache à un exercice uniquement les produits et les charges qui le concernent effectivement, indépendamment de leur date de paiement.",
+          "L'entreprise peut choisir l'année où elle déclare ses impôts.",
+          "Les exercices comptables doivent obligatoirement durer exactement 365 jours."
+        ],
+        "reponses_correctes": [
+          "On rattache à un exercice uniquement les produits et les charges qui le concernent effectivement, indépendamment de leur date de paiement."
+        ]
+      },
+      "explication": "C'est le principe de la comptabilité d'engagement : les produits et charges sont rattachés à la période où ils se sont réellement produits (via les comptes de régularisation)."
     },
-    "reponse_correcte": "C",
-    "explication": "L'impôt sur les bénéfices fait l'objet d'une ligne spécifique en fin de compte de résultat, venant soustraire le montant de l'IS au résultat courant pour aboutir au résultat net."
-  },
-  {
-    "id": 15,
-    "question": "Qu'est-ce qu'une 'reprise sur provisions' inscrite dans les produits ?",
-    "options": {
-      "A": "Une diminution de la valeur des stocks.",
-      "B": "L'annulation totale ou partielle d'une provision antérieure qui n'a plus lieu d'être, constituant ainsi un produit.",
-      "C": "Un emprunt contracté auprès d'un fournisseur.",
-      "D": "Le remboursement d'un impôt par l'État."
+    {
+      "id": 14,
+      "consigne": "Comment traite-t-on l'impôt sur les sociétés (IS) dans le compte de résultat français ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "C'est une charge d'exploitation classique.",
+          "C'est une charge financière.",
+          "C'est un poste spécifique situé après le résultat courant avant impôts, qui mène au résultat net.",
+          "Ce n'apparaît pas dans le compte de résultat mais directement au bilan."
+        ],
+        "reponses_correctes": [
+          "C'est un poste spécifique situé après le résultat courant avant impôts, qui mène au résultat net."
+        ]
+      },
+      "explication": "L'impôt sur les bénéfices fait l'objet d'une ligne spécifique en fin de compte de résultat, venant soustraire le montant de l'IS au résultat courant pour aboutir au résultat net."
     },
-    "reponse_correcte": "B",
-    "explication": "Lorsqu'un risque ou une charge pour lequel une provision avait été constatée disparaît ou diminue, la reprise de provision est enregistrée en produit."
-  },
-  {
-    "id": 16,
-    "question": "Quelle est la principale distinction entre 'marge commerciale' et 'production de l'exercice' ?",
-    "options": {
-      "A": "La marge commerciale concerne l'activité de négoce (revente en l'état), tandis que la production concerne les entreprises qui fabriquent ou transforment des biens ou services.",
-      "B": "Il n'y a aucune différence, ce sont deux synonymes.",
-      "C": "La marge commerciale est toujours négative.",
-      "D": "La production concerne uniquement les banques."
+    {
+      "id": 15,
+      "consigne": "Qu'est-ce qu'une 'reprise sur provisions' inscrite dans les produits ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Une diminution de la valeur des stocks.",
+          "L'annulation totale ou partielle d'une provision antérieure qui n'a plus lieu d'être, constituant ainsi un produit.",
+          "Un emprunt contracté auprès d'un fournisseur.",
+          "Le remboursement d'un impôt par l'État."
+        ],
+        "reponses_correctes": [
+          "L'annulation totale ou partielle d'une provision antérieure qui n'a plus lieu d'être, constituant ainsi un produit."
+        ]
+      },
+      "explication": "Lorsqu'un risque ou une charge pour lequel une provision avait été constatée disparaît ou diminue, la reprise de provision est enregistrée en produit."
     },
-    "reponse_correcte": "A",
-    "explication": "Les entreprises commerciales utilisent la marge commerciale (Ventes de marchandises - Coût d'achat des marchandises vendues), tandis que les entreprises de production utilisent la production de l'exercice."
-  },
-  {
-    "id": 17,
-    "question": "Si les charges d'une entreprise s'élèvent à 150 000 € et ses produits à 120 000 €, quel est le statut du résultat ?",
-    "options": {
-      "A": "Un bénéfice net de 30 000 €.",
-      "B": "Une perte nette de 30 000 €.",
-      "C": "Un résultat nul de 0 €.",
-      "D": "Un chiffre d'affaires de 30 000 €."
+    {
+      "id": 16,
+      "consigne": "Quelle est la principale distinction entre 'marge commerciale' et 'production de l'exercice' ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "La marge commerciale concerne l'activité de négoce (revente en l'état), tandis que la production concerne les entreprises qui fabriquent ou transforment des biens ou services.",
+          "Il n'y a aucune différence, ce sont deux synonymes.",
+          "La marge commerciale est toujours négative.",
+          "La production concerne uniquement les banques."
+        ],
+        "reponses_correctes": [
+          "La marge commerciale concerne l'activité de négoce (revente en l'état), tandis que la production concerne les entreprises qui fabriquent ou transforment des biens ou services."
+        ]
+      },
+      "explication": "Les entreprises commerciales utilisent la marge commerciale (Ventes de marchandises - Coût d'achat des marchandises vendues), tandis que les entreprises de production utilisent la production de l'exercice."
     },
-    "reponse_correcte": "B",
-    "explication": "Lorsque les charges sont supérieures aux produits, la différence constitue une perte nette (ici 120 000 - 150 000 = -30 000 €)."
-  },
-  {
-    "id": 18,
-    "question": "Quel compte de la classe du Plan Comptable Général (PCG) est généralement associé aux charges dans un compte de résultat ?",
-    "options": {
-      "A": "Classe 1",
-      "B": "Classe 4",
-      "C": "Classe 6",
-      "D": "Classe 7"
+    {
+      "id": 17,
+      "consigne": "Si les charges d'une entreprise s'élèvent à 150 000 € et ses produits à 120 000 €, quel est le statut du résultat ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Un bénéfice net de 30 000 €.",
+          "Une perte nette de 30 000 €.",
+          "Un résultat nul de 0 €.",
+          "Un chiffre d'affaires de 30 000 €."
+        ],
+        "reponses_correctes": [
+          "Une perte nette de 30 000 €."
+        ]
+      },
+      "explication": "Lorsque les charges sont supérieures aux produits, la différence constitue une perte nette (ici 120 000 - 150 000 = -30 000 €)."
     },
-    "reponse_correcte": "C",
-    "explication": "Dans le plan comptable français, la classe 6 regroupe les comptes de charges et la classe 7 regroupe les comptes de produits."
-  },
-  {
-    "id": 19,
-    "question": "Qu'appelle-t-on le Résultat Courant Avant Impôts (RCAI) ?",
-    "options": {
-      "A": "Le résultat d'exploitation uniquement.",
-      "B": "La somme du résultat d'exploitation et du résultat financier.",
-      "C": "Le résultat net après impôt.",
-      "D": "Le chiffre d'affaires diminué des charges."
+    {
+      "id": 18,
+      "consigne": "Quel compte de la classe du Plan Comptable Général (PCG) est généralement associé aux charges dans un compte de résultat ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "tag": "Compte de résultat",
+      "timer_secondes": 15,
+      "donnees": {
+        "options": [
+          "Classe 1",
+          "Classe 4",
+          "Classe 6",
+          "Classe 7"
+        ],
+        "reponses_correctes": [
+          "Classe 6"
+        ]
+      },
+      "explication": "Dans le plan comptable français, la classe 6 regroupe les comptes de charges et la classe 7 regroupe les comptes de produits."
     },
-    "reponse_correcte": "B",
-    "explication": "Le RCAI cumule la performance opérationnelle (exploitation) et la performance financière de l'entreprise, avant la prise en compte des éléments exceptionnels et de l'impôt."
-  },
-  {
-    "id": 20,
-    "question": "Où le résultat net de l'exercice (bénéfice ou perte) est-il intégré au bilan de l'exercice suivant ?",
-    "options": {
-      "A": "Dans les dettes financières à long terme.",
-      "B": "Dans l'actif circulant sous forme de liquidités.",
-      "C": "Dans les capitaux propres (en report à nouveau ou en instance d'affectation).",
-      "D": "Dans les provisions pour risques et charges."
+    {
+      "id": 19,
+      "consigne": "Qu'appelle-t-on le Résultat Courant Avant Impôts (RCAI) ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Le résultat d'exploitation uniquement.",
+          "La somme du résultat d'exploitation et du résultat financier.",
+          "Le résultat net après impôt.",
+          "Le chiffre d'affaires diminué des charges."
+        ],
+        "reponses_correctes": [
+          "La somme du résultat d'exploitation et du résultat financier."
+        ]
+      },
+      "explication": "Le RCAI cumule la performance opérationnelle (exploitation) et la performance financière de l'entreprise, avant la prise en compte des éléments exceptionnels et de l'impôt."
     },
-    "reponse_correcte": "C",
-    "explication": "Le résultat net de l'exercice s'intègre dans le passif du bilan au niveau des capitaux propres, traduisant la variation de la valeur nette de l'entreprise avant affectation définitive."
-  }
-]
+    {
+      "id": 20,
+      "consigne": "Où le résultat net de l'exercice (bénéfice ou perte) est-il intégré au bilan de l'exercice suivant ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "tag": "Compte de résultat",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Dans les dettes financières à long terme.",
+          "Dans l'actif circulant sous forme de liquidités.",
+          "Dans les capitaux propres (en report à nouveau ou en instance d'affectation).",
+          "Dans les provisions pour risques et charges."
+        ],
+        "reponses_correctes": [
+          "Dans les capitaux propres (en report à nouveau ou en instance d'affectation)."
+        ]
+      },
+      "explication": "Le résultat net de l'exercice s'intègre dans le passif du bilan au niveau des capitaux propres, traduisant la variation de la valeur nette de l'entreprise avant affectation définitive."
+    }
+  ]
+}

@@ -188,7 +188,7 @@ if mode == "👨‍🏫 Espace Professeur":
                 key="domaine_app_collec"
             )
 
-            if st.button("🚀 Créer / Ouvrir la session collective", type="primary"):
+            if st.button("🚀 Créer une nouvelle session", type="primary"):
                 session_id = f"sess_{int(time.time())}"
                 chemin_qcm = os.path.join(DOSSIER_QUIZZES, qcm_collectif)
                 with open(chemin_qcm, 'r', encoding='utf-8') as f:
@@ -212,13 +212,13 @@ if mode == "👨‍🏫 Espace Professeur":
                 with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
                     json.dump(session_data, f, ensure_ascii=False, indent=4)
                 
-                st.success("Session créée avec succès !")
+                st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
                 st.rerun()
 
             sessions_existantes = [f.replace('.json', '') for f in os.listdir(DOSSIER_SESSIONS) if f.endswith('.json')]
             if sessions_existantes:
                 st.markdown("---")
-                st.markdown("### 📊 Suivi des Sessions Actives")
+                st.markdown("### 📊 Suivi / Consultation des Sessions")
                 sess_choisie = st.selectbox("Sélectionnez une session à piloter :", sessions_existantes)
                 
                 chemin_sess = os.path.join(DOSSIER_SESSIONS, f"{sess_choisie}.json")
@@ -450,243 +450,235 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
-                with open(chemin_sess, 'r', encoding='utf-8') as f:
-                    sess_data = json.load(f)
-                status_sess = sess_data.get("status", "waiting")
-                student_info = sess_data["students"].get(st.session_state.collec_student_name, {})
+                # Utilisation d'un fragment avec actualisation native (run_every=2) pour garantir le rafraîchissement fluide sur mobile
+                @st.fragment(run_every=2)
+                def rendu_session_etudiant():
+                    if not os.path.exists(chemin_sess):
+                        st.error("Session supprimée.")
+                        return
+                    with open(chemin_sess, 'r', encoding='utf-8') as f:
+                        current_sess_data = json.load(f)
+                    
+                    cur_status = current_sess_data.get("status", "waiting")
+                    s_info = current_sess_data["students"].get(st.session_state.collec_student_name, {})
 
-                st.write(f"Connecté en tant que : **{st.session_state.collec_student_name}**")
+                    st.write(f"Connecté en tant que : **{st.session_state.collec_student_name}**")
 
-                if status_sess == "waiting":
-                    st.info("⏳ En attente du lancement par le professeur...")
-                    components.html("""
-                    <script>
-                        setTimeout(() => { window.location.reload(); }, 3000);
-                    </script>
-                    """, height=0)
-                    if st.button("🔄 Actualiser"):
-                        st.rerun()
+                    if cur_status == "waiting":
+                        st.info("⏳ En attente du lancement par le professeur...")
+                        if st.button("🔄 Actualiser"):
+                            st.rerun()
 
-                elif status_sess == "ended":
-                    st.warning("🛑 Cette session est maintenant terminée.")
-                    st.markdown(f"### Votre Score final : {student_info.get('score', 0)} / {student_info.get('max_points', 0)}")
+                    elif cur_status == "ended":
+                        st.warning("🛑 Cette session est maintenant terminée.")
+                        st.markdown(f"### Votre Score final : {s_info.get('score', 0)} / {s_info.get('max_points', 0)}")
 
-                elif status_sess == "started":
-                    questions_list = sess_data["questions"]
+                    elif cur_status == "started":
+                        questions_list = current_sess_data["questions"]
 
-                    # Gestion de la musique de fond collective
-                    musique_path = quiz_info.get('musique')
-                    if musique_path and os.path.exists(musique_path):
-                        jouer_musique_fond(musique_path, vol_musique)
+                        musique_path = quiz_info.get('musique')
+                        if musique_path and os.path.exists(musique_path):
+                            jouer_musique_fond(musique_path, vol_musique)
 
-                    # ==========================================
-                    # MODE BATTLE (Synchrone & Rythmé)
-                    # ==========================================
-                    if mode_sess == "battle":
-                        current_global_idx = sess_data.get("current_global_idx", 0)
-                        in_transition = sess_data.get("in_transition", False)
+                        # ==========================================
+                        # MODE BATTLE (Synchrone & Rythmé)
+                        # ==========================================
+                        if mode_sess == "battle":
+                            current_global_idx = current_sess_data.get("current_global_idx", 0)
+                            in_transition = current_sess_data.get("in_transition", False)
 
-                        if in_transition:
-                            trans_start = sess_data.get("transition_start_time", time.time())
-                            elapsed_trans = time.time() - trans_start
-                            remaining_trans = max(0, 5 - int(elapsed_trans))
+                            if in_transition:
+                                trans_start = current_sess_data.get("transition_start_time", time.time())
+                                elapsed_trans = time.time() - trans_start
+                                remaining_trans = max(0, 5 - int(elapsed_trans))
 
-                            if remaining_trans == 0:
-                                sess_data["current_global_idx"] += 1
-                                sess_data["in_transition"] = False
-                                if sess_data["current_global_idx"] >= len(questions_list):
-                                    sess_data["status"] = "ended"
+                                if remaining_trans == 0:
+                                    current_sess_data["current_global_idx"] += 1
+                                    current_sess_data["in_transition"] = False
+                                    if current_sess_data["current_global_idx"] >= len(questions_list):
+                                        current_sess_data["status"] = "ended"
+                                    else:
+                                        current_sess_data["question_start_time"] = time.time()
+                                        for s_name in current_sess_data["students"]:
+                                            current_sess_data["students"][s_name]["answered_current"] = False
+                                            current_sess_data["students"][s_name]["last_result"] = None
+                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                        json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                    st.rerun()
                                 else:
-                                    sess_data["question_start_time"] = time.time()
-                                    for s_name in sess_data["students"]:
-                                        sess_data["students"][s_name]["answered_current"] = False
-                                        sess_data["students"][s_name]["last_result"] = None
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(sess_data, f, ensure_ascii=False, indent=4)
-                                st.rerun()
+                                    st.info(f"⏸️ Fin de la manche ! Question suivante dans **{remaining_trans} secondes**...")
                             else:
-                                st.info(f"⏸️ Fin de la manche ! Question suivante dans **{remaining_trans} secondes**...")
-                                components.html("""
-                                <script>
-                                    setTimeout(() => { window.location.reload(); }, 1000);
-                                </script>
-                                """, height=0)
+                                if current_global_idx >= len(questions_list):
+                                    s_info["finished"] = True
+                                    current_sess_data["students"][st.session_state.collec_student_name] = s_info
+                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                        json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                    st.balloons()
+                                    st.success("🎉 Battle terminée !")
+                                    st.markdown(f"### 🏆 Score : {s_info['score']} / {s_info['max_points']} pts")
+                                else:
+                                    q = questions_list[current_global_idx]
+                                    consigne = q.get('consigne', '')
+                                    points = q.get('points', 10)
+                                    timer_sec = q.get('timer_secondes', 30)
+                                    options = q.get('donnees', {}).get('options', [])
+
+                                    q_start = current_sess_data.get("question_start_time", time.time())
+                                    elapsed_q = int(time.time() - q_start)
+                                    temps_restant = max(0, timer_sec - elapsed_q)
+
+                                    all_answered = True
+                                    if len(current_sess_data["students"]) > 0:
+                                        for student_item in current_sess_data["students"].values():
+                                            if not student_item.get("answered_current", False):
+                                                all_answered = False
+                                                break
+                                    else:
+                                        all_answered = False
+
+                                    if temps_restant == 0 or all_answered:
+                                        current_sess_data["in_transition"] = True
+                                        current_sess_data["transition_start_time"] = time.time()
+                                        with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                            json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                        st.rerun()
+
+                                    st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
+                                    st.markdown(f"""
+                                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">
+                                        ⏱️ Temps restant : {temps_restant} secondes
+                                    </div>
+                                    """, unsafe_allow_html=True)
+
+                                    st.markdown(f"**{consigne}**")
+                                    already_answered = s_info.get("answered_current", False)
+                                    choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
+
+                                    if not already_answered:
+                                        if st.button("Valider la réponse", type="primary"):
+                                            if choix is None:
+                                                st.warning("Veuillez sélectionner une option.")
+                                            else:
+                                                reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                                                est_correct = choix in reponses_correctes
+                                                
+                                                points_gagnes = 0
+                                                if est_correct:
+                                                    ratio_temps = (timer_sec - elapsed_q) / timer_sec if timer_sec > 0 else 1
+                                                    points_gagnes = int(points * (0.5 + 0.5 * max(0, ratio_temps)))
+                                                    res_msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
+                                                    res_type = "success"
+                                                    if quiz_info.get('son_good'):
+                                                        jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
+                                                else:
+                                                    res_msg = "Mauvaise réponse ❌"
+                                                    res_type = "error"
+                                                    if quiz_info.get('son_bad'):
+                                                        jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
+
+                                                s_info["score"] += points_gagnes
+                                                s_info["answered_current"] = True
+                                                s_info["last_result"] = (res_type, res_msg)
+                                                s_info["answers_detail"].append({
+                                                    "q_num": current_global_idx + 1,
+                                                    "consigne": consigne,
+                                                    "reponse": choix,
+                                                    "correct": est_correct,
+                                                    "points": points_gagnes
+                                                })
+
+                                                current_sess_data["students"][st.session_state.collec_student_name] = s_info
+                                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                                    json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                                st.rerun()
+                                    else:
+                                        res_type, res_msg = s_info.get("last_result", ("info", "Réponse enregistrée."))
+                                        if res_type == "success":
+                                            st.success(res_msg)
+                                        else:
+                                            st.error(res_msg)
+                                        st.info("⏳ En attente des autres participants pour la question suivante...")
+
+                        # ==========================================
+                        # MODE EXAMAN (Autonome après départ simultané)
+                        # ==========================================
                         else:
-                            if current_global_idx >= len(questions_list):
-                                student_info["finished"] = True
-                                sess_data["students"][st.session_state.collec_student_name] = student_info
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(sess_data, f, ensure_ascii=False, indent=4)
-                                st.balloons()
-                                st.success("🎉 Battle terminée !")
-                                st.markdown(f"### 🏆 Score : {student_info['score']} / {student_info['max_points']} pts")
-                            else:
-                                q = questions_list[current_global_idx]
+                            question_order = s_info.get("question_order", list(range(len(questions_list))))
+                            current_idx_student = s_info.get("current_idx", 0)
+
+                            if current_idx_student < len(question_order):
+                                reel_idx = question_order[current_idx_student]
+                                q = questions_list[reel_idx]
+                                
                                 consigne = q.get('consigne', '')
                                 points = q.get('points', 10)
                                 timer_sec = q.get('timer_secondes', 30)
                                 options = q.get('donnees', {}).get('options', [])
 
-                                q_start = sess_data.get("question_start_time", time.time())
-                                elapsed_q = int(time.time() - q_start)
-                                temps_restant = max(0, timer_sec - elapsed_q)
-
-                                all_answered = True
-                                if len(sess_data["students"]) > 0:
-                                    for s_info in sess_data["students"].values():
-                                        if not s_info.get("answered_current", False):
-                                            all_answered = False
-                                            break
-                                else:
-                                    all_answered = False
-
-                                if temps_restant == 0 or all_answered:
-                                    sess_data["in_transition"] = True
-                                    sess_data["transition_start_time"] = time.time()
-                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                        json.dump(sess_data, f, ensure_ascii=False, indent=4)
-                                    st.rerun()
-
-                                st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
-                                st.markdown(f"""
-                                <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">
-                                    ⏱️ Temps restant : {temps_restant} secondes
-                                </div>
-                                """, unsafe_allow_html=True)
-
-                                components.html("""
-                                <script>
-                                    setTimeout(() => { window.location.reload(); }, 1000);
-                                </script>
-                                """, height=0)
-
+                                st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)} (Mode Examen)")
                                 st.markdown(f"**{consigne}**")
-                                already_answered = student_info.get("answered_current", False)
-                                choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
 
-                                if not already_answered:
+                                choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=s_info.get("answered", False))
+
+                                if not s_info.get("answered", False):
                                     if st.button("Valider la réponse", type="primary"):
                                         if choix is None:
                                             st.warning("Veuillez sélectionner une option.")
                                         else:
                                             reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
                                             est_correct = choix in reponses_correctes
-                                            
-                                            points_gagnes = 0
+                                            points_gagnes = points if est_correct else 0
+
                                             if est_correct:
-                                                ratio_temps = (timer_sec - elapsed_q) / timer_sec if timer_sec > 0 else 1
-                                                points_gagnes = int(points * (0.5 + 0.5 * max(0, ratio_temps)))
-                                                res_msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
-                                                res_type = "success"
+                                                s_info["last_result"] = ("success", f"Réponse enregistrée (+{points} pts) ✅")
                                                 if quiz_info.get('son_good'):
                                                     jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
                                             else:
-                                                res_msg = "Mauvaise réponse ❌"
-                                                res_type = "error"
+                                                s_info["last_result"] = ("error", "Réponse enregistrée ❌")
                                                 if quiz_info.get('son_bad'):
                                                     jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
 
-                                            student_info["score"] += points_gagnes
-                                            student_info["answered_current"] = True
-                                            student_info["last_result"] = (res_type, res_msg)
-                                            student_info["answers_detail"].append({
-                                                "q_num": current_global_idx + 1,
+                                            s_info["score"] += points_gagnes
+                                            s_info["answered"] = True
+                                            s_info["answers_detail"].append({
+                                                "q_num": current_idx_student + 1,
                                                 "consigne": consigne,
                                                 "reponse": choix,
                                                 "correct": est_correct,
                                                 "points": points_gagnes
                                             })
 
-                                            sess_data["students"][st.session_state.collec_student_name] = student_info
+                                            current_sess_data["students"][st.session_state.collec_student_name] = s_info
                                             with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                                json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                                json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
                                             st.rerun()
                                 else:
-                                    res_type, res_msg = student_info.get("last_result", ("info", "Réponse enregistrée."))
+                                    res_type, res_msg = s_info.get("last_result", ("info", ""))
                                     if res_type == "success":
                                         st.success(res_msg)
                                     else:
                                         st.error(res_msg)
-                                    st.info("⏳ En attente des autres participants pour la question suivante...")
 
-                    # ==========================================
-                    # MODE EXAMAN (Autonome après départ simultané)
-                    # ==========================================
-                    else:
-                        question_order = student_info.get("question_order", list(range(len(questions_list))))
-                        current_idx_student = student_info.get("current_idx", 0)
-
-                        if current_idx_student < len(question_order):
-                            reel_idx = question_order[current_idx_student]
-                            q = questions_list[reel_idx]
-                            
-                            consigne = q.get('consigne', '')
-                            points = q.get('points', 10)
-                            timer_sec = q.get('timer_secondes', 30)
-                            options = q.get('donnees', {}).get('options', [])
-
-                            st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)} (Mode Examen)")
-                            st.markdown(f"**{consigne}**")
-
-                            choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=student_info.get("answered", False))
-
-                            if not student_info.get("answered", False):
-                                if st.button("Valider la réponse", type="primary"):
-                                    if choix is None:
-                                        st.warning("Veuillez sélectionner une option.")
-                                    else:
-                                        reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
-                                        est_correct = choix in reponses_correctes
-                                        points_gagnes = points if est_correct else 0
-
-                                        if est_correct:
-                                            student_info["last_result"] = ("success", f"Réponse enregistrée (+{points} pts) ✅")
-                                            if quiz_info.get('son_good'):
-                                                jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
-                                        else:
-                                            student_info["last_result"] = ("error", "Réponse enregistrée ❌")
-                                            if quiz_info.get('son_bad'):
-                                                jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
-
-                                        student_info["score"] += points_gagnes
-                                        student_info["answered"] = True
-                                        student_info["answers_detail"].append({
-                                            "q_num": current_idx_student + 1,
-                                            "consigne": consigne,
-                                            "reponse": choix,
-                                            "correct": est_correct,
-                                            "points": points_gagnes
-                                        })
-
-                                        sess_data["students"][st.session_state.collec_student_name] = student_info
+                                    if st.button("Question suivante ➡️", type="primary"):
+                                        s_info["current_idx"] += 1
+                                        s_info["answered"] = False
+                                        s_info["last_result"] = None
+                                        current_sess_data["students"][st.session_state.collec_student_name] = s_info
                                         with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                            json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                            json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
                                         st.rerun()
                             else:
-                                res_type, res_msg = student_info.get("last_result", ("info", ""))
-                                if res_type == "success":
-                                    st.success(res_msg)
-                                else:
-                                    st.error(res_msg)
+                                s_info["finished"] = True
+                                current_sess_data["students"][st.session_state.collec_student_name] = s_info
+                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                    json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
 
-                                if st.button("Question suivante ➡️", type="primary"):
-                                    student_info["current_idx"] += 1
-                                    student_info["answered"] = False
-                                    student_info["last_result"] = None
-                                    sess_data["students"][st.session_state.collec_student_name] = student_info
-                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                        json.dump(sess_data, f, ensure_ascii=False, indent=4)
-                                    st.rerun()
-                        else:
-                            student_info["finished"] = True
-                            sess_data["students"][st.session_state.collec_student_name] = student_info
-                            with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                                st.balloons()
+                                st.success("🎉 Vous avez terminé l'examen !")
+                                st.markdown(f"### 🏆 Votre Score : {s_info['score']} / {s_info['max_points']} points")
+                                st.info("Vos résultats ont été enregistrés et transmis au professeur.")
 
-                            st.balloons()
-                            st.success("🎉 Vous avez terminé l'examen !")
-                            st.markdown(f"### 🏆 Votre Score : {student_info['score']} / {student_info['max_points']} points")
-                            st.info("Vos résultats ont été enregistrés et transmis au professeur.")
+                rendu_session_etudiant()
 
 # ==========================================
 # 👨‍🎓 ESPACE ÉTUDIANT : MODE SOLO

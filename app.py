@@ -36,7 +36,6 @@ if not os.path.exists(DOSSIER_SESSIONS):
 
 # --- FONCTION DE SYNCHRONISATION AUTOMATIQUE AVEC GITHUB ---
 def sauvegarder_fichier_github(chemin_relatif, contenu_str):
-    """Pousse le fichier JSON directement sur GitHub si le token est configuré dans les secrets Streamlit."""
     try:
         if "GITHUB_TOKEN" in st.secrets:
             token = st.secrets["GITHUB_TOKEN"]
@@ -126,13 +125,18 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.answered = False
         st.session_state.last_result = None
 
+# Aiguillage automatique de l'index du menu selon l'URL scannée
+default_mode_idx = 0
+if url_session:
+    default_mode_idx = 1
+
 # --- NAVIGATION GLOBALE (Sidebar) ---
 st.sidebar.title("🧭 Navigation")
 mode = st.sidebar.radio("Choisissez le mode :", [
     "👨‍🎓 Espace Étudiant (Solo)", 
     "🌐 Espace Collectif (Rejoindre une session)", 
     "👨‍🏫 Espace Professeur"
-])
+], index=default_mode_idx)
 
 if mode == "👨‍🎓 Espace Étudiant (Solo)":
     if 'music_active_path' in st.session_state:
@@ -177,7 +181,7 @@ if mode == "👨‍🏫 Espace Professeur":
                     "session_id": session_id,
                     "qcm_filename": qcm_collectif,
                     "mode": mode_interne,
-                    "status": "waiting", # waiting, started, ended
+                    "status": "waiting",
                     "quiz_info": qcm_data.get("quiz_info", {}),
                     "questions": qcm_data.get("questions", []),
                     "students": {}
@@ -189,7 +193,6 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.active_teacher_session = session_id
                 st.rerun()
 
-            # Gestion des sessions existantes
             sessions_existantes = [f.replace('.json', '') for f in os.listdir(DOSSIER_SESSIONS) if f.endswith('.json')]
             if sessions_existantes:
                 st.markdown("---")
@@ -204,7 +207,6 @@ if mode == "👨‍🏫 Espace Professeur":
                     url_session_complete = f"{domaine_app.strip('/')}/?session={sess_choisie}"
                     st.write(f"**Lien de connexion pour les étudiants :** [{url_session_complete}]({url_session_complete})")
                     
-                    # QR Code de la session
                     img_qr = qrcode.make(url_session_complete)
                     buffered = BytesIO()
                     img_qr.save(buffered, format="PNG")
@@ -238,7 +240,6 @@ if mode == "👨‍🏫 Espace Professeur":
                                 json.dump(s_data, f, ensure_ascii=False, indent=4)
                             st.rerun()
 
-                    # Affichage des résultats / classements
                     if s_data["status"] in ["started", "ended"]:
                         st.markdown("### 🏆 Résultats en direct / finaux")
                         if etudiants:
@@ -415,12 +416,10 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                 if st.button("S'inscrire et rejoindre le salon", type="primary"):
                     if nom_etudiant.strip():
                         st.session_state.collec_student_name = nom_etudiant.strip()
-                        # Enregistrer dans le fichier de session
                         if nom_etudiant.strip() not in sess_data["students"]:
-                            # Préparer l'ordre des questions (mélangé pour examen, normal pour battle)
                             indices_questions = list(range(len(sess_data["questions"])))
                             if mode_sess == "examen":
-                                random.seed(nom_etudiant.strip()) # Ordre unique mais reproductible par étudiant
+                                random.seed(nom_etudiant.strip())
                                 random.shuffle(indices_questions)
 
                             sess_data["students"][nom_etudiant.strip()] = {
@@ -440,7 +439,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
-                # Recharger l'état de la session depuis le disque pour synchroniser le statut (waiting -> started)
                 with open(chemin_sess, 'r', encoding='utf-8') as f:
                     sess_data = json.load(f)
                 status_sess = sess_data.get("status", "waiting")
@@ -472,7 +470,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                         st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)}")
                         st.caption(f"🏆 Valeur de base : {points} pts ({'Mode Battle (Rapidité)' if mode_sess=='battle' else 'Mode Examen'})")
 
-                        # Temps écoulé depuis le début de la question
                         if "q_start_time" not in st.session_state:
                             st.session_state.q_start_time = time.time()
 
@@ -514,16 +511,14 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     points_gagnes = 0
                                     if est_correct:
                                         if mode_sess == "battle":
-                                            # Bonus de rapidité pour le battle
                                             if elapsed <= timer_sec:
                                                 ratio_temps = (timer_sec - elapsed) / timer_sec
-                                                points_gagnes = int(points * (0.5 + 0.5 * ratio_temps)) # Entre 50% et 100% des points selon rapidité
+                                                points_gagnes = int(points * (0.5 + 0.5 * ratio_temps))
                                                 msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
                                             else:
                                                 points_gagnes = points // 2
                                                 msg = f"Bonne réponse mais hors temps (+{points_gagnes} pts) ⏱️"
                                         else:
-                                            # Examen standard
                                             points_gagnes = points
                                             msg = f"Réponse enregistrée (+{points} pts) ✅"
                                         student_info["last_result"] = ("success", msg)
@@ -533,7 +528,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     student_info["score"] += points_gagnes
                                     student_info["answered"] = True
                                     
-                                    # Mettre à jour le fichier de session
                                     sess_data["students"][st.session_state.collec_student_name] = student_info
                                     with open(chemin_sess, 'w', encoding='utf-8') as f:
                                         json.dump(sess_data, f, ensure_ascii=False, indent=4)
@@ -583,17 +577,24 @@ else:
         questions = st.session_state.banque.get('questions', [])
         titre = quiz_info.get('titre', 'Évaluation QCM')
         description = quiz_info.get('description', '')
+        vol_musique = quiz_info.get('volume_musique', 0.5)
+        vol_sons = quiz_info.get('volume_sons', 0.8)
 
         st.title(f"🎓 {titre}")
 
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
+            st.info("💡 Cliquez sur le bouton ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
+            musique_path = quiz_info.get('musique')
+            if musique_path and os.path.exists(musique_path):
+                jouer_musique_fond(musique_path, vol_musique)
+
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
                 q_id = st.session_state.current_idx
@@ -656,25 +657,28 @@ else:
                                 if est_correct:
                                     if elapsed <= timer_sec:
                                         points_gagnes = points
-                                        st.session_state.last_result = ("success", f"Bonne réponse ! +{points} pts 🎉")
+                                        st.session_state.last_result = ("success", f"Bonne réponse ! +{points} pts 🎉", quiz_info.get('son_good'))
                                     else:
                                         points_gagnes = points // 2
-                                        st.session_state.last_result = ("warning", f"Bonne réponse mais hors temps. +{points_gagnes} pts ⏱️")
+                                        st.session_state.last_result = ("warning", f"Bonne réponse mais hors temps. +{points_gagnes} pts ⏱️", quiz_info.get('son_good'))
                                 else:
-                                    st.session_state.last_result = ("error", "Mauvaise réponse ❌")
+                                    st.session_state.last_result = ("error", "Mauvaise réponse ❌", quiz_info.get('son_bad'))
 
                                 st.session_state.score_total += points_gagnes
                                 st.session_state.max_points += points
                                 st.session_state.answered = True
                                 st.rerun()
                     else:
-                        res_type, res_msg = st.session_state.last_result
+                        res_type, res_msg, son_path = st.session_state.last_result
                         if res_type == "success":
                             st.success(res_msg)
                         elif res_type == "warning":
                             st.warning(res_msg)
                         else:
                             st.error(res_msg)
+
+                        if son_path and os.path.exists(son_path):
+                            jouer_effet_sonore(son_path, vol_sons)
 
                         explication = q.get('explication', '')
                         if explication:
@@ -687,6 +691,8 @@ else:
                             st.session_state.question_start_time = time.time()
                             st.rerun()
             else:
+                if 'music_active_path' in st.session_state:
+                    del st.session_state.music_active_path
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")
@@ -697,4 +703,6 @@ else:
                     st.session_state.quiz_started = False
                     st.session_state.answered = False
                     st.session_state.last_result = None
+                    if 'music_active_path' in st.session_state:
+                        del st.session_state.music_active_path
                     st.rerun()

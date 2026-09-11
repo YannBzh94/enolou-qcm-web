@@ -1,0 +1,248 @@
+{
+  "quiz_info": {
+    "titre": "Cours AnaFi - Cas Cémoi Chocolatier",
+    "description": "QCM sur l'analyse financière des comptes 2024 de Cémoi Chocolatier (CA, résultat financier et exceptionnel)",
+    "son_good": "sons/sons_good/bonnereponse003.mp3",
+    "son_bad": "sons/sons_bad/Mauvaiserep001.mp3",
+    "musique": "musique/Scott Buckley - Call To Adventure.mp3"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "consigne": "De manière générale, quels facteurs peuvent expliquer une hausse significative du chiffre d'affaires d'une entreprise ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Chiffre d'affaires",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "Une augmentation des volumes de ventes physiques ou des quantités écoulées",
+          "Une baisse des charges d'exploitation de l'exercice",
+          "Une hausse des prix de vente unitaires des produits ou services",
+          "La souscription d'un nouvel emprunt bancaire à long terme",
+          "Une évolution favorable du taux de change pour les activités à l'international",
+          "L'enregistrement d'une dotation aux amortissements",
+          "Une restructuration juridique ou une fusion modifiant le périmètre d'intégration des flux"
+        ],
+        "reponses_correctes": [
+          "Une augmentation des volumes de ventes physiques ou des quantités écoulées",
+          "Une hausse des prix de vente unitaires des produits ou services",
+          "Une évolution favorable du taux de change pour les activités à l'international",
+          "Une restructuration juridique ou une fusion modifiant le périmètre d'intégration des flux"
+        ]
+      },
+      "explication": "Le chiffre d'affaires progresse par le volume, les prix, le change ou des modifications de périmètre (fusion)."
+    },
+    {
+      "id": 2,
+      "consigne": "En analysant les comptes annuels de Cémoi Chocolatier, on observe que le poste des « ventes de marchandises » bondit de 6 894 199 € en 2023 à 143 042 018 € en 2024. Quel est le principal facteur explicatif issu des notes annexes ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Chiffre d'affaires",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Une campagne publicitaire agressive ayant conquis de nouveaux marchés de détail à l'international.",
+          "La fusion-absorption de la société DIPA intervenue le 27 décembre 2024 (avec un effet rétroactif au 1er janvier 2024), transférant son activité de commissionnaire au sein de Cémoi.",
+          "L'explosion du cours mondial du cacao passé de 2 700 £ à environ 7 500 £ la tonne sur la période.",
+          "Une erreur matérielle de ventilation comptable entre la production vendue et les ventes de marchandises lors de la clôture."
+        ],
+        "reponses_correctes": [
+          "La fusion-absorption de la société DIPA intervenue le 27 décembre 2024 (avec un effet rétroactif au 1er janvier 2024), transférant son activité de commissionnaire au sein de Cémoi."
+        ]
+      },
+      "explication": "L'intégration de la société DIPA explique la forte variation des ventes de marchandises."
+    },
+    {
+      "id": 3,
+      "consigne": "Au terme de cette analyse financière, comment peut-on qualifier la progression spectaculaire du chiffre d'affaires (774,9 M€) et du résultat net (72,9 M€) de Cémoi Chocolatier en 2024 ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Synthèse",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Elle reflète exclusivement une croissance organique record portée par une augmentation massive des volumes de vente à l'international.",
+          "Elle combine à la fois une adaptation face à la crise historique du marché du cacao (via des provisions adaptées) et un impact mécanique majeur lié à la restructuration juridique (fusion-absorption de la société DIPA).",
+          "Elle est artificiellement gonflée par des cessions d'actifs immobilisés sans aucun lien avec l'activité industrielle et commerciale.",
+          "Elle traduit une dégradation profonde de la structure financière de l'entreprise compensée uniquement par des subventions."
+        ],
+        "reponses_correctes": [
+          "Elle combine à la fois une adaptation face à la crise historique du marché du cacao (via des provisions adaptées) et un impact mécanique majeur lié à la restructuration juridique (fusion-absorption de la société DIPA)."
+        ]
+      },
+      "explication": "La performance globale intègre à la fois des aspects structurels juridiques et des choix prudentiels face au marché du cacao."
+    },
+    {
+      "id": 4,
+      "consigne": "De quoi se compose principalement le résultat financier d'une entreprise et en quoi se distingue-t-il ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Résultat financier",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Il regroupe les produits et charges liés à la politique commerciale et aux ventes de marchandises.",
+          "Il intègre les produits et charges liés à la politique financière (produits de participations, intérêts d'emprunts, gains ou pertes de change), traduisant sa structure de financement.",
+          "Il correspond exclusivement aux variations de stocks de matières premières.",
+          "Il regroupe l'ensemble des impôts sur les sociétés."
+        ],
+        "reponses_correctes": [
+          "Il intègre les produits et charges liés à la politique financière (produits de participations, intérêts d'emprunts, gains ou pertes de change), traduisant sa structure de financement."
+        ]
+      },
+      "explication": "Le résultat financier reflète la gestion de la trésorerie, de l'endettement et des participations."
+    },
+    {
+      "id": 5,
+      "consigne": "De manière générale, que recouvre le poste comptable des « produits de participations » au sein du résultat financier ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Résultat financier",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les intérêts perçus sur les comptes courants bancaires et les placements à court terme.",
+          "Les dividendes ou revenus versés par les filiales et sociétés dans lesquelles l'entreprise détient des parts ou des actions (titres de participation).",
+          "Les plus-values réalisées lors de la revente de marchandises.",
+          "Les subventions d'investissement perçues de l'État."
+        ],
+        "reponses_correctes": [
+          "Les dividendes ou revenus versés par les filiales et sociétés dans lesquelles l'entreprise détient des parts ou des actions (titres de participation)."
+        ]
+      },
+      "explication": "Les produits de participations correspondent aux dividendes des filiales."
+    },
+    {
+      "id": 6,
+      "consigne": "Dans les comptes 2024 de Cémoi Chocolatier, le poste des produits de participations s'élève à 3 378 450 €. Que traduit principalement ce montant ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Résultat financier",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Des pénalités financières versées par les clients en retard de paiement.",
+          "Le remboursement d'un emprunt obligataire par une filiale étrangère.",
+          "La rémunération des participations détenues par Cémoi dans ses filiales, matérialisée par la remontée de dividendes au niveau de la société mère.",
+          "Un gain exceptionnel lié à l'évolution des taux de change sur les achats de cacao."
+        ],
+        "reponses_correctes": [
+          "La rémunération des participations détenues par Cémoi dans ses filiales, matérialisée par la remontée de dividendes au niveau de la société mère."
+        ]
+      },
+      "explication": "Ce montant illustre la remontée des dividendes des filiales vers Cémoi Chocolatier."
+    },
+    {
+      "id": 7,
+      "consigne": "De manière générale, que recouvre le résultat exceptionnel dans un compte de résultat et en quoi se distingue-t-il des résultats d'exploitation et financier ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Résultat exceptionnel",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Il regroupe l'ensemble des ventes de marchandises et des prestations de services facturées aux clients.",
+          "Il intègre les produits et charges liés à la structure de financement de l'entreprise (intérêts d'emprunts, dividendes).",
+          "Il enregistre les produits et charges non récurrents, liés à des événements inhabituels, majeurs ou à caractère exceptionnel (cessions d'actifs, pénalités), sans lien direct avec l'exploitation courante.",
+          "Il correspond au montant total des impôts sur les sociétés payés au Trésor public."
+        ],
+        "reponses_correctes": [
+          "Il enregistre les produits et charges non récurrents, liés à des événements inhabituels, majeurs ou à caractère exceptionnel (cessions d'actifs, pénalités), sans lien direct avec l'exploitation courante."
+        ]
+      },
+      "explication": "Le résultat exceptionnel isole les opérations non récurrentes et inhabituelles."
+    },
+    {
+      "id": 8,
+      "consigne": "Dans le cadre de la structure des comptes de Cémoi Chocolatier pour 2024, quelle est la nature des éléments traités au sein du résultat exceptionnel ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Résultat exceptionnel",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Les flux de trésorerie quotidiens générés par la vente directe de tablettes de chocolat en grande surface.",
+          "Les opérations et charges induites par des événements de gestion non répétitifs, des transferts de charges spécifiques ou des régularisations fiscales et comptables majeures.",
+          "Les revenus des participations financières détenues dans les filiales du groupe.",
+          "Les dotations aux amortissements industriels de routine des usines de transformation."
+        ],
+        "reponses_correctes": [
+          "Les opérations et charges induites par des événements de gestion non répétitifs, des transferts de charges spécifiques ou des régularisations fiscales et comptables majeures."
+        ]
+      },
+      "explication": "Il s'agit des éléments non répétitifs ou des régularisations majeures."
+    },
+    {
+      "id": 9,
+      "consigne": "Quel est le rôle comptable et fiscal d'une provision réglementée pour hausse des prix ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Provisions",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Permettre à une entreprise confrontée à une inflation majeure de ses matières premières de constituer une réserve déductible fiscalement pour faire face au renchérissement de son stock.",
+          "Distribuer des dividendes exceptionnels aux actionnaires en période de crise boursière.",
+          "Enregistrer une créance certaine et exigible auprès des clients défaillants.",
+          "Éliminer définitivement la TVA due sur les achats intracommunautaires."
+        ],
+        "reponses_correctes": [
+          "Permettre à une entreprise confrontée à une inflation majeure de ses matières premières de constituer une réserve déductible fiscalement pour faire face au renchérissement de son stock."
+        ]
+      },
+      "explication": "La provision réglementée permet d'amortir l'impact fiscal et financier d'une forte inflation des stocks."
+    },
+    {
+      "id": 10,
+      "consigne": "Face à l'envolée historique du cours mondial du cacao sur la période (passé de 2 700 £ à environ 7 500 £ la tonne), comment cette mécanique s'est-elle concrétisée dans les comptes de Cémoi Chocolatier en 2024 ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Provisions",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Par la constatation d'un produit financier exceptionnel lié aux gains de change.",
+          "Par l'enregistrement d'une provision réglementée pour hausse des prix d'un montant de 19 millions d'euros.",
+          "Par l'annulation pure et simple des stocks de fèves de cacao au bilan.",
+          "Par le versement d'une subvention publique d'équilibre pour couvrir l'intégralité du déficit."
+        ],
+        "reponses_correctes": [
+          "Par l'enregistrement d'une provision réglementée pour hausse des prix d'un montant de 19 millions d'euros."
+        ]
+      },
+      "explication": "Cémoi a mobilisé une provision réglementée de 19 millions d'euros pour faire face à la flambée du cours du cacao."
+    },
+    {
+      "id": 11,
+      "consigne": "Concernant la performance globale de Cémoi Chocolatier pour l'exercice 2024, quelle a été l'évolution notable du bénéfice net ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 10,
+      "tag": "Cémoi - Synthèse",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Il s'est effondré en raison du renchérissement massif des coûts d'approvisionnement en matières premières.",
+          "Il est resté rigoureusement stable malgré la forte croissance du chiffre d'affaires net global.",
+          "Il a doublé pour s'établir à 72 860 655 € (contre 33 977 883 € l'exercice précédent).",
+          "Il devient négatif en raison de la comptabilisation intégrale de la provision réglementée pour hausse des prix."
+        ],
+        "reponses_correctes": [
+          "Il a doublé pour s'établir à 72 860 655 € (contre 33 977 883 € l'exercice précédent)."
+        ]
+      },
+      "explication": "Le bénéfice net a doublé pour atteindre près de 72,9 millions d'euros."
+    }
+  ]
+}

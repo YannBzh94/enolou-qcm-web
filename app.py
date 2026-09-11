@@ -235,7 +235,6 @@ if mode == "👨‍🏫 Espace Professeur":
                 with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
                     json.dump(session_data, f, ensure_ascii=False, indent=4)
                 
-                # Sélection automatique de la nouvelle session dans le menu déroulant
                 st.session_state["sel_session_piloter"] = session_id
                 st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
                 st.rerun()
@@ -360,6 +359,12 @@ if mode == "👨‍🏫 Espace Professeur":
             st.session_state.edit_nom_fichier = "nouveau_qcm.json"
             st.session_state.edit_titre = ""
             st.session_state.edit_desc = ""
+            st.session_state.edit_quiz_image = ""
+            st.session_state.edit_document_appui = ""
+            st.session_state.edit_quiz_video = ""
+            st.session_state.edit_musique = ""
+            st.session_state.edit_son_good = ""
+            st.session_state.edit_son_bad = ""
             st.session_state.edit_questions = []
             st.session_state.dernier_choix_edition = None
 
@@ -369,6 +374,12 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.edit_nom_fichier = "nouveau_qcm.json"
                 st.session_state.edit_titre = "Mon Nouveau Quiz"
                 st.session_state.edit_desc = ""
+                st.session_state.edit_quiz_image = ""
+                st.session_state.edit_document_appui = ""
+                st.session_state.edit_quiz_video = ""
+                st.session_state.edit_musique = ""
+                st.session_state.edit_son_good = ""
+                st.session_state.edit_son_bad = ""
                 st.session_state.edit_questions = []
             else:
                 chemin = os.path.join(DOSSIER_QUIZZES, choix_edition)
@@ -379,47 +390,191 @@ if mode == "👨‍🏫 Espace Professeur":
                         st.session_state.edit_nom_fichier = choix_edition
                         st.session_state.edit_titre = info.get("titre", "")
                         st.session_state.edit_desc = info.get("description", "")
+                        st.session_state.edit_quiz_image = info.get("image", "")
+                        st.session_state.edit_document_appui = info.get("document_appui", "")
+                        st.session_state.edit_quiz_video = info.get("video", "")
+                        st.session_state.edit_musique = info.get("musique", "")
+                        st.session_state.edit_son_good = info.get("son_good", "")
+                        st.session_state.edit_son_bad = info.get("son_bad", "")
                         st.session_state.edit_questions = data.get("questions", [])
                 except Exception:
                     pass
 
+        # Formulaire des Paramètres Généraux (incluant image, PDF, vidéo, sons, musique)
         with st.form("form_edition_qcm"):
+            st.markdown("### ⚙️ Paramètres Généraux du QCM")
             nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
             titre_quiz = st.text_input("Titre affiché :", value=st.session_state.edit_titre)
             desc_quiz = st.text_area("Description :", value=st.session_state.edit_desc)
+            
+            col_m1, col_m2, col_m3 = st.columns(3)
+            with col_m1:
+                quiz_image = st.text_input("Image générale (chemin ex: docs/image.png) :", value=st.session_state.edit_quiz_image)
+            with col_m2:
+                document_appui = st.text_input("PDF d'appui / Doc (chemin ex: docs/cas.pdf) :", value=st.session_state.edit_document_appui)
+            with col_m3:
+                quiz_video = st.text_input("Vidéo générale (chemin ex: docs/video.mp4) :", value=st.session_state.edit_quiz_video)
+
+            col_s1, col_s2, col_s3 = st.columns(3)
+            with col_s1:
+                musique_path = st.text_input("Musique de fond :", value=st.session_state.edit_musique)
+            with col_s2:
+                son_good = st.text_input("Son bonne réponse :", value=st.session_state.edit_son_good)
+            with col_s3:
+                son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
+
             submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux")
             if submitted_meta:
                 if not nom_fichier.endswith(".json"):
                     nom_fichier += ".json"
+                
+                st.session_state.edit_nom_fichier = nom_fichier
+                st.session_state.edit_titre = titre_quiz
+                st.session_state.edit_desc = desc_quiz
+                st.session_state.edit_quiz_image = quiz_image
+                st.session_state.edit_document_appui = document_appui
+                st.session_state.edit_quiz_video = quiz_video
+                st.session_state.edit_musique = musique_path
+                st.session_state.edit_son_good = son_good
+                st.session_state.edit_son_bad = son_bad
+
                 donnees_globales = {
-                    "quiz_info": {"titre": titre_quiz, "description": desc_quiz},
+                    "quiz_info": {
+                        "titre": titre_quiz,
+                        "description": desc_quiz,
+                        "image": quiz_image,
+                        "document_appui": document_appui,
+                        "video": quiz_video,
+                        "musique": musique_path,
+                        "son_good": son_good,
+                        "son_bad": son_bad
+                    },
                     "questions": st.session_state.edit_questions
                 }
                 contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
                 with open(os.path.join(DOSSIER_QUIZZES, nom_fichier), "w", encoding="utf-8") as f:
                     f.write(contenu_json)
                 sauvegarder_fichier_github(f"QCM/{nom_fichier}", contenu_json)
-                st.success("Paramètres enregistrés !")
+                st.success("Paramètres généraux enregistrés avec succès !")
 
-        st.subheader("Gestion des questions")
+        st.markdown("---")
+        st.subheader("📋 Gestion et Modification des Questions")
+        
         if st.session_state.edit_questions:
             for idx, q in enumerate(st.session_state.edit_questions):
-                col1, col2 = st.columns([5, 1])
-                with col1:
-                    st.text(f"Q{idx+1}: {q.get('consigne', '')[:50]}...")
-                with col2:
-                    if st.button("❌", key=f"del_q_{idx}"):
+                with st.expander(f"Question {idx+1} : {q.get('consigne', '')[:60]}... (Points: {q.get('points', 10)})"):
+                    with st.form(f"form_mod_q_{idx}"):
+                        mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{idx}")
+                        col_p1, col_p2 = st.columns(2)
+                        with col_p1:
+                            mod_points = st.number_input("Points :", min_value=1, value=q.get('points', 10), key=f"mod_pts_{idx}")
+                        with col_p2:
+                            mod_timer = st.number_input("Chronomètre (sec) :", min_value=5, value=q.get('timer_secondes', 30), key=f"mod_tim_{idx}")
+                        
+                        options_actuelles = q.get('donnees', {}).get('options', [])
+                        mod_options_input = st.text_area("Options (une par ligne) :", value="\n".join(options_actuelles), key=f"mod_opt_{idx}")
+                        
+                        reponses_actuelles = q.get('donnees', {}).get('reponses_correctes', [])
+                        mod_reponse_correcte = st.text_input("Réponse exacte (doit correspondre à l'une des options) :", value=reponses_actuelles[0] if reponses_actuelles else "", key=f"mod_rep_{idx}")
+                        
+                        mod_explication = st.text_area("Explication :", value=q.get('explication', ''), key=f"mod_exp_{idx}")
+                        
+                        col_m_img, col_m_vid = st.columns(2)
+                        with col_m_img:
+                            mod_img = st.text_input("Image question (optionnel) :", value=q.get('media', {}).get('image', ''), key=f"mod_img_{idx}")
+                        with col_m_vid:
+                            mod_vid = st.text_input("Vidéo question (optionnel) :", value=q.get('media', {}).get('video', ''), key=f"mod_vid_{idx}")
+
+                        submitted_mod = st.form_submit_button("💾 Mettre à jour cette question")
+                        if submitted_mod:
+                            options_liste = [opt.strip() for opt in mod_options_input.split("\n") if opt.strip()]
+                            if mod_consigne and options_liste and mod_reponse_correcte:
+                                st.session_state.edit_questions[idx] = {
+                                    "id": idx + 1,
+                                    "consigne": mod_consigne,
+                                    "type": "qcm",
+                                    "difficulte": q.get("difficulte", "Moyen"),
+                                    "points": mod_points,
+                                    "tag": q.get("tag", "Général"),
+                                    "timer_secondes": mod_timer,
+                                    "donnees": {
+                                        "options": options_liste,
+                                        "reponses_correctes": [mod_reponse_correcte]
+                                    },
+                                    "explication": mod_explication,
+                                    "document_texte": q.get("document_texte", ""),
+                                    "document_image_a4": q.get("document_image_a4", ""),
+                                    "document_appui": q.get("document_appui", ""),
+                                    "media": {
+                                        "image": mod_img,
+                                        "video": mod_vid
+                                    }
+                                }
+                                donnees_globales = {
+                                    "quiz_info": {
+                                        "titre": st.session_state.edit_titre,
+                                        "description": st.session_state.edit_desc,
+                                        "image": st.session_state.edit_quiz_image,
+                                        "document_appui": st.session_state.edit_document_appui,
+                                        "video": st.session_state.edit_quiz_video,
+                                        "musique": st.session_state.edit_musique,
+                                        "son_good": st.session_state.edit_son_good,
+                                        "son_bad": st.session_state.edit_son_bad
+                                    },
+                                    "questions": st.session_state.edit_questions
+                                }
+                                contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+                                with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
+                                    f.write(contenu_json)
+                                sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
+                                st.success(f"Question {idx+1} mise à jour avec succès !")
+                                st.rerun()
+
+                    if st.button(f"❌ Supprimer la question {idx+1}", key=f"del_q_{idx}"):
                         st.session_state.edit_questions.pop(idx)
+                        for r_idx, rq in enumerate(st.session_state.edit_questions):
+                            rq["id"] = r_idx + 1
+                        donnees_globales = {
+                            "quiz_info": {
+                                "titre": st.session_state.edit_titre,
+                                "description": st.session_state.edit_desc,
+                                "image": st.session_state.edit_quiz_image,
+                                "document_appui": st.session_state.edit_document_appui,
+                                "video": st.session_state.edit_quiz_video,
+                                "musique": st.session_state.edit_musique,
+                                "son_good": st.session_state.edit_son_good,
+                                "son_bad": st.session_state.edit_son_bad
+                            },
+                            "questions": st.session_state.edit_questions
+                        }
+                        contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+                        with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
+                            f.write(contenu_json)
+                        sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
+                        st.success("Question supprimée !")
                         st.rerun()
 
+        st.markdown("---")
+        st.subheader("➕ Ajouter une nouvelle question")
         with st.form("form_ajout_question"):
             consigne_q = st.text_area("Consigne :")
-            points_q = st.number_input("Points :", min_value=1, value=10)
-            timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
+            col_ap1, col_ap2 = st.columns(2)
+            with col_ap1:
+                points_q = st.number_input("Points :", min_value=1, value=10)
+            with col_ap2:
+                timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
+            
             options_input = st.text_area("Options (une par ligne) :")
             reponse_correcte = st.text_input("Réponse exacte :")
             explication_q = st.text_area("Explication :")
-            submitted_q = st.form_submit_button("➕ Ajouter la question")
+            
+            col_m_add_img, col_m_add_vid = st.columns(2)
+            with col_m_add_img:
+                add_img = st.text_input("Image média (optionnel) :", value="")
+            with col_m_add_vid:
+                add_vid = st.text_input("Vidéo média (optionnel) :", value="")
+
+            submitted_q = st.form_submit_button("➕ Ajouter la question au QCM")
             if submitted_q:
                 options_liste = [opt.strip() for opt in options_input.split("\n") if opt.strip()]
                 if consigne_q and options_liste and reponse_correcte:
@@ -427,24 +582,42 @@ if mode == "👨‍🏫 Espace Professeur":
                         "id": len(st.session_state.edit_questions) + 1,
                         "consigne": consigne_q,
                         "type": "qcm",
+                        "difficulte": "Moyen",
                         "points": points_q,
+                        "tag": "Général",
                         "timer_secondes": timer_q,
-                        "donnees": {"options": options_liste, "reponses_correctes": [reponse_correcte]},
+                        "donnees": {
+                            "options": options_liste,
+                            "reponses_correctes": [reponse_correcte]
+                        },
                         "explication": explication_q,
                         "document_texte": "",
-                        "media": {"image": ""},
-                        "document_appui": ""
+                        "document_image_a4": "",
+                        "document_appui": "",
+                        "media": {
+                            "image": add_img,
+                            "video": add_vid
+                        }
                     }
                     st.session_state.edit_questions.append(nouv_q)
                     donnees_globales = {
-                        "quiz_info": {"titre": st.session_state.edit_titre, "description": st.session_state.edit_desc},
+                        "quiz_info": {
+                            "titre": st.session_state.edit_titre,
+                            "description": st.session_state.edit_desc,
+                            "image": st.session_state.edit_quiz_image,
+                            "document_appui": st.session_state.edit_document_appui,
+                            "video": st.session_state.edit_quiz_video,
+                            "musique": st.session_state.edit_musique,
+                            "son_good": st.session_state.edit_son_good,
+                            "son_bad": st.session_state.edit_son_bad
+                        },
                         "questions": st.session_state.edit_questions
                     }
                     contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
                     with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
                         f.write(contenu_json)
                     sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
-                    st.success("Question ajoutée !")
+                    st.success("Question ajoutée avec succès !")
                     st.rerun()
 
 # ==========================================
@@ -508,7 +681,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     else:
                         st.warning("Veuillez entrer un nom valide.")
             else:
-                # Lancement de la musique de fond de manière globale (en dehors du fragment pour éviter les redémarrages intempestifs)
                 musique_path = quiz_info.get('musique')
                 if status_sess == "started" and musique_path and os.path.exists(musique_path):
                     jouer_musique_fond_robuste(musique_path, vol_musique)
@@ -538,9 +710,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     elif cur_status == "started":
                         questions_list = current_sess_data["questions"]
 
-                        # ==========================================
-                        # MODE BATTLE (Synchrone & Rythmé)
-                        # ==========================================
                         if mode_sess == "battle":
                             current_global_idx = current_sess_data.get("current_global_idx", 0)
                             in_transition = current_sess_data.get("in_transition", False)
@@ -657,9 +826,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                             st.error(res_msg)
                                         st.info("⏳ En attente des autres participants pour la question suivante...")
 
-                        # ==========================================
-                        # MODE EXAMAN (Autonome après départ simultané)
-                        # ==========================================
                         else:
                             question_order = s_info.get("question_order", list(range(len(questions_list))))
                             current_idx_student = s_info.get("current_idx", 0)
@@ -758,6 +924,15 @@ else:
         if not st.session_state.quiz_started:
             if description:
                 st.write(description)
+            
+            # Affichage des médias généraux si présents
+            img_gen = quiz_info.get('image')
+            if img_gen and os.path.exists(img_gen):
+                st.image(img_gen, use_container_width=True)
+            vid_gen = quiz_info.get('video')
+            if vid_gen and os.path.exists(vid_gen):
+                st.video(vid_gen)
+
             st.info("💡 Cliquez ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
             if st.button("Commencer le QCM 🎵", type="primary"):
                 st.session_state.quiz_started = True
@@ -783,9 +958,15 @@ else:
                     doc_texte = q.get('document_texte')
                     if doc_texte:
                         st.info(doc_texte)
-                    img_path = q.get('media', {}).get('image')
+                    
+                    # Affichage des médias de la question ou généraux
+                    img_path = q.get('media', {}).get('image') or quiz_info.get('image')
                     if img_path and os.path.exists(img_path):
                         st.image(img_path, use_container_width=True)
+                    
+                    vid_path = q.get('media', {}).get('video') or quiz_info.get('video')
+                    if vid_path and os.path.exists(vid_path):
+                        st.video(vid_path)
 
                 with col_qcm:
                     st.subheader(f"Question {q_id + 1} sur {len(questions)}")

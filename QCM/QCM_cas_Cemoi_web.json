@@ -1,7 +1,13 @@
 {
     "quiz_info": {
         "titre": "Cours AnaFi - Cas Cémoi Chocolatier",
-        "description": "QCM sur l'analyse financière des comptes 2024 de Cémoi Chocolatier (CA, résultat financier et exceptionnel)"
+        "description": "QCM sur l'analyse financière des comptes 2024 de Cémoi Chocolatier (CA, résultat financier et exceptionnel)",
+        "image": "docs/Cemoi001.jpg",
+        "document_appui": "",
+        "video": "docs/Cemoi_prez.mp4",
+        "musique": "musique/Nikos Spiliotis - Love Waltz.mp3",
+        "son_good": "sons\\sons_good/bonnereponse003.mp3",
+        "son_bad": "sons\\sons_bad/Docteur maboul.wav"
     },
     "questions": [
         {

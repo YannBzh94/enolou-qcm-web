@@ -7,7 +7,9 @@
         "video": "docs/Cemoi_prez.mp4",
         "musique": "musique/Nikos Spiliotis - Love Waltz.mp3",
         "son_good": "sons\\sons_good/bonnereponse003.mp3",
-        "son_bad": "sons\\sons_bad/Docteur maboul.wav"
+        "son_bad": "sons\\sons_bad/Docteur maboul.wav",
+        "volume_musique": 0.2,
+        "volume_sons": 0.8
     },
     "questions": [
         {

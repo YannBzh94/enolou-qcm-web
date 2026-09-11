@@ -355,18 +355,23 @@ if mode == "👨‍🏫 Espace Professeur":
                     st.session_state.qcm_selectionne = None
                 st.rerun()
 
-        if 'edit_nom_fichier' not in st.session_state:
-            st.session_state.edit_nom_fichier = "nouveau_qcm.json"
-            st.session_state.edit_titre = ""
-            st.session_state.edit_desc = ""
-            st.session_state.edit_quiz_image = ""
-            st.session_state.edit_document_appui = ""
-            st.session_state.edit_quiz_video = ""
-            st.session_state.edit_musique = ""
-            st.session_state.edit_son_good = ""
-            st.session_state.edit_son_bad = ""
-            st.session_state.edit_questions = []
-            st.session_state.dernier_choix_edition = None
+        # Initialisation sécurisée de toutes les variables de session de l'éditeur
+        keys_defaults = {
+            'edit_nom_fichier': "nouveau_qcm.json",
+            'edit_titre': "",
+            'edit_desc': "",
+            'edit_quiz_image': "",
+            'edit_document_appui': "",
+            'edit_quiz_video': "",
+            'edit_musique': "",
+            'edit_son_good': "",
+            'edit_son_bad': "",
+            'edit_questions': [],
+            'dernier_choix_edition': None
+        }
+        for k, v in keys_defaults.items():
+            if k not in st.session_state:
+                st.session_state[k] = v
 
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
@@ -925,7 +930,6 @@ else:
             if description:
                 st.write(description)
             
-            # Affichage des médias généraux si présents
             img_gen = quiz_info.get('image')
             if img_gen and os.path.exists(img_gen):
                 st.image(img_gen, use_container_width=True)
@@ -959,7 +963,6 @@ else:
                     if doc_texte:
                         st.info(doc_texte)
                     
-                    # Affichage des médias de la question ou généraux
                     img_path = q.get('media', {}).get('image') or quiz_info.get('image')
                     if img_path and os.path.exists(img_path):
                         st.image(img_path, use_container_width=True)

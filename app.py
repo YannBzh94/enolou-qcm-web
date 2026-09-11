@@ -355,7 +355,7 @@ if mode == "👨‍🏫 Espace Professeur":
                     st.session_state.qcm_selectionne = None
                 st.rerun()
 
-        # Initialisation sécurisée de toutes les variables de session de l'éditeur
+        # Initialisation sécurisée de toutes les variables de session de l'éditeur (incluant volumes)
         keys_defaults = {
             'edit_nom_fichier': "nouveau_qcm.json",
             'edit_titre': "",
@@ -366,6 +366,8 @@ if mode == "👨‍🏫 Espace Professeur":
             'edit_musique': "",
             'edit_son_good': "",
             'edit_son_bad': "",
+            'edit_vol_musique': 0.5,
+            'edit_vol_sons': 0.8,
             'edit_questions': [],
             'dernier_choix_edition': None
         }
@@ -385,6 +387,8 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.edit_musique = ""
                 st.session_state.edit_son_good = ""
                 st.session_state.edit_son_bad = ""
+                st.session_state.edit_vol_musique = 0.5
+                st.session_state.edit_vol_sons = 0.8
                 st.session_state.edit_questions = []
             else:
                 chemin = os.path.join(DOSSIER_QUIZZES, choix_edition)
@@ -401,11 +405,13 @@ if mode == "👨‍🏫 Espace Professeur":
                         st.session_state.edit_musique = info.get("musique", "")
                         st.session_state.edit_son_good = info.get("son_good", "")
                         st.session_state.edit_son_bad = info.get("son_bad", "")
+                        st.session_state.edit_vol_musique = info.get("volume_musique", 0.5)
+                        st.session_state.edit_vol_sons = info.get("volume_sons", 0.8)
                         st.session_state.edit_questions = data.get("questions", [])
                 except Exception:
                     pass
 
-        # Formulaire des Paramètres Généraux (incluant image, PDF, vidéo, sons, musique)
+        # Formulaire des Paramètres Généraux (incluant image, PDF, vidéo, sons, musique et curseurs de volume)
         with st.form("form_edition_qcm"):
             st.markdown("### ⚙️ Paramètres Généraux du QCM")
             nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
@@ -428,6 +434,12 @@ if mode == "👨‍🏫 Espace Professeur":
             with col_s3:
                 son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
 
+            col_v1, col_v2 = st.columns(2)
+            with col_v1:
+                vol_musique_input = st.slider("Volume musique de fond", 0.0, 1.0, value=float(st.session_state.edit_vol_musique), step=0.1)
+            with col_v2:
+                vol_sons_input = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.1)
+
             submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux")
             if submitted_meta:
                 if not nom_fichier.endswith(".json"):
@@ -442,6 +454,8 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.edit_musique = musique_path
                 st.session_state.edit_son_good = son_good
                 st.session_state.edit_son_bad = son_bad
+                st.session_state.edit_vol_musique = vol_musique_input
+                st.session_state.edit_vol_sons = vol_sons_input
 
                 donnees_globales = {
                     "quiz_info": {
@@ -452,7 +466,9 @@ if mode == "👨‍🏫 Espace Professeur":
                         "video": quiz_video,
                         "musique": musique_path,
                         "son_good": son_good,
-                        "son_bad": son_bad
+                        "son_bad": son_bad,
+                        "volume_musique": vol_musique_input,
+                        "volume_sons": vol_sons_input
                     },
                     "questions": st.session_state.edit_questions
                 }
@@ -524,7 +540,9 @@ if mode == "👨‍🏫 Espace Professeur":
                                         "video": st.session_state.edit_quiz_video,
                                         "musique": st.session_state.edit_musique,
                                         "son_good": st.session_state.edit_son_good,
-                                        "son_bad": st.session_state.edit_son_bad
+                                        "son_bad": st.session_state.edit_son_bad,
+                                        "volume_musique": st.session_state.edit_vol_musique,
+                                        "volume_sons": st.session_state.edit_vol_sons
                                     },
                                     "questions": st.session_state.edit_questions
                                 }
@@ -548,7 +566,9 @@ if mode == "👨‍🏫 Espace Professeur":
                                 "video": st.session_state.edit_quiz_video,
                                 "musique": st.session_state.edit_musique,
                                 "son_good": st.session_state.edit_son_good,
-                                "son_bad": st.session_state.edit_son_bad
+                                "son_bad": st.session_state.edit_son_bad,
+                                "volume_musique": st.session_state.edit_vol_musique,
+                                "volume_sons": st.session_state.edit_vol_sons
                             },
                             "questions": st.session_state.edit_questions
                         }
@@ -614,7 +634,9 @@ if mode == "👨‍🏫 Espace Professeur":
                             "video": st.session_state.edit_quiz_video,
                             "musique": st.session_state.edit_musique,
                             "son_good": st.session_state.edit_son_good,
-                            "son_bad": st.session_state.edit_son_bad
+                            "son_bad": st.session_state.edit_son_bad,
+                            "volume_musique": st.session_state.edit_vol_musique,
+                            "volume_sons": st.session_state.edit_vol_sons
                         },
                         "questions": st.session_state.edit_questions
                     }

@@ -530,7 +530,7 @@ if mode == "👨‍🏫 Espace Professeur":
             drag_drop_html = f"""
             <style>
                 .drag-container {{ display: flex; flex-direction: column; gap: 6px; font-family: sans-serif; margin-bottom: 10px; }}
-                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; align-items: center; transition: background 0.2s; }}
+                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; max-height: 400px; overflow-y: auto; align-items: center; transition: background 0.2s; }}
                 .drag-item:hover {{ background: #e9ecef; border-color: #adb5bd; }}
                 .drag-item:active {{ cursor: grabbing; }}
                 .drag-item.dragging {{ opacity: 0.4; background: #dee2e6; }}

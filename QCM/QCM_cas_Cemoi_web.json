@@ -31,7 +31,10 @@
                     "Une restructuration juridique ou une fusion modifiant le périmètre d'intégration"
                 ],
                 "reponses_correctes": [
-                    "Une augmentation des volumes de ventes physiques ou des quantités écoulées, Une hausse des prix de vente unitaires des produits ou services, Une évolution favorable du taux de change pour les activités à l'international, Une restructuration juridique ou une fusion modifiant le périmètre d'intégration"
+                    "Une augmentation des volumes de ventes physiques ou des quantités écoulées",
+                    "Une hausse des prix de vente unitaires des produits ou services",
+                    "Une évolution favorable du taux de change pour les activités à l'international",
+                    "Une restructuration juridique ou une fusion modifiant le périmètre d'intégration"
                 ]
             },
             "explication": "Le chiffre d'affaires progresse par le volume, les prix, le change ou des modifications de périmètre (fusion).",

@@ -87,50 +87,49 @@ def supprimer_fichier_github(chemin_relatif):
     except Exception as e:
         print(f"Erreur suppression GitHub: {e}")
 
-# --- FONCTIONS AUDIO ROBUSTES ---
-def get_base64_audio(chemin):
-    if os.path.exists(chemin):
+# --- FONCTIONS AUDIO ROBUSTES (BASÉES SUR LA VERSION DE SAUVEGARDE) ---
+def jouer_musique_fond(chemin, volume=0.5):
+    """Joue la musique de fond en continu sans la redémarrer et gère son volume dédié[cite: 3]."""
+    if chemin and os.path.exists(chemin):
         ext = chemin.strip().lower().split('.')[-1]
         mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
-        mime = mime_map.get(ext, 'audio/mpeg')
-        with open(chemin, "rb") as f:
-            data = base64.b64encode(f.read()).decode("utf-8")
-        return f"data:{mime};base64,{data}"
-    return None
-
-def jouer_musique_fond_robuste(chemin, volume=0.5):
-    if chemin and os.path.exists(chemin):
-        b64 = get_base64_audio(chemin)
-        if b64:
-            st.markdown(f"""
-            <audio id="bg_audio" autoplay loop style="display:none;">
-                <source src="{b64}" type="audio/mpeg">
-            </audio>
-            <script>
-                const audio = document.getElementById('bg_audio');
-                if (audio) {{
-                    audio.volume = {volume};
-                    audio.play().catch(e => console.log("Autoplay bloqué par le navigateur:", e));
+        mime_type = mime_map.get(ext, 'audio/mpeg')
+        
+        if 'music_active_path' not in st.session_state or st.session_state.music_active_path != chemin:
+            st.session_state.music_active_path = chemin
+            st.audio(chemin, format=mime_type, autoplay=True, loop=True)
+        
+        st.markdown(f"""
+        <script>
+            setTimeout(() => {{
+                const audios = document.querySelectorAll('audio');
+                if (audios.length > 0) {{
+                    audios[0].volume = {volume};
                 }}
-            </script>
-            """, unsafe_allow_html=True)
+            }}, 100);
+        </script>
+        """, unsafe_allow_html=True)
 
 def jouer_effet_sonore(chemin, volume=0.8):
+    """Joue un effet sonore (bonne/mauvaise réponse) et règle son volume sans toucher à la musique[cite: 3]."""
     if chemin and os.path.exists(chemin):
-        b64 = get_base64_audio(chemin)
-        if b64:
-            components.html(f"""
-            <audio autoplay style="display:none;">
-                <source src="{b64}" type="audio/mpeg">
-            </audio>
-            <script>
-                const sfx = document.currentScript.previousElementSibling;
-                if (sfx) {{
+        ext = chemin.strip().lower().split('.')[-1]
+        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
+        mime_type = mime_map.get(ext, 'audio/mpeg')
+        
+        st.audio(chemin, format=mime_type, autoplay=True, loop=False)
+        
+        st.markdown(f"""
+        <script>
+            setTimeout(() => {{
+                const audios = document.querySelectorAll('audio');
+                if (audios.length > 0) {{
+                    const sfx = audios[audios.length - 1];
                     sfx.volume = {volume};
-                    sfx.play().catch(e => console.log("SFX error:", e));
                 }}
-            </script>
-            """, height=0)
+            }}, 100);
+        </script>
+        """, unsafe_allow_html=True)
 
 # --- EXPORT TABLEUR COMPATIBLE EXCEL ---
 def generer_csv_session(sess_data):
@@ -170,6 +169,8 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.answered = False
         st.session_state.last_result = None
+        if 'music_active_path' in st.session_state:
+            del st.session_state.music_active_path
 
 default_mode_idx = 1 if url_session else 0
 
@@ -409,13 +410,13 @@ if mode == "👨‍🏫 Espace Professeur":
                 except Exception:
                     pass
 
-        # Curseurs de volume hors du formulaire pour un fonctionnement interactif instantané
+        # Curseurs de volume hors du formulaire
         st.markdown("### 🔊 Réglage des Volumes Audio")
         col_v1, col_v2 = st.columns(2)
         with col_v1:
-            st.session_state.edit_vol_musique = st.slider("Volume musique de fond", 0.0, 1.0, value=float(st.session_state.edit_vol_musique), step=0.1)
+            st.session_state.edit_vol_musique = st.slider("Volume musique de fond", 0.0, 1.0, value=float(st.session_state.edit_vol_musique), step=0.05)
         with col_v2:
-            st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.1)
+            st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.05)
 
         # Formulaire des Paramètres Généraux
         with st.form("form_edition_qcm"):
@@ -708,7 +709,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
             else:
                 musique_path = quiz_info.get('musique')
                 if status_sess == "started" and musique_path and os.path.exists(musique_path):
-                    jouer_musique_fond_robuste(musique_path, vol_musique)
+                    jouer_musique_fond(musique_path, vol_musique)
 
                 @st.fragment(run_every=2)
                 def rendu_session_etudiant():
@@ -965,7 +966,7 @@ else:
         else:
             musique_path = quiz_info.get('musique')
             if musique_path and os.path.exists(musique_path):
-                jouer_musique_fond_robuste(musique_path, vol_musique)
+                jouer_musique_fond(musique_path, vol_musique)
 
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]

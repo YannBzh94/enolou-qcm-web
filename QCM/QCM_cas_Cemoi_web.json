@@ -232,15 +232,22 @@
             "donnees": {
                 "options": [
                     "Par la constatation d'un produit financier exceptionnel lié aux gains de change.",
-                    "Par l'enregistrement d'une provision réglementée pour hausse des prix d'un montant de 19 millions d'euros.",
                     "Par l'annulation pure et simple des stocks de fèves de cacao au bilan.",
-                    "Par le versement d'une subvention publique d'équilibre pour couvrir l'intégralité du déficit."
+                    "Par le versement d'une subvention publique d'équilibre pour couvrir l'intégralité du déficit.",
+                    "Par l'enregistrement d'une provision réglementée pour hausse des prix d'un montant de 19 millions d'euros."
                 ],
                 "reponses_correctes": [
                     "Par l'enregistrement d'une provision réglementée pour hausse des prix d'un montant de 19 millions d'euros."
                 ]
             },
-            "explication": "Cémoi a mobilisé une provision réglementée de 19 millions d'euros pour faire face à la flambée du cours du cacao."
+            "explication": "Cémoi a mobilisé une provision réglementée de 19 millions d'euros pour faire face à la flambée du cours du cacao.",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "",
+                "video": ""
+            }
         },
         {
             "id": 11,

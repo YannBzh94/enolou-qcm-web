@@ -277,34 +277,6 @@
                 "image": "docs/02.1 qui est ce - Ennoncé.jpg",
                 "video": ""
             }
-        },
-        {
-            "id": 13,
-            "consigne": "Question 3 : A qui appartient les comptes de la colonne 2 ?",
-            "type": "qcm",
-            "difficulte": "Moyen",
-            "points": 10,
-            "tag": "Général",
-            "timer_secondes": 30,
-            "donnees": {
-                "options": [
-                    "e - 1 jour sur 2 travail temporaire",
-                    "c - e-strawberry Agence de pub",
-                    "b - Perseus Luxe",
-                    "a - Buy Buy distributeur généraliste"
-                ],
-                "reponses_correctes": [
-                    "a - Buy Buy distributeur généraliste"
-                ]
-            },
-            "explication": "",
-            "document_texte": "",
-            "document_image_a4": "",
-            "document_appui": "",
-            "media": {
-                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
-                "video": ""
-            }
         }
     ]
 }

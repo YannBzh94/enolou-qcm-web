@@ -183,10 +183,23 @@ def generer_csv_session(sess_data):
     df = pd.DataFrame(summary_data)
     return df.to_csv(index=False, sep=';', encoding='utf-8-sig').encode('utf-8-sig')
 
-# --- GESTION DES URLS ---
+# --- GESTION DES URLS & REORDER DRAG-AND-DROP ---
 query_params = st.query_params
 url_qcm = query_params.get("qcm")
 url_session = query_params.get("session")
+
+if "reorder" in query_params and 'edit_questions' in st.session_state and st.session_state.edit_questions:
+    try:
+        new_order_indices = [int(x) for x in query_params["reorder"].split(",")]
+        if len(new_order_indices) == len(st.session_state.edit_questions):
+            st.session_state.edit_questions = [st.session_state.edit_questions[i] for i in new_order_indices]
+            for r_idx, rq in enumerate(st.session_state.edit_questions):
+                rq["id"] = r_idx + 1
+            enregistrer_qcm_actuel()
+            st.query_params.pop("reorder", None)
+            st.rerun()
+    except Exception as e:
+        print(f"Erreur reorder D&D: {e}")
 
 if url_qcm and 'qcm_selectionne' not in st.session_state:
     chemin_complet = os.path.join(DOSSIER_QUIZZES, url_qcm)
@@ -490,33 +503,83 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.success("Paramètres généraux enregistrés avec succès !")
 
         st.markdown("---")
-        st.subheader("📋 Gestion, Ré-ordonnancement et Modification des Questions")
+        st.subheader("📋 Ré-ordonnancement par Glisser-Déposer (Drag & Drop)")
         
         if st.session_state.edit_questions:
+            st.info("💡 Glissez et déposez les questions ci-dessous pour réorganiser leur ordre instantanément.")
+            
+            # Génération du composant Drag-and-Drop en HTML/JS
+            questions_list_html = ""
             for idx, q in enumerate(st.session_state.edit_questions):
-                with st.expander(f"Question {idx+1} : {q.get('consigne', '')[:60]}... (Points: {q.get('points', 10)})"):
-                    
-                    # Boutons de ré-ordonnancement rapide (Monter / Descendre)
-                    col_ord1, col_ord2, col_ord_spacer = st.columns([1, 1, 4])
-                    with col_ord1:
-                        if idx > 0:
-                            if st.button("⬆️ Monter", key=f"up_{idx}"):
-                                st.session_state.edit_questions[idx], st.session_state.edit_questions[idx-1] = st.session_state.edit_questions[idx-1], st.session_state.edit_questions[idx]
-                                for r_idx, rq in enumerate(st.session_state.edit_questions):
-                                    rq["id"] = r_idx + 1
-                                enregistrer_qcm_actuel()
-                                st.success("Question remontée !")
-                                st.rerun()
-                    with col_ord2:
-                        if idx < len(st.session_state.edit_questions) - 1:
-                            if st.button("⬇️ Descendre", key=f"down_{idx}"):
-                                st.session_state.edit_questions[idx], st.session_state.edit_questions[idx+1] = st.session_state.edit_questions[idx+1], st.session_state.edit_questions[idx]
-                                for r_idx, rq in enumerate(st.session_state.edit_questions):
-                                    rq["id"] = r_idx + 1
-                                enregistrer_qcm_actuel()
-                                st.success("Question descendue !")
-                                st.rerun()
+                consigne_court = q.get('consigne', f'Question {idx+1}')[:65].replace('"', '&quot;')
+                questions_list_html += f'<div class="drag-item" draggable="true" data-index="{idx}"><span style="font-weight:bold; color:#ff4b4b; margin-right:10px;">☰ Q{idx+1}</span> {consigne_court}...</div>'
 
+            drag_drop_html = f"""
+            <style>
+                .drag-container {{ display: flex; flex-direction: column; gap: 6px; font-family: sans-serif; margin-bottom: 10px; }}
+                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; align-items: center; transition: background 0.2s; }}
+                .drag-item:hover {{ background: #e9ecef; border-color: #adb5bd; }}
+                .drag-item:active {{ cursor: grabbing; }}
+                .drag-item.dragging {{ opacity: 0.4; background: #dee2e6; }}
+            </style>
+            <div class="drag-container" id="dragContainer">
+                {questions_list_html}
+            </div>
+            <script>
+                const container = document.getElementById('dragContainer');
+                let draggedItem = null;
+
+                container.querySelectorAll('.drag-item').forEach(item => {{
+                    item.addEventListener('dragstart', function(e) {{
+                        draggedItem = this;
+                        setTimeout(() => this.classList.add('dragging'), 0);
+                    }});
+                    item.addEventListener('dragend', function(e) {{
+                        this.classList.remove('dragging');
+                        draggedItem = null;
+                        updateOrder();
+                    }});
+                    item.addEventListener('dragover', function(e) {{
+                        e.preventDefault();
+                        const afterElement = getDragAfterElement(container, e.clientY);
+                        const currentItem = document.querySelector('.dragging');
+                        if (afterElement == null) {{
+                            container.appendChild(currentItem);
+                        }} else {{
+                            container.insertBefore(currentItem, afterElement);
+                        }}
+                    }});
+                }});
+
+                function getDragAfterElement(container, y) {{
+                    const draggableElements = [...container.querySelectorAll('.drag-item:not(.dragging)')];
+                    return draggableElements.reduce((closest, child) => {{
+                        const box = child.getBoundingClientRect();
+                        const offset = y - box.top - box.height / 2;
+                        if (offset < 0 && offset > closest.offset) {{
+                            return {{ offset: offset, element: child }};
+                        }} else {{
+                            return closest;
+                        }}
+                    }}, {{ offset: Number.NEGATIVE_INFINITY }}).element;
+                }}
+
+                function updateOrder() {{
+                    const items = [...container.querySelectorAll('.drag-item')];
+                    const order = items.map(item => item.getAttribute('data-index'));
+                    const currentUrl = window.parent.location.href.split('?')[0];
+                    const searchParams = new URLSearchParams(window.parent.location.search);
+                    searchParams.set('reorder', order.join(','));
+                    window.parent.location.href = currentUrl + '?' + searchParams.toString();
+                }}
+            </script>
+            """
+            components.html(drag_drop_html, height=min(450, max(120, len(st.session_state.edit_questions) * 45 + 30)))
+
+            st.markdown("---")
+            st.subheader("📝 Modification et Édition des Questions")
+            for idx, q in enumerate(st.session_state.edit_questions):
+                with st.expander(f"Modifier la Question {idx+1} : {q.get('consigne', '')[:50]}... (Points: {q.get('points', 10)})"):
                     with st.form(f"form_mod_q_{idx}"):
                         mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{idx}")
                         col_p1, col_p2 = st.columns(2)

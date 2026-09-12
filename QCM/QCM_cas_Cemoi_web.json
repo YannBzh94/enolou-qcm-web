@@ -8,8 +8,8 @@
         "musique": "musique/Nikos Spiliotis - Love Waltz.mp3",
         "son_good": "sons/sons_good/bonnereponse003.mp3",
         "son_bad": "sons/sons_bad/Docteur maboul.wav",
-        "volume_musique": 0.15,
-        "volume_sons": 0.75
+        "volume_musique": 0.1,
+        "volume_sons": 0.25
     },
     "questions": [
         {

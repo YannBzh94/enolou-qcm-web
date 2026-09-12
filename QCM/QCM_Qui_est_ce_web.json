@@ -50,8 +50,8 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Une entreprise qui n'a pas d'activité industrielle ou commerciale propre, détenant des participations dans d'autres sociétés.",
                     "Une entreprise de distribution avec un BFR fortement négatif.",
+                    "Une entreprise qui n'a pas d'activité industrielle ou commerciale propre, détenant des participations dans d'autres sociétés.",
                     "Un groupe industriel lourd avec d'importantes immobilisations corporelles.",
                     "Une entreprise de services à forte intensité de main-d'œuvre."
                 ],
@@ -99,10 +99,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants.",
                     "Parce qu'il ne détient aucun stock de marchandises et ne fait aucun crédit aux clients.",
                     "Parce qu'il réalise exclusivement des ventes en ligne avec paiement différé à 120 jours.",
-                    "Parce que ses immobilisations nettes représentent plus de 90% du total de son actif."
+                    "Parce que ses immobilisations nettes représentent plus de 90% du total de son actif.",
+                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants."
                 ],
                 "reponses_correctes": [
                     "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants."
@@ -197,8 +197,8 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "En raison du vieillissement obligatoire de l'alcool en chais, qui nécessite de stocker les Eaux-de-vie pendant de nombreuses années avant commercialisation.",
                     "À cause d'une mévente chronique des bouteilles sur les marchés internationaux.",
+                    "En raison du vieillissement obligatoire de l'alcool en chais, qui nécessite de stocker les Eaux-de-vie pendant de nombreuses années avant commercialisation.",
                     "Parce que l'entreprise achète toutes ses matières premières en une seule fois au 31 décembre.",
                     "En raison d'une erreur d'évaluation comptable des stocks en prix de vente au lieu du prix de revient."
                 ],
@@ -246,10 +246,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions).",
                     "Un poste clients extrêmement lourd avec des crédits accordés sur plusieurs mois.",
                     "Un besoin en fonds de roulement structurellement positif et très élevé.",
-                    "Une marge brute de 100% sans aucun investissement matériel."
+                    "Une marge brute de 100% sans aucun investissement matériel.",
+                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions).",
                 ],
                 "reponses_correctes": [
                     "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions)."
@@ -345,9 +345,9 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et une marge d'excédent brut d'exploitation (EBE) très élevée.",
                     "Un stock considérable de matières premières et de produits finis.",
                     "Un poste clients extrêmement élevé avec des délais de paiement très longs.",
+                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et un EBE très élevée.",
                     "Une marge brute de 100% sans aucun actif immobilisé."
                 ],
                 "reponses_correctes": [
@@ -394,9 +394,9 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du chiffre d'affaires par rapport à l'actif économique relativement faible.",
-                    "Une absence totale d'immobilisations et un BFR négatif record.",
                     "Un stock de produits finis représentant des années de production à forte valeur unitaire.",
+                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du CA par rapport à l'actif économique relativement faible.",
+                    "Une absence totale d'immobilisations et un BFR négatif record.",
                     "Une marge nette supérieure à 50% du chiffre d'affaires."
                 ],
                 "reponses_correctes": [
@@ -443,10 +443,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis.",
                     "Des stocks de personnel très importants évalués au bilan.",
                     "Des immobilisations corporelles lourdes constituées d'usines et de machines de production.",
-                    "Un taux d'endettement à long terme supérieur à 80% du total passif."
+                    "Un taux d'endettement à long terme supérieur à 80% du total passif.",
+                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis."
                 ],
                 "reponses_correctes": [
                     "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis."

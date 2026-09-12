@@ -221,6 +221,34 @@
                 ]
             },
             "explication": "Le négociant sidérurgique stocke des aciers et métaux lourds, ce qui alourdit son poste de stocks et augmente la durée de rotation par rapport à un distributeur alimentaire ou généraliste."
+        },
+        {
+            "id": 11,
+            "consigne": "A qui appartient les comptes de la colonne 1 ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Général",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "j - Pur Feu Producteur de cognac",
+                    "i - Shark Invest société holding",
+                    "c - e-strawberry Agence de pub",
+                    "b - Perseus Luxe"
+                ],
+                "reponses_correctes": [
+                    "i - Shark Invest société holding"
+                ]
+            },
+            "explication": "",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
+                "video": ""
+            }
         }
     ]
 }

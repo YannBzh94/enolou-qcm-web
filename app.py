@@ -35,6 +35,37 @@ if not os.path.exists(DOSSIER_QUIZZES):
 if not os.path.exists(DOSSIER_SESSIONS):
     os.makedirs(DOSSIER_SESSIONS)
 
+# --- INITIALISATION ROBUSTE DE SESSION STATE ---
+default_session_states = {
+    'qcm_selectionne': None,
+    'banque': {"quiz_info": {}, "questions": []},
+    'current_idx': 0,
+    'score_total': 0,
+    'max_points': 0,
+    'quiz_started': False,
+    'answered': False,
+    'last_result': None,
+    'declencher_son': None,
+    'collec_student_name': "",
+    'edit_nom_fichier': "nouveau_qcm.json",
+    'edit_titre': "",
+    'edit_desc': "",
+    'edit_quiz_image': "",
+    'edit_document_appui': "",
+    'edit_quiz_video': "",
+    'edit_musique': "",
+    'edit_son_good': "",
+    'edit_son_bad': "",
+    'edit_vol_musique': 0.5,
+    'edit_vol_sons': 0.8,
+    'edit_questions': [],
+    'dernier_choix_edition': None
+}
+
+for key, val in default_session_states.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
+
 # --- FONCTION DE SYNCHRONISATION AUTOMATIQUE AVEC GITHUB ---
 def sauvegarder_fichier_github(chemin_relatif, contenu_str):
     try:
@@ -188,7 +219,7 @@ query_params = st.query_params
 url_qcm = query_params.get("qcm")
 url_session = query_params.get("session")
 
-if "reorder" in query_params and 'edit_questions' in st.session_state and st.session_state.edit_questions:
+if "reorder" in query_params and st.session_state.get('edit_questions'):
     try:
         new_order_indices = [int(x) for x in query_params["reorder"].split(",")]
         if len(new_order_indices) == len(st.session_state.edit_questions):
@@ -201,20 +232,23 @@ if "reorder" in query_params and 'edit_questions' in st.session_state and st.ses
     except Exception as e:
         print(f"Erreur reorder D&D: {e}")
 
-if url_qcm and 'qcm_selectionne' not in st.session_state:
+if url_qcm and not st.session_state.qcm_selectionne:
     chemin_complet = os.path.join(DOSSIER_QUIZZES, url_qcm)
     if os.path.exists(chemin_complet):
-        with open(chemin_complet, 'r', encoding='utf-8') as f:
-            banque = json.load(f)
-        st.session_state.banque = banque if isinstance(banque, dict) else {"quiz_info": {}, "questions": banque}
-        st.session_state.qcm_selectionne = url_qcm
-        st.session_state.current_idx = 0
-        st.session_state.score_total = 0
-        st.session_state.max_points = 0
-        st.session_state.quiz_started = False
-        st.session_state.answered = False
-        st.session_state.last_result = None
-        st.session_state.declencher_son = None
+        try:
+            with open(chemin_complet, 'r', encoding='utf-8') as f:
+                banque = json.load(f)
+            st.session_state.banque = banque if isinstance(banque, dict) else {"quiz_info": {}, "questions": banque}
+            st.session_state.qcm_selectionne = url_qcm
+            st.session_state.current_idx = 0
+            st.session_state.score_total = 0
+            st.session_state.max_points = 0
+            st.session_state.quiz_started = False
+            st.session_state.answered = False
+            st.session_state.last_result = None
+            st.session_state.declencher_son = None
+        except Exception as e:
+            print(f"Erreur chargement QCM URL: {e}")
 
 default_mode_idx = 1 if url_session else 0
 
@@ -224,13 +258,6 @@ mode = st.sidebar.radio("Choisissez le mode :", [
     "🌐 Espace Collectif (Rejoindre une session)", 
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
-
-if 'qcm_selectionne' not in st.session_state:
-    st.session_state.qcm_selectionne = None
-
-if 'declencher_son' not in st.session_state:
-    st.session_state.declencher_son = None
-    st.session_state.chemin_son_actuel = None
 
 # ==========================================
 # 👨‍🏫 ESPACE PROFESSEUR
@@ -259,30 +286,33 @@ if mode == "👨‍🏫 Espace Professeur":
             if st.button("🚀 Créer une nouvelle session", type="primary"):
                 session_id = f"sess_{int(time.time())}"
                 chemin_qcm = os.path.join(DOSSIER_QUIZZES, qcm_collectif)
-                with open(chemin_qcm, 'r', encoding='utf-8') as f:
-                    qcm_data = json.load(f)
-                
-                mode_interne = "battle" if "Battle" in type_mode_collec else "examen"
-                session_data = {
-                    "session_id": session_id,
-                    "qcm_filename": qcm_collectif,
-                    "mode": mode_interne,
-                    "status": "waiting",
-                    "current_global_idx": 0,
-                    "question_start_time": 0,
-                    "in_transition": False,
-                    "transition_start_time": 0,
-                    "quiz_info": qcm_data.get("quiz_info", {}),
-                    "questions": qcm_data.get("questions", []),
-                    "students": {}
-                }
-                
-                with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
-                    json.dump(session_data, f, ensure_ascii=False, indent=4)
-                
-                st.session_state["sel_session_piloter"] = session_id
-                st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
-                st.rerun()
+                try:
+                    with open(chemin_qcm, 'r', encoding='utf-8') as f:
+                        qcm_data = json.load(f)
+                    
+                    mode_interne = "battle" if "Battle" in type_mode_collec else "examen"
+                    session_data = {
+                        "session_id": session_id,
+                        "qcm_filename": qcm_collectif,
+                        "mode": mode_interne,
+                        "status": "waiting",
+                        "current_global_idx": 0,
+                        "question_start_time": 0,
+                        "in_transition": False,
+                        "transition_start_time": 0,
+                        "quiz_info": qcm_data.get("quiz_info", {}),
+                        "questions": qcm_data.get("questions", []),
+                        "students": {}
+                    }
+                    
+                    with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
+                        json.dump(session_data, f, ensure_ascii=False, indent=4)
+                    
+                    st.session_state["sel_session_piloter"] = session_id
+                    st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Erreur lors de la création de la session: {e}")
 
             sessions_existantes = [f.replace('.json', '') for f in os.listdir(DOSSIER_SESSIONS) if f.endswith('.json')]
             if sessions_existantes:
@@ -296,82 +326,85 @@ if mode == "👨‍🏫 Espace Professeur":
                 
                 chemin_sess = os.path.join(DOSSIER_SESSIONS, f"{sess_choisie}.json")
                 if os.path.exists(chemin_sess):
-                    with open(chemin_sess, 'r', encoding='utf-8') as f:
-                        s_data = json.load(f)
-                    
-                    url_session_complete = f"{domaine_app.strip('/')}/?session={sess_choisie}"
-                    st.write(f"**Lien étudiants :** [{url_session_complete}]({url_session_complete})")
-                    
-                    img_qr = qrcode.make(url_session_complete)
-                    buffered = BytesIO()
-                    img_qr.save(buffered, format="PNG")
-                    st.image(buffered.getvalue(), caption=f"QR Code Session : {s_data['quiz_info'].get('titre', '')}", width=200)
+                    try:
+                        with open(chemin_sess, 'r', encoding='utf-8') as f:
+                            s_data = json.load(f)
+                        
+                        url_session_complete = f"{domaine_app.strip('/')}/?session={sess_choisie}"
+                        st.write(f"**Lien étudiants :** [{url_session_complete}]({url_session_complete})")
+                        
+                        img_qr = qrcode.make(url_session_complete)
+                        buffered = BytesIO()
+                        img_qr.save(buffered, format="PNG")
+                        st.image(buffered.getvalue(), caption=f"QR Code Session : {s_data['quiz_info'].get('titre', '')}", width=200)
 
-                    st.markdown(f"**Mode :** `{s_data['mode'].upper()}` | **Statut :** `{s_data['status'].upper()}`")
-                    
-                    etudiants = s_data.get("students", {})
-                    st.markdown(f"#### 👥 Étudiants inscrits ({len(etudiants)}) :")
-                    if etudiants:
-                        st.success(", ".join(etudiants.keys()))
-                    else:
-                        st.info("En attente d'inscription...")
+                        st.markdown(f"**Mode :** `{s_data['mode'].upper()}` | **Statut :** `{s_data['status'].upper()}`")
+                        
+                        etudiants = s_data.get("students", {})
+                        st.markdown(f"#### 👥 Étudiants inscrits ({len(etudiants)}) :")
+                        if etudiants:
+                            st.success(", ".join(etudiants.keys()))
+                        else:
+                            st.info("En attente d'inscription...")
 
-                    col_btn1, col_btn2, col_btn3 = st.columns(3)
-                    with col_btn1:
-                        if st.button("🔄 Rafraîchir l'écran"):
-                            st.rerun()
-                    with col_btn2:
-                        if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session", type="primary"):
-                            s_data["status"] = "started"
-                            s_data["current_global_idx"] = 0
-                            s_data["question_start_time"] = time.time()
-                            s_data["in_transition"] = False
-                            with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                json.dump(s_data, f, ensure_ascii=False, indent=4)
-                            st.success("Session lancée !")
-                            st.rerun()
-                    with col_btn3:
-                        if s_data["status"] == "started" and st.button("⏹️ Clôturer la session"):
-                            s_data["status"] = "ended"
-                            with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                json.dump(s_data, f, ensure_ascii=False, indent=4)
-                            st.rerun()
+                        col_btn1, col_btn2, col_btn3 = st.columns(3)
+                        with col_btn1:
+                            if st.button("🔄 Rafraîchir l'écran"):
+                                st.rerun()
+                        with col_btn2:
+                            if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session", type="primary"):
+                                s_data["status"] = "started"
+                                s_data["current_global_idx"] = 0
+                                s_data["question_start_time"] = time.time()
+                                s_data["in_transition"] = False
+                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                    json.dump(s_data, f, ensure_ascii=False, indent=4)
+                                st.success("Session lancée !")
+                                st.rerun()
+                        with col_btn3:
+                            if s_data["status"] == "started" and st.button("⏹️ Clôturer la session"):
+                                s_data["status"] = "ended"
+                                with open(chemin_sess, 'w', encoding='utf-8') as f:
+                                    json.dump(s_data, f, ensure_ascii=False, indent=4)
+                                st.rerun()
 
-                    if s_data["status"] in ["started", "ended"]:
-                        csv_data = generer_csv_session(s_data)
-                        st.download_button(
-                            label="📥 Télécharger le rapport des notes (.csv compatible Excel)",
-                            data=csv_data,
-                            file_name=f"resultats_{sess_choisie}.csv",
-                            mime="text/csv"
-                        )
+                        if s_data["status"] in ["started", "ended"]:
+                            csv_data = generer_csv_session(s_data)
+                            st.download_button(
+                                label="📥 Télécharger le rapport des notes (.csv compatible Excel)",
+                                data=csv_data,
+                                file_name=f"resultats_{sess_choisie}.csv",
+                                mime="text/csv"
+                            )
 
-                    if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":
-                        finis = [info for info in etudiants.values() if info.get("finished", False) or info.get("score", 0) >= 0]
-                        if finis:
-                            finis_tries = sorted(finis, key=lambda x: x["score"], reverse=True)
-                            st.markdown("### 🏆 Podium Battle en direct")
-                            for idx, f_info in enumerate(finis_tries[:3]):
-                                medailles = ["🥇", "🥈", "🥉"]
-                                st.markdown(f"**{medailles[idx]} {f_info['name']}** : {f_info['score']} pts")
-                            if len(finis_tries) >= 4:
-                                dernier = finis_tries[-1]
-                                st.markdown(f"**🥄 Cuillère de bois :** {dernier['name']} ({dernier['score']} pts)")
+                        if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":
+                            finis = [info for info in etudiants.values() if info.get("finished", False) or info.get("score", 0) >= 0]
+                            if finis:
+                                finis_tries = sorted(finis, key=lambda x: x["score"], reverse=True)
+                                st.markdown("### 🏆 Podium Battle en direct")
+                                for idx, f_info in enumerate(finis_tries[:3]):
+                                    medailles = ["🥇", "🥈", "🥉"]
+                                    st.markdown(f"**{medailles[idx]} {f_info['name']}** : {f_info['score']} pts")
+                                if len(finis_tries) >= 4:
+                                    dernier = finis_tries[-1]
+                                    st.markdown(f"**🥄 Cuillère de bois :** {dernier['name']} ({dernier['score']} pts)")
 
-                    st.markdown("---")
-                    col_del1, col_del2 = st.columns(2)
-                    with col_del1:
-                        if st.button(f"🗑️ Supprimer cette session ({sess_choisie})"):
-                            os.remove(chemin_sess)
-                            st.success(f"Session {sess_choisie} supprimée.")
-                            st.rerun()
-                    with col_del2:
-                        if st.button("🔥 Purger toutes les sessions"):
-                            for f_s in os.listdir(DOSSIER_SESSIONS):
-                                if f_s.endswith('.json'):
-                                    os.remove(os.path.join(DOSSIER_SESSIONS, f_s))
-                            st.success("Toutes les sessions ont été purgées.")
-                            st.rerun()
+                        st.markdown("---")
+                        col_del1, col_del2 = st.columns(2)
+                        with col_del1:
+                            if st.button(f"🗑️ Supprimer cette session ({sess_choisie})"):
+                                os.remove(chemin_sess)
+                                st.success(f"Session {sess_choisie} supprimée.")
+                                st.rerun()
+                        with col_del2:
+                            if st.button("🔥 Purger toutes les sessions"):
+                                for f_s in os.listdir(DOSSIER_SESSIONS):
+                                    if f_s.endswith('.json'):
+                                        os.remove(os.path.join(DOSSIER_SESSIONS, f_s))
+                                st.success("Toutes les sessions ont été purgées.")
+                                st.rerun()
+                    except Exception as e:
+                        st.error(f"Erreur de lecture de la session: {e}")
         else:
             st.info("Aucun QCM disponible pour lancer une session.")
 
@@ -399,25 +432,6 @@ if mode == "👨‍🏫 Espace Professeur":
                 if st.session_state.get('qcm_selectionne') == choix_edition:
                     st.session_state.qcm_selectionne = None
                 st.rerun()
-
-        keys_defaults = {
-            'edit_nom_fichier': "nouveau_qcm.json",
-            'edit_titre': "",
-            'edit_desc': "",
-            'edit_quiz_image': "",
-            'edit_document_appui': "",
-            'edit_quiz_video': "",
-            'edit_musique': "",
-            'edit_son_good': "",
-            'edit_son_bad': "",
-            'edit_vol_musique': 0.5,
-            'edit_vol_sons': 0.8,
-            'edit_questions': [],
-            'dernier_choix_edition': None
-        }
-        for k, v in keys_defaults.items():
-            if k not in st.session_state:
-                st.session_state[k] = v
 
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
@@ -452,8 +466,8 @@ if mode == "👨‍🏫 Espace Professeur":
                         st.session_state.edit_vol_musique = info.get("volume_musique", 0.5)
                         st.session_state.edit_vol_sons = info.get("volume_sons", 0.8)
                         st.session_state.edit_questions = data.get("questions", [])
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Erreur chargement édition QCM: {e}")
 
         st.markdown("### 🔊 Réglage des Volumes Audio")
         col_v1, col_v2 = st.columns(2)
@@ -508,7 +522,6 @@ if mode == "👨‍🏫 Espace Professeur":
         if st.session_state.edit_questions:
             st.info("💡 Glissez et déposez les questions ci-dessous pour réorganiser leur ordre instantanément.")
             
-            # Génération du composant Drag-and-Drop en HTML/JS
             questions_list_html = ""
             for idx, q in enumerate(st.session_state.edit_questions):
                 consigne_court = q.get('consigne', f'Question {idx+1}')[:65].replace('"', '&quot;')
@@ -715,8 +728,12 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
         if not os.path.exists(chemin_sess):
             st.error("❌ Session introuvable ou terminée.")
         else:
-            with open(chemin_sess, 'r', encoding='utf-8') as f:
-                sess_data = json.load(f)
+            try:
+                with open(chemin_sess, 'r', encoding='utf-8') as f:
+                    sess_data = json.load(f)
+            except Exception as e:
+                st.error(f"Erreur de lecture de la session: {e}")
+                st.stop()
 
             quiz_info = sess_data.get("quiz_info", {})
             mode_sess = sess_data.get("mode", "battle")
@@ -726,9 +743,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
             vol_sons = quiz_info.get('volume_sons', 0.8)
 
             st.subheader(f"Session : {titre_quiz} (Mode : {mode_sess.upper()})")
-
-            if 'collec_student_name' not in st.session_state:
-                st.session_state.collec_student_name = ""
 
             if not st.session_state.collec_student_name:
                 st.markdown("### ✍️ Inscription à la session")
@@ -773,8 +787,11 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                     if not os.path.exists(chemin_sess):
                         st.error("Session supprimée.")
                         return
-                    with open(chemin_sess, 'r', encoding='utf-8') as f:
-                        current_sess_data = json.load(f)
+                    try:
+                        with open(chemin_sess, 'r', encoding='utf-8') as f:
+                            current_sess_data = json.load(f)
+                    except Exception:
+                        return
                     
                     cur_status = current_sess_data.get("status", "waiting")
                     s_info = current_sess_data["students"].get(st.session_state.collec_student_name, {})
@@ -1097,7 +1114,7 @@ else:
 
                     st.caption(f"🏆 Valeur : {points} pts")
                     
-                    temps_ecoule = int(time.time() - st.session_state.question_start_time)
+                    temps_ecoule = int(time.time() - st.session_state.get("question_start_time", time.time()))
                     temps_restant_initial = max(0, timer_sec - temps_ecoule)
                     
                     components.html(f"""

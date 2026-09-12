@@ -102,7 +102,6 @@ def fichier_en_base64(chemin):
     return ""
 
 def rendre_moteur_audio(musique_path, vol_musique, son_declenche=None, son_path=None, vol_sons=0.8):
-    """Gère la musique de fond et les effets sonores de manière synchrone et sans coupure."""
     b64_music = fichier_en_base64(musique_path) if musique_path else ""
     b64_sfx = fichier_en_base64(son_path) if (son_declenche and son_path) else ""
     
@@ -149,9 +148,10 @@ def generer_csv_session(sess_data):
             "Statut": "Terminé" if info.get("finished", False) else "En cours"
         })
         for ans in info.get("answers_detail", []):
+            rep_str = ", ".join(ans.get('reponse', [])) if isinstance(ans.get('reponse'), list) else str(ans.get('reponse'))
             summary_data.append({
                 "Étudiant": f"   -> Q{ans.get('q_num')}: {ans.get('consigne')}",
-                "Score Total": f"Réponse: {ans.get('reponse')}",
+                "Score Total": f"Réponse: {rep_str}",
                 "Score Max": f"Correct: {'Oui' if ans.get('correct') else 'Non'}",
                 "Statut": f"Pts: {ans.get('points')}"
             })
@@ -500,7 +500,16 @@ if mode == "👨‍🏫 Espace Professeur":
                         mod_options_input = st.text_area("Options (une par ligne) :", value="\n".join(options_actuelles), key=f"mod_opt_{idx}")
                         
                         reponses_actuelles = q.get('donnees', {}).get('reponses_correctes', [])
-                        mod_reponse_correcte = st.text_input("Réponse exacte (doit correspondre à l'une des options) :", value=reponses_actuelles[0] if reponses_actuelles else "", key=f"mod_rep_{idx}")
+                        
+                        # Sélection multiple des réponses correctes
+                        options_temp_list = [o.strip() for o in mod_options_input.split("\n") if o.strip()]
+                        def_reps = [r for r in reponses_actuelles if r in options_temp_list]
+                        mod_reponses_correctes = st.multiselect(
+                            "Réponses correctes (cochez une ou plusieurs options) :", 
+                            options=options_temp_list, 
+                            default=def_reps, 
+                            key=f"mod_rep_{idx}"
+                        )
                         
                         mod_explication = st.text_area("Explication :", value=q.get('explication', ''), key=f"mod_exp_{idx}")
                         
@@ -513,7 +522,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         submitted_mod = st.form_submit_button("💾 Mettre à jour cette question")
                         if submitted_mod:
                             options_liste = [opt.strip() for opt in mod_options_input.split("\n") if opt.strip()]
-                            if mod_consigne and options_liste and mod_reponse_correcte:
+                            if mod_consigne and options_liste and mod_reponses_correctes:
                                 st.session_state.edit_questions[idx] = {
                                     "id": idx + 1,
                                     "consigne": mod_consigne,
@@ -524,7 +533,7 @@ if mode == "👨‍🏫 Espace Professeur":
                                     "timer_secondes": mod_timer,
                                     "donnees": {
                                         "options": options_liste,
-                                        "reponses_correctes": [mod_reponse_correcte]
+                                        "reponses_correctes": mod_reponses_correctes
                                     },
                                     "explication": mod_explication,
                                     "document_texte": q.get("document_texte", ""),
@@ -594,7 +603,9 @@ if mode == "👨‍🏫 Espace Professeur":
                 timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
             
             options_input = st.text_area("Options (une par ligne) :")
-            reponse_correcte = st.text_input("Réponse exacte :")
+            options_ajout_list = [o.strip() for o in options_input.split("\n") if o.strip()]
+            
+            add_reponses_correctes = st.multiselect("Réponses correctes (cochez une ou plusieurs options) :", options=options_ajout_list)
             explication_q = st.text_area("Explication :")
             
             col_m_add_img, col_m_add_vid = st.columns(2)
@@ -606,7 +617,7 @@ if mode == "👨‍🏫 Espace Professeur":
             submitted_q = st.form_submit_button("➕ Ajouter la question au QCM")
             if submitted_q:
                 options_liste = [opt.strip() for opt in options_input.split("\n") if opt.strip()]
-                if consigne_q and options_liste and reponse_correcte:
+                if consigne_q and options_liste and add_reponses_correctes:
                     nouv_q = {
                         "id": len(st.session_state.edit_questions) + 1,
                         "consigne": consigne_q,
@@ -617,7 +628,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         "timer_secondes": timer_q,
                         "donnees": {
                             "options": options_liste,
-                            "reponses_correctes": [reponse_correcte]
+                            "reponses_correctes": add_reponses_correctes
                         },
                         "explication": explication_q,
                         "document_texte": "",
@@ -785,6 +796,8 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     points = q.get('points', 10)
                                     timer_sec = q.get('timer_secondes', 30)
                                     options = q.get('donnees', {}).get('options', [])
+                                    reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                                    est_multiple = len(reponses_correctes) > 1
 
                                     q_start = current_sess_data.get("question_start_time", time.time())
                                     elapsed_q = int(time.time() - q_start)
@@ -807,6 +820,13 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                         st.rerun()
 
                                     st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
+                                    
+                                    # Indication visuelle unique / multiple
+                                    if est_multiple:
+                                        st.markdown("🔷 **Type :** *Plusieurs réponses possibles (Cochez toutes les options correctes)*")
+                                    else:
+                                        st.markdown("🔸 **Type :** *Réponse unique (Choisissez une seule option)*")
+
                                     st.markdown(f"""
                                     <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">
                                         ⏱️ Temps restant : {temps_restant} secondes
@@ -815,15 +835,24 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
 
                                     st.markdown(f"**{consigne}**")
                                     already_answered = s_info.get("answered_current", False)
-                                    choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
+
+                                    if est_multiple:
+                                        choix = []
+                                        for opt_idx, opt in enumerate(options):
+                                            if st.checkbox(opt, key=f"battle_m_{current_global_idx}_{opt_idx}", disabled=already_answered):
+                                                choix.append(opt)
+                                    else:
+                                        choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
 
                                     if not already_answered:
                                         if st.button("Valider la réponse", type="primary"):
-                                            if choix is None:
-                                                st.warning("Veuillez sélectionner une option.")
+                                            if not choix:
+                                                st.warning("Veuillez sélectionner au moins une option.")
                                             else:
-                                                reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
-                                                est_correct = choix in reponses_correctes
+                                                if est_multiple:
+                                                    est_correct = set(choix) == set(reponses_correctes)
+                                                else:
+                                                    est_correct = choix in reponses_correctes
                                                 
                                                 points_gagnes = 0
                                                 if est_correct:
@@ -872,19 +901,37 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 points = q.get('points', 10)
                                 timer_sec = q.get('timer_secondes', 30)
                                 options = q.get('donnees', {}).get('options', [])
+                                reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                                est_multiple = len(reponses_correctes) > 1
 
                                 st.subheader(f"Question {current_idx_student + 1} sur {len(questions_list)} (Mode Examen)")
+                                
+                                if est_multiple:
+                                    st.markdown("🔷 **Type :** *Plusieurs réponses possibles (Cochez toutes les options correctes)*")
+                                else:
+                                    st.markdown("🔸 **Type :** *Réponse unique (Choisissez une seule option)*")
+
                                 st.markdown(f"**{consigne}**")
 
-                                choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=s_info.get("answered", False))
+                                already_answered = s_info.get("answered", False)
+                                if est_multiple:
+                                    choix = []
+                                    for opt_idx, opt in enumerate(options):
+                                        if st.checkbox(opt, key=f"ex_m_{current_idx_student}_{opt_idx}", disabled=already_answered):
+                                            choix.append(opt)
+                                else:
+                                    choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=already_answered)
 
-                                if not s_info.get("answered", False):
+                                if not already_answered:
                                     if st.button("Valider la réponse", type="primary"):
-                                        if choix is None:
-                                            st.warning("Veuillez sélectionner une option.")
+                                        if not choix:
+                                            st.warning("Veuillez sélectionner au moins une option.")
                                         else:
-                                            reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
-                                            est_correct = choix in reponses_correctes
+                                            if est_multiple:
+                                                est_correct = set(choix) == set(reponses_correctes)
+                                            else:
+                                                est_correct = choix in reponses_correctes
+                                            
                                             points_gagnes = points if est_correct else 0
 
                                             if est_correct:
@@ -986,6 +1033,8 @@ else:
                 points = q.get('points', 10)
                 timer_sec = q.get('timer_secondes', 30)
                 options = q.get('donnees', {}).get('options', [])
+                reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
+                est_multiple = len(reponses_correctes) > 1
                 
                 col_docs, col_qcm = st.columns([3, 2], gap="large")
 
@@ -1005,6 +1054,13 @@ else:
 
                 with col_qcm:
                     st.subheader(f"Question {q_id + 1} sur {len(questions)}")
+                    
+                    # Indication visuelle unique / multiple
+                    if est_multiple:
+                        st.markdown("🔷 **Type :** *Plusieurs réponses possibles (Cochez toutes les options correctes)*")
+                    else:
+                        st.markdown("🔸 **Type :** *Réponse unique (Choisissez une seule option)*")
+
                     st.caption(f"🏆 Valeur : {points} pts")
                     
                     temps_ecoule = int(time.time() - st.session_state.question_start_time)
@@ -1031,16 +1087,27 @@ else:
                     """, height=55)
 
                     st.markdown(f"**{consigne}**")
-                    choix = st.radio("Sélectionnez votre réponse :", options, key=f"radio_q_{q_id}", index=None, disabled=st.session_state.answered)
+
+                    if est_multiple:
+                        choix = []
+                        for opt_idx, opt in enumerate(options):
+                            if st.checkbox(opt, key=f"solo_m_{q_id}_{opt_idx}", disabled=st.session_state.answered):
+                                choix.append(opt)
+                    else:
+                        choix = st.radio("Sélectionnez votre réponse :", options, key=f"radio_q_{q_id}", index=None, disabled=st.session_state.answered)
 
                     if not st.session_state.answered:
                         if st.button("Valider la réponse", type="primary"):
-                            if choix is None:
-                                st.warning("Veuillez sélectionner une option.")
+                            if not choix:
+                                st.warning("Veuillez sélectionner au moins une option.")
                             else:
                                 elapsed = time.time() - st.session_state.question_start_time
-                                reponses_correctes = q.get('donnees', {}).get('reponses_correctes', [])
-                                est_correct = choix in reponses_correctes
+                                
+                                if est_multiple:
+                                    est_correct = set(choix) == set(reponses_correctes)
+                                else:
+                                    est_correct = choix in reponses_correctes
+
                                 points_gagnes = 0
 
                                 if est_correct:

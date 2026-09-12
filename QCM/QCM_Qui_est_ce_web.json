@@ -224,34 +224,6 @@
         },
         {
             "id": 11,
-            "consigne": "A qui appartient les comptes de la colonne 1 ?",
-            "type": "qcm",
-            "difficulte": "Moyen",
-            "points": 10,
-            "tag": "Général",
-            "timer_secondes": 30,
-            "donnees": {
-                "options": [
-                    "j - Pur Feu Producteur de cognac",
-                    "i - Shark Invest société holding",
-                    "c - e-strawberry Agence de pub",
-                    "b - Perseus Luxe"
-                ],
-                "reponses_correctes": [
-                    "i - Shark Invest société holding"
-                ]
-            },
-            "explication": "",
-            "document_texte": "",
-            "document_image_a4": "",
-            "document_appui": "",
-            "media": {
-                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
-                "video": ""
-            }
-        },
-        {
-            "id": 12,
             "consigne": "Question 3 : A qui appartient les comptes de la colonne 2 ?",
             "type": "qcm",
             "difficulte": "Moyen",
@@ -267,6 +239,34 @@
                 ],
                 "reponses_correctes": [
                     "a - Buy Buy distributeur généraliste"
+                ]
+            },
+            "explication": "",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
+                "video": ""
+            }
+        },
+        {
+            "id": 12,
+            "consigne": "A qui appartient les comptes de la colonne 1 ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Général",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "j - Pur Feu Producteur de cognac",
+                    "i - Shark Invest société holding",
+                    "c - e-strawberry Agence de pub",
+                    "b - Perseus Luxe"
+                ],
+                "reponses_correctes": [
+                    "i - Shark Invest société holding"
                 ]
             },
             "explication": "",

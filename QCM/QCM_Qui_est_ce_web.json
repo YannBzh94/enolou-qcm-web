@@ -1,0 +1,226 @@
+{
+    "quiz_info": {
+        "titre": "Cours AnaFi - Cas 'Qui est-ce ?' (Profils sectoriels et structures financières)",
+        "description": "QCM basé sur l'exercice d'analyse financière mettant en relation les bilans, comptes de résultat et secteurs d'activité.",
+        "image": "",
+        "document_appui": "",
+        "video": "",
+        "musique": "",
+        "son_good": "",
+        "son_bad": "",
+        "volume_musique": 0.1,
+        "volume_sons": 0.25
+    },
+    "questions": [
+        {
+            "id": 1,
+            "consigne": "Qu'est-ce qu'une société holding d'un point de vue financier, ce qui explique l'absence de besoin en fonds de roulement (BFR) (cas numéro 1) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Société holding",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Une entreprise qui n'a pas d'activité industrielle ou commerciale propre, détenant des participations dans d'autres sociétés.",
+                    "Une entreprise de distribution avec un BFR fortement négatif.",
+                    "Un groupe industriel lourd avec d'importantes immobilisations corporelles.",
+                    "Une entreprise de services à forte intensité de main-d'œuvre."
+                ],
+                "reponses_correctes": [
+                    "Une entreprise qui n'a pas d'activité industrielle ou commerciale propre, détenant des participations dans d'autres sociétés."
+                ]
+            },
+            "explication": "Une société holding n'a pas d'activité propre d'exploitation, ce qui se traduit par l'absence d'exploitation directe et donc pas de BFR opérationnel significatif."
+        },
+        {
+            "id": 2,
+            "consigne": "Quelles sont les caractéristiques bilancielles et de résultat typiques d'un opérateur de satellites (cas numéro 7) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Opérateur de satellites",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et une marge d'excédent brut d'exploitation (EBE) très élevée.",
+                    "Un stock considérable de matières premières et de produits finis.",
+                    "Un poste clients extrêmement élevé avec des délais de paiement très longs.",
+                    "Une marge brute de 100% sans aucun actif immobilisé."
+                ],
+                "reponses_correctes": [
+                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et une marge d'excédent brut d'exploitation (EBE) très élevée."
+                ]
+            },
+            "explication": "Un opérateur de satellites possède des immobilisations lourdes et peu de frais d'exploitation directs, d'où un EBE élevé."
+        },
+        {
+            "id": 3,
+            "consigne": "Pourquoi un distributeur généraliste (cas numéro 2 / A) présente-t-il généralement un BFR négatif ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Distributeur généraliste",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants.",
+                    "Parce qu'il ne détient aucun stock de marchandises et ne fait aucun crédit aux clients.",
+                    "Parce qu'il réalise exclusivement des ventes en ligne avec paiement différé à 120 jours.",
+                    "Parce que ses immobilisations nettes représentent plus de 90% du total de son actif."
+                ],
+                "reponses_correctes": [
+                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants."
+                ]
+            },
+            "explication": "Le distributeur encaisse l'argent de ses clients immédiatement (ou très rapidement) alors qu'il règle ses fournisseurs à terme, ce qui génère un BFR négatif."
+        },
+        {
+            "id": 4,
+            "consigne": "Qu'est-ce qui caractérise la structure financière d'une entreprise de luxe (cas numéro 3 / B) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Secteur du Luxe",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Un niveau de résultat d'exploitation élevé, des ventes en direct aux clients finaux (poste clients faible), et des immobilisations importantes liées aux acquisitions de marques.",
+                    "Une marge brute quasi nulle et des délais de paiement fournisseurs très courts.",
+                    "Un endettement bancaire massif à court terme et une absence totale d'actifs incorporels.",
+                    "Une rotation de l'actif économique extrêmement rapide et des marges unitaires très faibles."
+                ],
+                "reponses_correctes": [
+                    "Un niveau de résultat d'exploitation élevé, des ventes en direct aux clients finaux (poste clients faible), et des immobilisations importantes liées aux acquisitions de marques."
+                ]
+            },
+            "explication": "Le secteur du luxe combine de fortes marges, des acquisitions de marques (immobilisations incorporelles) et une vente directe réduisant le crédit client."
+        },
+        {
+            "id": 5,
+            "consigne": "Quelles sont les particularités financières d'un groupe de travail temporaire (intérim) (cas numéro 9 / E) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Travail temporaire",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis.",
+                    "Des stocks de personnel très importants évalués au bilan.",
+                    "Des immobilisations corporelles lourdes constituées d'usines et de machines de production.",
+                    "Un taux d'endettement à long terme supérieur à 80% du total passif."
+                ],
+                "reponses_correctes": [
+                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis."
+                ]
+            },
+            "explication": "L'intérim vend du service en régie : il n'a pas de stocks de marchandises ni d'achats physiques de biens, d'où une marge brute de 100%."
+        },
+        {
+            "id": 6,
+            "consigne": "Pourquoi un producteur de cognac (cas numéro 4) affiche-t-il des stocks représentant un nombre très élevé de jours de chiffre d'affaires (ou de prix de revient) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Producteur de Cognac",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "En raison du vieillissement obligatoire de l'alcool en chais, qui nécessite de stocker les Eaux-de-vie pendant de nombreuses années avant commercialisation.",
+                    "À cause d'une mévente chronique des bouteilles sur les marchés internationaux.",
+                    "Parce que l'entreprise achète toutes ses matières premières en une seule fois au 31 décembre.",
+                    "En raison d'une erreur d'évaluation comptable des stocks en prix de vente au lieu du prix de revient."
+                ],
+                "reponses_correctes": [
+                    "En raison du vieillissement obligatoire de l'alcool en chais, qui nécessite de stocker les Eaux-de-vie pendant de nombreuses années avant commercialisation."
+                ]
+            },
+            "explication": "La fabrication du cognac exige un temps de vieillissement prolongé (plusieurs années), ce qui immobilise des stocks considérables dans les chais."
+        },
+        {
+            "id": 7,
+            "consigne": "Comment se caractérise le profil financier d'une compagnie aérienne (cas numéro 5 / G) ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Compagnie aérienne",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions).",
+                    "Un poste clients extrêmement lourd avec des crédits accordés sur plusieurs mois.",
+                    "Un besoin en fonds de roulement structurellement positif et très élevé.",
+                    "Une marge brute de 100% sans aucun investissement matériel."
+                ],
+                "reponses_correctes": [
+                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions)."
+                ]
+            },
+            "explication": "Les compagnies aériennes encaissent les billets avant le voyage, ont des actifs immobilisés considérables (avions) et un niveau de stock minime (carburant, catering)."
+        },
+        {
+            "id": 8,
+            "consigne": "Qu'est-ce qui distingue un groupe cimentier (cas numéro 8 / D) dans son analyse financière ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Groupe cimentier",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du chiffre d'affaires par rapport à l'actif économique relativement faible.",
+                    "Une absence totale d'immobilisations et un BFR négatif record.",
+                    "Un stock de produits finis représentant des années de production à forte valeur unitaire.",
+                    "Une marge nette supérieure à 50% du chiffre d'affaires."
+                ],
+                "reponses_correctes": [
+                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du chiffre d'affaires par rapport à l'actif économique relativement faible."
+                ]
+            },
+            "explication": "L'industrie du ciment est lourde en capitaux fixes (usines) avec des produits de faible valeur unitaire au kilo, impliquant une faible rotation de l'actif économique."
+        },
+        {
+            "id": 9,
+            "consigne": "Quel rôle économique et financier joue une agence de publicité (cas numéro 6 / C) qui explique sa structure de bilan particulière ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Agence de publicité",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Elle collecte des fonds auprès de ses clients (annonceurs) et les reverse après un certain délai aux médias diffuseurs, agissant un peu comme une centrale de paiements.",
+                    "Elle fabrique et stocke des supports publicitaires physiques en grande quantité.",
+                    "Elle investit l'essentiel de ses capitaux dans des flottes de véhicules utilitaires et des entrepôts.",
+                    "Elle finance ses activités exclusivement par des emprunts obligataires à long terme."
+                ],
+                "reponses_correctes": [
+                    "Elle collecte des fonds auprès de ses clients (annonceurs) et les reverse après un certain délai aux médias diffuseurs, agissant un peu comme une centrale de paiements."
+                ]
+            },
+            "explication": "L'agence de publicité gère des flux de trésorerie intermédiaires entre annonceurs et régies publicitaires, ce qui lui confère un profil de gestion de trésorerie spécifique."
+        },
+        {
+            "id": 10,
+            "consigne": "En quoi le profil d'un négociant en produits sidérurgiques (cas numéro 10 / H) diffère-t-il de celui d'un distributeur généraliste ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Négociant sidérurgique",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "Il s'agit également d'une activité de négoce/distribution, mais avec des stocks de métaux et aciers beaucoup plus importants qui tournent beaucoup moins vite.",
+                    "Il n'a aucun stock et présente un BFR strictement nul.",
+                    "Il réalise 100% de sa marge brute sans aucun achat de marchandises.",
+                    "Il détient des usines de production sidérurgique classées en immobilisations corporelles."
+                ],
+                "reponses_correctes": [
+                    "Il s'agit également d'une activité de négoce/distribution, mais avec des stocks de métaux et aciers beaucoup plus importants qui tournent beaucoup moins vite."
+                ]
+            },
+            "explication": "Le négociant sidérurgique stocke des aciers et métaux lourds, ce qui alourdit son poste de stocks et augmente la durée de rotation par rapport à un distributeur alimentaire ou généraliste."
+        }
+    ]
+}

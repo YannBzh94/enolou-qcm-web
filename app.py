@@ -529,8 +529,19 @@ if mode == "👨‍🏫 Espace Professeur":
 
             drag_drop_html = f"""
             <style>
-                .drag-container {{ display: flex; flex-direction: column; gap: 6px; font-family: sans-serif; margin-bottom: 10px; }}
-                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; max-height: 400px; overflow-y: auto; align-items: center; transition: background 0.2s; }}
+                body {{ background-color: transparent; margin: 0; padding: 0; }}
+                .drag-container {{ 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 6px; 
+                    font-family: sans-serif; 
+                    max-height: 360px; 
+                    overflow-y: auto; 
+                    overflow-x: hidden;
+                    padding-right: 8px; 
+                    box-sizing: border-box;
+                }}
+                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; align-items: center; transition: background 0.2s; }}
                 .drag-item:hover {{ background: #e9ecef; border-color: #adb5bd; }}
                 .drag-item:active {{ cursor: grabbing; }}
                 .drag-item.dragging {{ opacity: 0.4; background: #dee2e6; }}
@@ -587,7 +598,7 @@ if mode == "👨‍🏫 Espace Professeur":
                 }}
             </script>
             """
-            components.html(drag_drop_html, height=min(450, max(120, len(st.session_state.edit_questions) * 45 + 30)))
+            components.html(drag_drop_html, height=400)
 
             st.markdown("---")
             st.subheader("📝 Modification et Édition des Questions")

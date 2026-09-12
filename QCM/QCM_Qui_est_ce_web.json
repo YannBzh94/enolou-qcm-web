@@ -277,6 +277,34 @@
                 "image": "docs/02.1 qui est ce - Ennoncé.jpg",
                 "video": ""
             }
+        },
+        {
+            "id": 13,
+            "consigne": "A qui appartient les comptes de la colonne 3 ?",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 10,
+            "tag": "Général",
+            "timer_secondes": 30,
+            "donnees": {
+                "options": [
+                    "j - Pur Feu Producteur de cognac",
+                    "g - Arabair",
+                    "b - Perseus Luxe",
+                    "c - e-strawberry Agence de pub"
+                ],
+                "reponses_correctes": [
+                    "b - Perseus Luxe"
+                ]
+            },
+            "explication": "",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
+                "video": ""
+            }
         }
     ]
 }

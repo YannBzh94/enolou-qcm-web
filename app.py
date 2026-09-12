@@ -87,6 +87,31 @@ def supprimer_fichier_github(chemin_relatif):
     except Exception as e:
         print(f"Erreur suppression GitHub: {e}")
 
+# --- UTILITAIRE DE SAUVEGARDE GLOBALE DU QCM ---
+def enregistrer_qcm_actuel():
+    donnees_globales = {
+        "quiz_info": {
+            "titre": st.session_state.edit_titre,
+            "description": st.session_state.edit_desc,
+            "image": st.session_state.edit_quiz_image,
+            "document_appui": st.session_state.edit_document_appui,
+            "video": st.session_state.edit_quiz_video,
+            "musique": st.session_state.edit_musique,
+            "son_good": st.session_state.edit_son_good,
+            "son_bad": st.session_state.edit_son_bad,
+            "volume_musique": st.session_state.edit_vol_musique,
+            "volume_sons": st.session_state.edit_vol_sons
+        },
+        "questions": st.session_state.edit_questions
+    }
+    contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
+    nom_fich = st.session_state.edit_nom_fichier
+    if not nom_fich.endswith(".json"):
+        nom_fich += ".json"
+    with open(os.path.join(DOSSIER_QUIZZES, nom_fich), "w", encoding="utf-8") as f:
+        f.write(contenu_json)
+    sauvegarder_fichier_github(f"QCM/{nom_fich}", contenu_json)
+
 # --- MOTEUR AUDIO UNIFIÉ (BASE64 & JS PERSISTANT) ---
 def fichier_en_base64(chemin):
     if chemin and os.path.exists(chemin):
@@ -461,33 +486,37 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.edit_son_good = son_good
                 st.session_state.edit_son_bad = son_bad
 
-                donnees_globales = {
-                    "quiz_info": {
-                        "titre": titre_quiz,
-                        "description": desc_quiz,
-                        "image": quiz_image,
-                        "document_appui": document_appui,
-                        "video": quiz_video,
-                        "musique": musique_path,
-                        "son_good": son_good,
-                        "son_bad": son_bad,
-                        "volume_musique": st.session_state.edit_vol_musique,
-                        "volume_sons": st.session_state.edit_vol_sons
-                    },
-                    "questions": st.session_state.edit_questions
-                }
-                contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
-                with open(os.path.join(DOSSIER_QUIZZES, nom_fichier), "w", encoding="utf-8") as f:
-                    f.write(contenu_json)
-                sauvegarder_fichier_github(f"QCM/{nom_fichier}", contenu_json)
+                enregistrer_qcm_actuel()
                 st.success("Paramètres généraux enregistrés avec succès !")
 
         st.markdown("---")
-        st.subheader("📋 Gestion et Modification des Questions")
+        st.subheader("📋 Gestion, Ré-ordonnancement et Modification des Questions")
         
         if st.session_state.edit_questions:
             for idx, q in enumerate(st.session_state.edit_questions):
                 with st.expander(f"Question {idx+1} : {q.get('consigne', '')[:60]}... (Points: {q.get('points', 10)})"):
+                    
+                    # Boutons de ré-ordonnancement rapide (Monter / Descendre)
+                    col_ord1, col_ord2, col_ord_spacer = st.columns([1, 1, 4])
+                    with col_ord1:
+                        if idx > 0:
+                            if st.button("⬆️ Monter", key=f"up_{idx}"):
+                                st.session_state.edit_questions[idx], st.session_state.edit_questions[idx-1] = st.session_state.edit_questions[idx-1], st.session_state.edit_questions[idx]
+                                for r_idx, rq in enumerate(st.session_state.edit_questions):
+                                    rq["id"] = r_idx + 1
+                                enregistrer_qcm_actuel()
+                                st.success("Question remontée !")
+                                st.rerun()
+                    with col_ord2:
+                        if idx < len(st.session_state.edit_questions) - 1:
+                            if st.button("⬇️ Descendre", key=f"down_{idx}"):
+                                st.session_state.edit_questions[idx], st.session_state.edit_questions[idx+1] = st.session_state.edit_questions[idx+1], st.session_state.edit_questions[idx]
+                                for r_idx, rq in enumerate(st.session_state.edit_questions):
+                                    rq["id"] = r_idx + 1
+                                enregistrer_qcm_actuel()
+                                st.success("Question descendue !")
+                                st.rerun()
+
                     with st.form(f"form_mod_q_{idx}"):
                         mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{idx}")
                         col_p1, col_p2 = st.columns(2)
@@ -500,8 +529,6 @@ if mode == "👨‍🏫 Espace Professeur":
                         mod_options_input = st.text_area("Options (une par ligne) :", value="\n".join(options_actuelles), key=f"mod_opt_{idx}")
                         
                         reponses_actuelles = q.get('donnees', {}).get('reponses_correctes', [])
-                        
-                        # Sélection multiple des réponses correctes
                         options_temp_list = [o.strip() for o in mod_options_input.split("\n") if o.strip()]
                         def_reps = [r for r in reponses_actuelles if r in options_temp_list]
                         mod_reponses_correctes = st.multiselect(
@@ -544,25 +571,7 @@ if mode == "👨‍🏫 Espace Professeur":
                                         "video": mod_vid
                                     }
                                 }
-                                donnees_globales = {
-                                    "quiz_info": {
-                                        "titre": st.session_state.edit_titre,
-                                        "description": st.session_state.edit_desc,
-                                        "image": st.session_state.edit_quiz_image,
-                                        "document_appui": st.session_state.edit_document_appui,
-                                        "video": st.session_state.edit_quiz_video,
-                                        "musique": st.session_state.edit_musique,
-                                        "son_good": st.session_state.edit_son_good,
-                                        "son_bad": st.session_state.edit_son_bad,
-                                        "volume_musique": st.session_state.edit_vol_musique,
-                                        "volume_sons": st.session_state.edit_vol_sons
-                                    },
-                                    "questions": st.session_state.edit_questions
-                                }
-                                contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
-                                with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
-                                    f.write(contenu_json)
-                                sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
+                                enregistrer_qcm_actuel()
                                 st.success(f"Question {idx+1} mise à jour avec succès !")
                                 st.rerun()
 
@@ -570,25 +579,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         st.session_state.edit_questions.pop(idx)
                         for r_idx, rq in enumerate(st.session_state.edit_questions):
                             rq["id"] = r_idx + 1
-                        donnees_globales = {
-                            "quiz_info": {
-                                "titre": st.session_state.edit_titre,
-                                "description": st.session_state.edit_desc,
-                                "image": st.session_state.edit_quiz_image,
-                                "document_appui": st.session_state.edit_document_appui,
-                                "video": st.session_state.edit_quiz_video,
-                                "musique": st.session_state.edit_musique,
-                                "son_good": st.session_state.edit_son_good,
-                                "son_bad": st.session_state.edit_son_bad,
-                                "volume_musique": st.session_state.edit_vol_musique,
-                                "volume_sons": st.session_state.edit_vol_sons
-                            },
-                            "questions": st.session_state.edit_questions
-                        }
-                        contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
-                        with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
-                            f.write(contenu_json)
-                        sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
+                        enregistrer_qcm_actuel()
                         st.success("Question supprimée !")
                         st.rerun()
 
@@ -640,25 +631,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         }
                     }
                     st.session_state.edit_questions.append(nouv_q)
-                    donnees_globales = {
-                        "quiz_info": {
-                            "titre": st.session_state.edit_titre,
-                            "description": st.session_state.edit_desc,
-                            "image": st.session_state.edit_quiz_image,
-                            "document_appui": st.session_state.edit_document_appui,
-                            "video": st.session_state.edit_quiz_video,
-                            "musique": st.session_state.edit_musique,
-                            "son_good": st.session_state.edit_son_good,
-                            "son_bad": st.session_state.edit_son_bad,
-                            "volume_musique": st.session_state.edit_vol_musique,
-                            "volume_sons": st.session_state.edit_vol_sons
-                        },
-                        "questions": st.session_state.edit_questions
-                    }
-                    contenu_json = json.dumps(donnees_globales, ensure_ascii=False, indent=4)
-                    with open(os.path.join(DOSSIER_QUIZZES, st.session_state.edit_nom_fichier), "w", encoding="utf-8") as f:
-                        f.write(contenu_json)
-                    sauvegarder_fichier_github(f"QCM/{st.session_state.edit_nom_fichier}", contenu_json)
+                    enregistrer_qcm_actuel()
                     st.success("Question ajoutée avec succès !")
                     st.rerun()
 
@@ -821,7 +794,6 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
 
                                     st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
                                     
-                                    # Indication visuelle unique / multiple
                                     if est_multiple:
                                         st.markdown("🔷 **Type :** *Plusieurs réponses possibles (Cochez toutes les options correctes)*")
                                     else:
@@ -1055,7 +1027,6 @@ else:
                 with col_qcm:
                     st.subheader(f"Question {q_id + 1} sur {len(questions)}")
                     
-                    # Indication visuelle unique / multiple
                     if est_multiple:
                         st.markdown("🔷 **Type :** *Plusieurs réponses possibles (Cochez toutes les options correctes)*")
                     else:

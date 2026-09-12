@@ -224,7 +224,7 @@
         },
         {
             "id": 11,
-            "consigne": "Question 3 : A qui appartient les comptes de la colonne 2 ?",
+            "consigne": "A qui appartient les comptes de la colonne 2 ?",
             "type": "qcm",
             "difficulte": "Moyen",
             "points": 10,

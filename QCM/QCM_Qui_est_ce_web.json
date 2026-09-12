@@ -4,7 +4,7 @@
         "description": "QCM basé sur l'exercice d'analyse financière mettant en relation les bilans, comptes de résultat et secteurs d'activité.",
         "image": "docs/Qui-est-ce.jpg",
         "document_appui": "",
-        "video": "",
+        "video": "docs/Qui_est_ce_video_1080p_caption.mp4",
         "musique": "musique/Cjbeards - Shattered Glass.mp3",
         "son_good": "sons/sons_good/bonnereponse002.mp3",
         "son_bad": "sons/sons_bad/Docteur maboul.wav",
@@ -30,7 +30,7 @@
                 "reponses_correctes": [
                     "i - Shark Invest société holding"
                 ]
-            },    
+            },
             "explication": "",
             "document_texte": "",
             "document_image_a4": "",
@@ -50,8 +50,8 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Une entreprise de distribution avec un BFR fortement négatif.",
                     "Une entreprise qui n'a pas d'activité industrielle ou commerciale propre, détenant des participations dans d'autres sociétés.",
+                    "Une entreprise de distribution avec un BFR fortement négatif.",
                     "Un groupe industriel lourd avec d'importantes immobilisations corporelles.",
                     "Une entreprise de services à forte intensité de main-d'œuvre."
                 ],
@@ -99,10 +99,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
+                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants.",
                     "Parce qu'il ne détient aucun stock de marchandises et ne fait aucun crédit aux clients.",
                     "Parce qu'il réalise exclusivement des ventes en ligne avec paiement différé à 120 jours.",
-                    "Parce que ses immobilisations nettes représentent plus de 90% du total de son actif.",
-                    "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants."
+                    "Parce que ses immobilisations nettes représentent plus de 90% du total de son actif."
                 ],
                 "reponses_correctes": [
                     "Parce que les stocks tournent très vite, que les clients paient comptant ou par carte bancaire, tandis que l'entreprise bénéficie de délais fournisseurs importants."
@@ -175,7 +175,7 @@
                     "c - e-strawberry Agence de pub"
                 ],
                 "reponses_correctes": [
-                     "j - Pur Feu Producteur de cognac"
+                    "j - Pur Feu Producteur de cognac"
                 ]
             },
             "explication": "",
@@ -197,8 +197,8 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "À cause d'une mévente chronique des bouteilles sur les marchés internationaux.",
                     "En raison du vieillissement obligatoire de l'alcool en chais, qui nécessite de stocker les Eaux-de-vie pendant de nombreuses années avant commercialisation.",
+                    "À cause d'une mévente chronique des bouteilles sur les marchés internationaux.",
                     "Parce que l'entreprise achète toutes ses matières premières en une seule fois au 31 décembre.",
                     "En raison d'une erreur d'évaluation comptable des stocks en prix de vente au lieu du prix de revient."
                 ],
@@ -246,10 +246,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
+                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions).",
                     "Un poste clients extrêmement lourd avec des crédits accordés sur plusieurs mois.",
                     "Un besoin en fonds de roulement structurellement positif et très élevé.",
-                    "Une marge brute de 100% sans aucun investissement matériel.",
-                    "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions).",
+                    "Une marge brute de 100% sans aucun investissement matériel."
                 ],
                 "reponses_correctes": [
                     "Des clients qui paient le plus souvent en avance (billets d'avion), peu de stocks, et beaucoup d'immobilisations (flotte d'avions)."
@@ -257,7 +257,6 @@
             },
             "explication": "Les compagnies aériennes encaissent les billets avant le voyage, ont des actifs immobilisés considérables (avions) et un niveau de stock minime (carburant, catering)."
         },
-
         {
             "id": 11,
             "consigne": "A qui appartient les comptes de la colonne 6 ?",
@@ -345,9 +344,9 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
+                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et une marge d'excédent brut d'exploitation (EBE) très élevée.",
                     "Un stock considérable de matières premières et de produits finis.",
                     "Un poste clients extrêmement élevé avec des délais de paiement très longs.",
-                    "Des immobilisations très importantes (le satellite en orbite), très peu de stocks, et un EBE très élevée.",
                     "Une marge brute de 100% sans aucun actif immobilisé."
                 ],
                 "reponses_correctes": [
@@ -394,9 +393,9 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
-                    "Un stock de produits finis représentant des années de production à forte valeur unitaire.",
-                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du CA par rapport à l'actif économique relativement faible.",
+                    "Beaucoup d'immobilisations (usines, cimenteries), un endettement conséquent et une rotation du chiffre d'affaires par rapport à l'actif économique relativement faible.",
                     "Une absence totale d'immobilisations et un BFR négatif record.",
+                    "Un stock de produits finis représentant des années de production à forte valeur unitaire.",
                     "Une marge nette supérieure à 50% du chiffre d'affaires."
                 ],
                 "reponses_correctes": [
@@ -404,7 +403,7 @@
                 ]
             },
             "explication": "L'industrie du ciment est lourde en capitaux fixes (usines) avec des produits de faible valeur unitaire au kilo, impliquant une faible rotation de l'actif économique."
-        },        
+        },
         {
             "id": 17,
             "consigne": "A qui appartient les comptes de la colonne 9 ?",
@@ -443,10 +442,10 @@
             "timer_secondes": 30,
             "donnees": {
                 "options": [
+                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis.",
                     "Des stocks de personnel très importants évalués au bilan.",
                     "Des immobilisations corporelles lourdes constituées d'usines et de machines de production.",
-                    "Un taux d'endettement à long terme supérieur à 80% du total passif.",
-                    "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis."
+                    "Un taux d'endettement à long terme supérieur à 80% du total passif."
                 ],
                 "reponses_correctes": [
                     "Une absence de stock, une marge brute apparente de 100% (pas d'achats de matières premières ou marchandises), et de faibles capitaux investis."
@@ -482,7 +481,7 @@
                 "video": ""
             }
         },
-                {
+        {
             "id": 20,
             "consigne": "En quoi le profil d'un négociant en produits sidérurgiques (cas numéro 10 / H) diffère-t-il de celui d'un distributeur généraliste ?",
             "type": "qcm",

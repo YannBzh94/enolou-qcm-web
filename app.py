@@ -117,21 +117,20 @@ def jouer_musique_fond_robuste(chemin, volume=0.5):
 
 def jouer_effet_sonore(chemin, volume=0.8):
     if chemin and os.path.exists(chemin):
-        ext = chemin.strip().lower().split('.')[-1]
-        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
-        mime_type = mime_map.get(ext, 'audio/mpeg')
-        st.audio(chemin, format=mime_type, autoplay=True, loop=False)
-        st.markdown(f"""
-        <script>
-            setTimeout(() => {{
-                const audios = document.querySelectorAll('audio');
-                if (audios.length > 0) {{
-                    const sfx = audios[audios.length - 1];
+        b64 = get_base64_audio(chemin)
+        if b64:
+            components.html(f"""
+            <audio autoplay style="display:none;">
+                <source src="{b64}" type="audio/mpeg">
+            </audio>
+            <script>
+                const sfx = document.currentScript.previousElementSibling;
+                if (sfx) {{
                     sfx.volume = {volume};
+                    sfx.play().catch(e => console.log("SFX error:", e));
                 }}
-            }}, 100);
-        </script>
-        """, unsafe_allow_html=True)
+            </script>
+            """, height=0)
 
 # --- EXPORT TABLEUR COMPATIBLE EXCEL ---
 def generer_csv_session(sess_data):
@@ -355,7 +354,6 @@ if mode == "👨‍🏫 Espace Professeur":
                     st.session_state.qcm_selectionne = None
                 st.rerun()
 
-        # Initialisation sécurisée de toutes les variables de session de l'éditeur (incluant volumes)
         keys_defaults = {
             'edit_nom_fichier': "nouveau_qcm.json",
             'edit_titre': "",
@@ -411,7 +409,15 @@ if mode == "👨‍🏫 Espace Professeur":
                 except Exception:
                     pass
 
-        # Formulaire des Paramètres Généraux (incluant image, PDF, vidéo, sons, musique et curseurs de volume)
+        # Curseurs de volume hors du formulaire pour un fonctionnement interactif instantané
+        st.markdown("### 🔊 Réglage des Volumes Audio")
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            st.session_state.edit_vol_musique = st.slider("Volume musique de fond", 0.0, 1.0, value=float(st.session_state.edit_vol_musique), step=0.1)
+        with col_v2:
+            st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.1)
+
+        # Formulaire des Paramètres Généraux
         with st.form("form_edition_qcm"):
             st.markdown("### ⚙️ Paramètres Généraux du QCM")
             nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
@@ -434,12 +440,6 @@ if mode == "👨‍🏫 Espace Professeur":
             with col_s3:
                 son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
 
-            col_v1, col_v2 = st.columns(2)
-            with col_v1:
-                vol_musique_input = st.slider("Volume musique de fond", 0.0, 1.0, value=float(st.session_state.edit_vol_musique), step=0.1)
-            with col_v2:
-                vol_sons_input = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.1)
-
             submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux")
             if submitted_meta:
                 if not nom_fichier.endswith(".json"):
@@ -454,8 +454,6 @@ if mode == "👨‍🏫 Espace Professeur":
                 st.session_state.edit_musique = musique_path
                 st.session_state.edit_son_good = son_good
                 st.session_state.edit_son_bad = son_bad
-                st.session_state.edit_vol_musique = vol_musique_input
-                st.session_state.edit_vol_sons = vol_sons_input
 
                 donnees_globales = {
                     "quiz_info": {
@@ -467,8 +465,8 @@ if mode == "👨‍🏫 Espace Professeur":
                         "musique": musique_path,
                         "son_good": son_good,
                         "son_bad": son_bad,
-                        "volume_musique": vol_musique_input,
-                        "volume_sons": vol_sons_input
+                        "volume_musique": st.session_state.edit_vol_musique,
+                        "volume_sons": st.session_state.edit_vol_sons
                     },
                     "questions": st.session_state.edit_questions
                 }

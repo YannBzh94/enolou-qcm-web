@@ -2,12 +2,12 @@
     "quiz_info": {
         "titre": "Cours AnaFi - Cas 'Qui est-ce ?' (Profils sectoriels et structures financières)",
         "description": "QCM basé sur l'exercice d'analyse financière mettant en relation les bilans, comptes de résultat et secteurs d'activité.",
-        "image": "",
+        "image": "docs/Qui-est-ce.jpg",
         "document_appui": "",
         "video": "",
-        "musique": "",
-        "son_good": "",
-        "son_bad": "",
+        "musique": "musique/Cjbeards - Shattered Glass.mp3",
+        "son_good": "sons/sons_good/bonnereponse002.mp3",
+        "son_bad": "sons/sons_bad/Docteur maboul.wav",
         "volume_musique": 0.1,
         "volume_sons": 0.25
     },

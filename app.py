@@ -87,53 +87,56 @@ def supprimer_fichier_github(chemin_relatif):
     except Exception as e:
         print(f"Erreur suppression GitHub: {e}")
 
-# --- FONCTIONS AUDIO ROBUSTES (BASE64 & JS) ---
-def jouer_musique_fond(chemin, volume=0.5):
-    """Joue la musique de fond en continu et applique dynamiquement le volume du curseur[cite: 3]."""
-    if chemin and os.path.exists(chemin):
-        ext = chemin.strip().lower().split('.')[-1]
-        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
-        mime_type = mime_map.get(ext, 'audio/mpeg')
-        
-        if 'music_active_path' not in st.session_state or st.session_state.music_active_path != chemin:
-            st.session_state.music_active_path = chemin
-            st.audio(chemin, format=mime_type, autoplay=True, loop=True)
-        
-        st.markdown(f"""
-        <script>
-            function updateMusicVolume() {{
-                const audios = document.querySelectorAll('audio');
-                if (audios.length > 0) {{
-                    audios[0].volume = {float(volume)};
-                }}
-            }}
-            updateMusicVolume();
-            setTimeout(updateMusicVolume, 200);
-            setTimeout(updateMusicVolume, 1000);
-        </script>
-        """, unsafe_allow_html=True)
-
-def jouer_effet_sonore(chemin, volume=0.8):
-    """Joue un effet sonore (bonne/mauvaise réponse) via JavaScript et Base64 avec contrôle du volume[cite: 3]."""
+# --- MOTEUR AUDIO UNIFIÉ (BASE64 & JS PERSISTANT) ---
+def fichier_en_base64(chemin):
     if chemin and os.path.exists(chemin):
         try:
-            with open(chemin, "rb") as f:
-                audio_bytes = f.read()
-            b64_audio = base64.b64encode(audio_bytes).decode()
             ext = chemin.strip().lower().split('.')[-1]
             mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
             mime_type = mime_map.get(ext, 'audio/mpeg')
-            
-            audio_html = f"""
-            <script>
-                const sfx = new Audio("data:{mime_type};base64,{b64_audio}");
-                sfx.volume = {float(volume)};
-                sfx.play().catch(e => console.log("Audio play error:", e));
-            </script>
-            """
-            components.html(audio_html, height=0, width=0)
+            with open(chemin, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode()
+            return f"data:{mime_type};base64,{b64}"
         except Exception as e:
-            print(f"Erreur effet sonore: {e}")
+            print(f"Erreur encodage audio: {e}")
+    return ""
+
+def rendre_moteur_audio(musique_path, vol_musique, son_declenche=None, son_path=None, vol_sons=0.8):
+    """Gère la musique de fond et les effets sonores de manière synchrone et sans coupure."""
+    b64_music = fichier_en_base64(musique_path) if musique_path else ""
+    b64_sfx = fichier_en_base64(son_path) if (son_declenche and son_path) else ""
+    
+    sfx_script = ""
+    if b64_sfx:
+        sfx_script = f"""
+        const sfx = new Audio("{b64_sfx}");
+        sfx.volume = {float(vol_sons)};
+        sfx.play().catch(e => console.log("SFX play error:", e));
+        """
+
+    audio_html = f"""
+    <audio id="persistent-bg-audio" loop style="display:none;"></audio>
+    <script>
+        const audioEl = document.getElementById('persistent-bg-audio');
+        const musicSrc = "{b64_music}";
+        
+        if (audioEl && musicSrc) {{
+            if (audioEl.src !== musicSrc) {{
+                audioEl.src = musicSrc;
+                audioEl.play().catch(e => console.log("Autoplay bloqué:", e));
+            }}
+            audioEl.volume = {float(vol_musique)};
+            if (audioEl.paused) {{
+                audioEl.play().catch(e => console.log("Reprise audio bloquée:", e));
+            }}
+        }} else if (audioEl && !musicSrc) {{
+            audioEl.pause();
+        }}
+
+        {sfx_script}
+    </script>
+    """
+    components.html(audio_html, height=0, width=0)
 
 # --- EXPORT TABLEUR COMPATIBLE EXCEL ---
 def generer_csv_session(sess_data):
@@ -173,8 +176,7 @@ if url_qcm and 'qcm_selectionne' not in st.session_state:
         st.session_state.quiz_started = False
         st.session_state.answered = False
         st.session_state.last_result = None
-        if 'music_active_path' in st.session_state:
-            del st.session_state.music_active_path
+        st.session_state.declencher_son = None
 
 default_mode_idx = 1 if url_session else 0
 
@@ -185,11 +187,12 @@ mode = st.sidebar.radio("Choisissez le mode :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-if mode == "👨‍🎓 Espace Étudiant (Solo)" and 'music_active_path' in st.session_state:
-    del st.session_state.music_active_path
-
 if 'qcm_selectionne' not in st.session_state:
     st.session_state.qcm_selectionne = None
+
+if 'declencher_son' not in st.session_state:
+    st.session_state.declencher_son = None
+    st.session_state.chemin_son_actuel = None
 
 # ==========================================
 # 👨‍🏫 ESPACE PROFESSEUR
@@ -414,7 +417,6 @@ if mode == "👨‍🏫 Espace Professeur":
                 except Exception:
                     pass
 
-        # Curseurs de volume hors du formulaire
         st.markdown("### 🔊 Réglage des Volumes Audio")
         col_v1, col_v2 = st.columns(2)
         with col_v1:
@@ -422,7 +424,6 @@ if mode == "👨‍🏫 Espace Professeur":
         with col_v2:
             st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.05)
 
-        # Formulaire des Paramètres Généraux
         with st.form("form_edition_qcm"):
             st.markdown("### ⚙️ Paramètres Généraux du QCM")
             nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
@@ -712,8 +713,13 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                         st.warning("Veuillez entrer un nom valide.")
             else:
                 musique_path = quiz_info.get('musique')
-                if status_sess == "started" and musique_path and os.path.exists(musique_path):
-                    jouer_musique_fond(musique_path, vol_musique)
+                son_declenche = st.session_state.get("declencher_son")
+                son_path = quiz_info.get('son_good') if son_declenche == "good" else quiz_info.get('son_bad')
+                
+                if status_sess == "started":
+                    rendre_moteur_audio(musique_path, vol_musique, son_declenche, son_path, vol_sons)
+                    if st.session_state.get("declencher_son"):
+                        st.session_state.declencher_son = None
 
                 @st.fragment(run_every=2)
                 def rendu_session_etudiant():
@@ -825,13 +831,11 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                                     points_gagnes = int(points * (0.5 + 0.5 * max(0, ratio_temps)))
                                                     res_msg = f"Bonne réponse rapide ! +{points_gagnes} pts ⚡"
                                                     res_type = "success"
-                                                    if quiz_info.get('son_good'):
-                                                        jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
+                                                    st.session_state.declencher_son = "good"
                                                 else:
                                                     res_msg = "Mauvaise réponse ❌"
                                                     res_type = "error"
-                                                    if quiz_info.get('son_bad'):
-                                                        jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
+                                                    st.session_state.declencher_son = "bad"
 
                                                 s_info["score"] += points_gagnes
                                                 s_info["answered_current"] = True
@@ -885,12 +889,10 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
 
                                             if est_correct:
                                                 s_info["last_result"] = ("success", f"Réponse enregistrée (+{points} pts) ✅")
-                                                if quiz_info.get('son_good'):
-                                                    jouer_effet_sonore(quiz_info.get('son_good'), vol_sons)
+                                                st.session_state.declencher_son = "good"
                                             else:
                                                 s_info["last_result"] = ("error", "Réponse enregistrée ❌")
-                                                if quiz_info.get('son_bad'):
-                                                    jouer_effet_sonore(quiz_info.get('son_bad'), vol_sons)
+                                                st.session_state.declencher_son = "bad"
 
                                             s_info["score"] += points_gagnes
                                             s_info["answered"] = True
@@ -949,6 +951,15 @@ else:
         vol_musique = quiz_info.get('volume_musique', 0.5)
         vol_sons = quiz_info.get('volume_sons', 0.8)
 
+        musique_path = quiz_info.get('musique')
+        son_declenche = st.session_state.get("declencher_son")
+        son_path = quiz_info.get('son_good') if son_declenche == "good" else quiz_info.get('son_bad')
+
+        if st.session_state.quiz_started:
+            rendre_moteur_audio(musique_path, vol_musique, son_declenche, son_path, vol_sons)
+            if st.session_state.get("declencher_son"):
+                st.session_state.declencher_son = None
+
         st.title(f"🎓 {titre}")
 
         if not st.session_state.quiz_started:
@@ -968,10 +979,6 @@ else:
                 st.session_state.question_start_time = time.time()
                 st.rerun()
         else:
-            musique_path = quiz_info.get('musique')
-            if musique_path and os.path.exists(musique_path):
-                jouer_musique_fond(musique_path, vol_musique)
-
             if st.session_state.current_idx < len(questions):
                 q = questions[st.session_state.current_idx]
                 q_id = st.session_state.current_idx
@@ -1039,28 +1046,27 @@ else:
                                 if est_correct:
                                     if elapsed <= timer_sec:
                                         points_gagnes = points
-                                        st.session_state.last_result = ("success", f"Bonne réponse ! +{points} pts 🎉", quiz_info.get('son_good'))
+                                        st.session_state.last_result = ("success", f"Bonne réponse ! +{points} pts 🎉")
                                     else:
                                         points_gagnes = points // 2
-                                        st.session_state.last_result = ("warning", f"Bonne réponse mais hors temps. +{points_gagnes} pts ⏱️", quiz_info.get('son_good'))
+                                        st.session_state.last_result = ("warning", f"Bonne réponse mais hors temps. +{points_gagnes} pts ⏱️")
+                                    st.session_state.declencher_son = "good"
                                 else:
-                                    st.session_state.last_result = ("error", "Mauvaise réponse ❌", quiz_info.get('son_bad'))
+                                    st.session_state.last_result = ("error", "Mauvaise réponse ❌")
+                                    st.session_state.declencher_son = "bad"
 
                                 st.session_state.score_total += points_gagnes
                                 st.session_state.max_points += points
                                 st.session_state.answered = True
                                 st.rerun()
                     else:
-                        res_type, res_msg, son_path = st.session_state.last_result
+                        res_type, res_msg = st.session_state.last_result
                         if res_type == "success":
                             st.success(res_msg)
                         elif res_type == "warning":
                             st.warning(res_msg)
                         else:
                             st.error(res_msg)
-
-                        if son_path and os.path.exists(son_path):
-                            jouer_effet_sonore(son_path, vol_sons)
 
                         explication = q.get('explication', '')
                         if explication:
@@ -1073,8 +1079,6 @@ else:
                             st.session_state.question_start_time = time.time()
                             st.rerun()
             else:
-                if 'music_active_path' in st.session_state:
-                    del st.session_state.music_active_path
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")
@@ -1085,6 +1089,5 @@ else:
                     st.session_state.quiz_started = False
                     st.session_state.answered = False
                     st.session_state.last_result = None
-                    if 'music_active_path' in st.session_state:
-                        del st.session_state.music_active_path
+                    st.session_state.declencher_son = None
                     st.rerun()

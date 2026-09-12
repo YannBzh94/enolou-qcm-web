@@ -87,9 +87,9 @@ def supprimer_fichier_github(chemin_relatif):
     except Exception as e:
         print(f"Erreur suppression GitHub: {e}")
 
-# --- FONCTIONS AUDIO ROBUSTES (BASÉES SUR LA VERSION DE SAUVEGARDE) ---
+# --- FONCTIONS AUDIO ROBUSTES (BASE64 & JS) ---
 def jouer_musique_fond(chemin, volume=0.5):
-    """Joue la musique de fond en continu sans la redémarrer et gère son volume dédié[cite: 3]."""
+    """Joue la musique de fond en continu et applique dynamiquement le volume du curseur[cite: 3]."""
     if chemin and os.path.exists(chemin):
         ext = chemin.strip().lower().split('.')[-1]
         mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
@@ -101,35 +101,39 @@ def jouer_musique_fond(chemin, volume=0.5):
         
         st.markdown(f"""
         <script>
-            setTimeout(() => {{
+            function updateMusicVolume() {{
                 const audios = document.querySelectorAll('audio');
                 if (audios.length > 0) {{
-                    audios[0].volume = {volume};
+                    audios[0].volume = {float(volume)};
                 }}
-            }}, 100);
+            }}
+            updateMusicVolume();
+            setTimeout(updateMusicVolume, 200);
+            setTimeout(updateMusicVolume, 1000);
         </script>
         """, unsafe_allow_html=True)
 
 def jouer_effet_sonore(chemin, volume=0.8):
-    """Joue un effet sonore (bonne/mauvaise réponse) et règle son volume sans toucher à la musique[cite: 3]."""
+    """Joue un effet sonore (bonne/mauvaise réponse) via JavaScript et Base64 avec contrôle du volume[cite: 3]."""
     if chemin and os.path.exists(chemin):
-        ext = chemin.strip().lower().split('.')[-1]
-        mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
-        mime_type = mime_map.get(ext, 'audio/mpeg')
-        
-        st.audio(chemin, format=mime_type, autoplay=True, loop=False)
-        
-        st.markdown(f"""
-        <script>
-            setTimeout(() => {{
-                const audios = document.querySelectorAll('audio');
-                if (audios.length > 0) {{
-                    const sfx = audios[audios.length - 1];
-                    sfx.volume = {volume};
-                }}
-            }}, 100);
-        </script>
-        """, unsafe_allow_html=True)
+        try:
+            with open(chemin, "rb") as f:
+                audio_bytes = f.read()
+            b64_audio = base64.b64encode(audio_bytes).decode()
+            ext = chemin.strip().lower().split('.')[-1]
+            mime_map = {'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4', 'aac': 'audio/aac'}
+            mime_type = mime_map.get(ext, 'audio/mpeg')
+            
+            audio_html = f"""
+            <script>
+                const sfx = new Audio("data:{mime_type};base64,{b64_audio}");
+                sfx.volume = {float(volume)};
+                sfx.play().catch(e => console.log("Audio play error:", e));
+            </script>
+            """
+            components.html(audio_html, height=0, width=0)
+        except Exception as e:
+            print(f"Erreur effet sonore: {e}")
 
 # --- EXPORT TABLEUR COMPATIBLE EXCEL ---
 def generer_csv_session(sess_data):

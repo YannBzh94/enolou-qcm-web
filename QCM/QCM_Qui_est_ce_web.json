@@ -264,7 +264,7 @@
             "difficulte": "Moyen",
             "points": 10,
             "tag": "Général",
-            "timer_secondes": 30,
+            "timer_secondes": 20,
             "donnees": {
                 "options": [
                     "e - 1 jour sur 2 travail temporaire",

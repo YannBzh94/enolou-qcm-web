@@ -501,6 +501,35 @@
                 ]
             },
             "explication": "Le négociant sidérurgique stocke des aciers et métaux lourds, ce qui alourdit son poste de stocks et augmente la durée de rotation par rapport à un distributeur alimentaire ou généraliste."
+        },
+        {
+            "id": 21,
+            "consigne": "Prenez connaissance des comptes que vous avez devant les yeux. \nVous avez 15 minutes maximum pour les associer avec les entreprises que vous voyez affichées. \nQuand vous êtes prêts, répondez à la question : ",
+            "type": "qcm",
+            "difficulte": "Moyen",
+            "points": 1,
+            "tag": "Général",
+            "timer_secondes": 900,
+            "donnees": {
+                "options": [
+                    "J'y vais serein",
+                    "J'y vais en mode panique",
+                    "J'y vais au talent"
+                ],
+                "reponses_correctes": [
+                    "J'y vais serein",
+                    "J'y vais en mode panique",
+                    "J'y vais au talent"
+                ]
+            },
+            "explication": "C'est parti ! Soyez méticuleux  !",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "docs/02.1 qui est ce - Ennoncé.jpg",
+                "video": ""
+            }
         }
     ]
 }

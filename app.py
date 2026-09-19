@@ -22,60 +22,15 @@ modern_ui_styles = """
     [data-testid="stAudio"] { display: none !important; }
     audio { display: none !important; }
 
-    /* Style général et typographie */
     .main {
         background-color: #f8fafc;
     }
     
-    /* Cartes de miniatures QCM */
-    .qcm-miniature-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-        border: 2px solid #e2e8f0;
-        border-radius: 16px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-        position: relative;
-    }
-    .qcm-miniature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 20px -3px rgba(99, 102, 241, 0.15);
-        border-color: #6366f1;
-    }
-    .qcm-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 8px;
-    }
-    .qcm-desc {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin-bottom: 12px;
-        height: 40px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    .qcm-badge {
-        display: inline-block;
-        background: #e0e7ff;
-        color: #4338ca;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        margin-bottom: 12px;
-    }
-
-    /* En-têtes stylés */
     h1, h2, h3 {
         color: #0f172a;
         font-family: 'Inter', sans-serif;
     }
     
-    /* Boutons personnalisés */
     .stButton > button {
         border-radius: 10px;
         font-weight: 600;
@@ -134,7 +89,8 @@ default_session_states = {
     'edit_vol_sons': 0.8,
     'edit_questions': [],
     'dernier_choix_edition': None,
-    'selected_qcm_miniature': None
+    'selected_collec_qcm': "",
+    'selected_edit_qcm': ""
 }
 
 for key, val in default_session_states.items():
@@ -193,7 +149,6 @@ def supprimer_fichier_github(chemin_relatif):
     except Exception as e:
         print(f"Erreur suppression GitHub: {e}")
 
-# --- UTILITAIRE DE SAUVEGARDE GLOBALE DU QCM ---
 def enregistrer_qcm_actuel():
     donnees_globales = {
         "quiz_info": {
@@ -334,6 +289,91 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
+# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ & COLORÉ ---
+def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
+    st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
+    if not fichiers:
+        st.info("Aucun QCM disponible.")
+        return None
+    
+    cols = st.columns(3)
+    choix_retenu = valeur_actuelle
+    
+    for idx, fichier in enumerate(fichiers):
+        chemin = os.path.join(DOSSIER_QUIZZES, fichier)
+        titre = fichier
+        desc = "Pas de description"
+        img = ""
+        nb_q = 0
+        try:
+            with open(chemin, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                info = data.get("quiz_info", {})
+                titre = info.get("titre", fichier)
+                desc = info.get("description", "Quiz interactif Enolou")
+                img = info.get("image", "")
+                nb_q = len(data.get("questions", []))
+        except:
+            pass
+        
+        est_selectionne = (valeur_actuelle == fichier)
+        
+        # Styles de la carte selon qu'elle est sélectionnée ou non
+        card_style = """
+            border: 3px solid #6366f1;
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.25);
+            margin-bottom: 20px;
+        """ if est_selectionne else """
+            border: 2px solid #e2e8f0;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        """
+        
+        with cols[idx % 3]:
+            st.markdown(f'<div style="{card_style}">', unsafe_allow_html=True)
+            
+            # Photo encadrée directement dans la miniature
+            if img and os.path.exists(img):
+                st.image(img, use_container_width=True)
+            else:
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 75px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem; margin-bottom: 12px;">
+                    🎓 {titre[:18]}
+                </div>
+                """, unsafe_allow_html=True)
+                
+            st.markdown(f"""
+                <div style="display: inline-block; background: {'#6366f1' if est_selectionne else '#e0e7ff'}; color: {'#ffffff' if est_selectionne else '#4338ca'}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px;">
+                    ⚡ {nb_q} Questions
+                </div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">{titre}</div>
+                <div style="font-size: 0.8rem; color: #64748b; height: 38px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 12px;">{desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if est_selectionne:
+                st.markdown("""
+                <div style="background-color: #6366f1; color: white; text-align: center; padding: 6px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; margin-top: 10px;">
+                    ✨ QCM Actif / Sélectionné
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                if st.button(f"Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                    choix_retenu = fichier
+                    st.rerun()
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+    return choix_retenu
+
 # ==========================================
 # 👨‍🏫 ESPACE PROFESSEUR
 # ==========================================
@@ -343,62 +383,19 @@ if mode == "👨‍🏫 Espace Professeur":
     tab_gen, tab_sess = st.tabs(["📝 Éditeur & Galerie de Miniatures", "🌐 Gestion des Sessions Collectives"])
     fichiers_existants = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith('.json')]
 
-    # Fonction utilitaire pour afficher une grille de miniatures de QCM interactive
-    def afficher_selecteur_miniatures(fichiers, cle_prefixe):
-        st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
-        if not fichiers:
-            st.info("Aucun QCM disponible.")
-            return None
-        
-        cols = st.columns(3)
-        choix_retenu = None
-        
-        for idx, fichier in enumerate(fichiers):
-            chemin = os.path.join(DOSSIER_QUIZZES, fichier)
-            titre = fichier
-            desc = "Pas de description"
-            img = ""
-            nb_q = 0
-            try:
-                with open(chemin, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    info = data.get("quiz_info", {})
-                    titre = info.get("titre", fichier)
-                    desc = info.get("description", "Quiz interactif Enolou")
-                    img = info.get("image", "")
-                    nb_q = len(data.get("questions", []))
-            except:
-                pass
-            
-            with cols[idx % 3]:
-                with st.container():
-                    st.markdown(f"""
-                    <div class="qcm-miniature-card">
-                        <div class="qcm-badge">⚡ {nb_q} Questions</div>
-                        <div class="qcm-title">{titre}</div>
-                        <div class="qcm-desc">{desc[:70]}...</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    if img and os.path.exists(img):
-                        st.image(img, use_container_width=True)
-                    
-                    if st.button(f"✨ Choisir {fichier}", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
-                        choix_retenu = fichier
-        return choix_retenu
-
     with tab_sess:
         st.subheader("🚀 Lancer un Quiz en mode Collectif")
         if fichiers_existants:
-            # Sélecteur par miniatures ou menu déroulant au choix
-            choix_par_miniature = afficher_selecteur_miniatures(fichiers_existants, "sess_mini")
-            if choix_par_miniature:
-                st.session_state["selected_collec_qcm"] = choix_par_miniature
+            if "selected_collec_qcm" not in st.session_state or st.session_state["selected_collec_qcm"] not in fichiers_existants:
+                st.session_state["selected_collec_qcm"] = fichiers_existants[0]
 
-            default_qcm_val = st.session_state.get("selected_collec_qcm", fichiers_existants[0])
-            if default_qcm_val not in fichiers_existants:
-                default_qcm_val = fichiers_existants[0]
+            choix_mini_sess = afficher_selecteur_miniatures(fichiers_existants, "sess_mini", st.session_state["selected_collec_qcm"])
+            if choix_mini_sess != st.session_state["selected_collec_qcm"]:
+                st.session_state["selected_collec_qcm"] = choix_mini_sess
+                st.rerun()
 
-            qcm_collectif = st.selectbox("Ou sélectionnez dans la liste :", fichiers_existants, index=fichiers_existants.index(default_qcm_val), key="sel_collec_qcm_box")
+            qcm_collectif = st.session_state["selected_collec_qcm"]
+            st.markdown(f"**QCM actif pour la session :** `{qcm_collectif}`")
             
             type_mode_collec = st.radio("Mode de session :", [
                 "🎮 Mode Battle (Synchronisé, rapidité, podium & cuillère de bois)", 
@@ -434,7 +431,6 @@ if mode == "👨‍🏫 Espace Professeur":
                     }
                     
                     sauvegarder_session_securisee(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), session_data)
-                    
                     st.session_state["sel_session_piloter"] = session_id
                     st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
                     st.rerun()
@@ -493,7 +489,6 @@ if mode == "👨‍🏫 Espace Professeur":
                                 sauvegarder_session_securisee(chemin_sess, s_data)
                                 st.rerun()
 
-                        # Bouton de téléchargement CSV/Excel disponible pour TOUS les modes (Examen et Battle)
                         if s_data["status"] in ["started", "ended"]:
                             csv_data = generer_csv_session(s_data)
                             st.download_button(
@@ -538,35 +533,44 @@ if mode == "👨‍🏫 Espace Professeur":
 
     with tab_gen:
         st.subheader("🎨 Galerie de Miniatures, Éditeur & QR Codes Solo")
+        
+        options_edition = ["-- Créer un nouveau QCM --"] + fichiers_existants
+        if "selected_edit_qcm" not in st.session_state or st.session_state["selected_edit_qcm"] not in options_edition:
+            st.session_state["selected_edit_qcm"] = options_edition[0]
+
+        col_nv1, col_nv2 = st.columns([2, 1])
+        with col_nv1:
+            if st.button("✨ + Créer un nouveau QCM", type="primary" if st.session_state["selected_edit_qcm"] == "-- Créer un nouveau QCM --" else "secondary", use_container_width=True):
+                st.session_state["selected_edit_qcm"] = "-- Créer un nouveau QCM --"
+                st.rerun()
+
         if fichiers_existants:
-            choix_par_miniature_edit = afficher_selecteur_miniatures(fichiers_existants, "edit_mini")
-            if choix_par_miniature_edit:
-                st.session_state["selected_edit_qcm"] = choix_par_miniature_edit
+            st.markdown("---")
+            choix_mini_edit = afficher_selecteur_miniatures(fichiers_existants, "edit_mini", st.session_state["selected_edit_qcm"])
+            if choix_mini_edit != st.session_state["selected_edit_qcm"]:
+                st.session_state["selected_edit_qcm"] = choix_mini_edit
+                st.rerun()
 
-            default_edit_val = st.session_state.get("selected_edit_qcm", "-- Créer un nouveau QCM --")
-            options_edition = ["-- Créer un nouveau QCM --"] + fichiers_existants
-            if default_edit_val not in options_edition:
-                default_edit_val = options_edition[0]
+        choix_edition = st.session_state["selected_edit_qcm"]
+        
+        domaine_app_solo = st.text_input("URL de l'application (pour QR Code Solo) :", value="https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/", key="dom_solo")
+        if choix_edition != "-- Créer un nouveau QCM --" and domaine_app_solo:
+            url_complete = f"{domaine_app_solo.strip('/')}/?qcm={choix_edition}"
+            img_qr = qrcode.make(url_complete)
+            buffered = BytesIO()
+            img_qr.save(buffered, format="PNG")
+            st.image(buffered.getvalue(), caption=f"QR Code Solo : {choix_edition}", width=180)
 
-            choix_edition = st.selectbox("Sélectionner ou éditer un QCM :", options_edition, index=options_edition.index(default_edit_val))
-            
-            domaine_app_solo = st.text_input("URL de l'application (pour QR Code Solo) :", value="https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/", key="dom_solo")
-            if choix_edition != "-- Créer un nouveau QCM --" and domaine_app_solo:
-                url_complete = f"{domaine_app_solo.strip('/')}/?qcm={choix_edition}"
-                img_qr = qrcode.make(url_complete)
-                buffered = BytesIO()
-                img_qr.save(buffered, format="PNG")
-                st.image(buffered.getvalue(), caption=f"QR Code Solo : {choix_edition}", width=180)
-
-                if st.button(f"🗑️ Supprimer définitivement le QCM '{choix_edition}'", type="secondary"):
-                    chemin_qcm = os.path.join(DOSSIER_QUIZZES, choix_edition)
-                    if os.path.exists(chemin_qcm):
-                        os.remove(chemin_qcm)
-                        supprimer_fichier_github(f"QCM/{choix_edition}")
-                    st.success(f"QCM {choix_edition} supprimé avec succès !")
-                    if st.session_state.get('qcm_selectionne') == choix_edition:
-                        st.session_state.qcm_selectionne = None
-                    st.rerun()
+            if st.button(f"🗑️ Supprimer définitivement le QCM '{choix_edition}'", type="secondary"):
+                chemin_qcm = os.path.join(DOSSIER_QUIZZES, choix_edition)
+                if os.path.exists(chemin_qcm):
+                    os.remove(chemin_qcm)
+                    supprimer_fichier_github(f"QCM/{choix_edition}")
+                st.success(f"QCM {choix_edition} supprimé avec succès !")
+                if st.session_state.get('qcm_selectionne') == choix_edition:
+                    st.session_state.qcm_selectionne = None
+                st.session_state["selected_edit_qcm"] = "-- Créer un nouveau QCM --"
+                st.rerun()
 
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
@@ -650,6 +654,8 @@ if mode == "👨‍🏫 Espace Professeur":
 
                 enregistrer_qcm_actuel()
                 st.success("Paramètres généraux enregistrés avec succès !")
+                st.session_state["selected_edit_qcm"] = nom_fichier
+                st.rerun()
 
         st.markdown("---")
         st.subheader("📋 Ré-ordonnancement par Glisser-Déposer (Drag & Drop)")
@@ -1171,7 +1177,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 st.markdown(f"### 🏆 Votre Score : {s_info['score']} / {s_info['max_points']} points")
                                 st.info("Vos résultats ont été enregistrés et transmis au professeur.")
 
-                rendu_session_etudiant()
+                    rendu_session_etudiant()
 
 # ==========================================
 # 👨‍🎓 ESPACE ÉTUDIANT : MODE SOLO

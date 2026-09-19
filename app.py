@@ -289,12 +289,54 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ & CORRIGÉ ---
+# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ, UNIFORME & PASTEL ---
 def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
     if not fichiers:
         st.info("Aucun QCM disponible.")
         return None
+    
+    # CSS pour garantir des hauteurs fixes, un alignement parfait et un style pastel distinct
+    st.markdown("""
+    <style>
+    .qcm-placeholder {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        height: 90px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+        margin-bottom: 8px;
+        text-align: center;
+        padding: 0 10px;
+    }
+    .qcm-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
+        height: 28px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-top: 4px;
+        margin-bottom: 4px;
+    }
+    .qcm-desc {
+        font-size: 0.75rem;
+        color: #64748b;
+        height: 38px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        margin-bottom: 8px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     cols = st.columns(3)
     choix_retenu = valeur_actuelle
@@ -319,47 +361,50 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         est_selectionne = (valeur_actuelle == fichier)
         
         with cols[idx % 3]:
-            # Utilisation d'un conteneur natif Streamlit propre pour éviter les bugs de balises HTML séparées
+            # Fond pastel distinct et bordure prononcée si sélectionné
+            bg_card = "#e0e7ff" if est_selectionne else "#ffffff"
+            border_card = "2px solid #6366f1" if est_selectionne else "1px solid #e2e8f0"
+            
             with st.container(border=True):
+                st.markdown(f"""
+                <div style="background-color: {bg_card}; border: {border_card}; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                """, unsafe_allow_html=True)
                 
-                if est_selectionne:
-                    st.markdown("""
-                    <div style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); padding: 4px; border-radius: 8px; margin-bottom: 8px;">
-                    """, unsafe_allow_html=True)
-                
-                # Image ou vignette par défaut
                 if img and os.path.exists(img):
                     st.image(img, use_container_width=True)
                 else:
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 75px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">
-                        🎓 {titre[:18]}
+                    <div class="qcm-placeholder">
+                        🎓 {titre}
                     </div>
                     """, unsafe_allow_html=True)
                     
-                # Informations textuelles
+                badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
+                badge_color = "#ffffff" if est_selectionne else "#4338ca"
+                
                 st.markdown(f"""
                     <div style="text-align: center;">
-                        <span style="background: {'#6366f1' if est_selectionne else '#e0e7ff'}; color: {'#ffffff' if est_selectionne else '#4338ca'}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                        <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
                             ⚡ {nb_q} Questions
                         </span>
-                        <div style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 6px; margin-bottom: 4px;">{titre}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; height: 32px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">{desc}</div>
+                        <div class="qcm-title">{titre}</div>
+                        <div class="qcm-desc">{desc}</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
                 if est_selectionne:
-                    st.markdown('</div>', unsafe_allow_html=True)
                     st.markdown("""
-                    <div style="background-color: #6366f1; color: white; text-align: center; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; margin-top: 8px;">
+                    <div style="background-color: #6366f1; color: white; text-align: center; padding: 5px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; margin-top: 6px;">
                         ✨ QCM Actif / Sélectionné
                     </div>
                     """, unsafe_allow_html=True)
                 else:
-                    if st.button(f"Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                    if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
                         choix_retenu = fichier
                         st.rerun()
-            
+                        
+                st.markdown("</div>", unsafe_allow_html=True)
+                
     return choix_retenu
 
 # ==========================================

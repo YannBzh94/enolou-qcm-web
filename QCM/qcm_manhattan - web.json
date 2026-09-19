@@ -41,12 +41,12 @@
             "timer_secondes": 15,
             "donnees": {
                 "options": [
-                    "Microprocesseur principal",
-                    "Alimentation stabilisée",
-                    "Capteur optique"
+                    "OM",
+                    "OL",
+                    "PSG"
                 ],
                 "reponses_correctes": [
-                    "Microprocesseur principal"
+                    "PSG"
                 ]
             },
             "explication": "PSG bien sûr 2025 à Munich et 2026 à Budapest !",

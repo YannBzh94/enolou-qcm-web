@@ -11,5 +11,37 @@
     "volume_musique": 0.5,
     "volume_sons": 0.8
   },
-  "questions": []
+  "questions": [
+    {
+      "id": 1,
+      "consigne": "Attribuer chaque poste comptable à sa catégorie",
+      "type": "association",
+      "difficulte": "Facile",
+      "points": 15,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "paires": [
+          [
+            "Titres de participations",
+            "Immobilisation financière"
+          ],
+          [
+            "Produits de participations",
+            "Produits financiers"
+          ],
+          [
+            "Participations des salariés",
+            "charges différées"
+          ]
+        ]
+      },
+      "explication": "faire la différence entre les éléments financiers du compte de résultat et du bilan",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    }
+  ]
 }

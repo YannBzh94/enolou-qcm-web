@@ -289,12 +289,12 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-# --- SÉLECTEUR DE MINIATURES PROPRE ET HARMONISÉ ---
+# --- SÉLECTEUR DE MINIATURES HARMONISÉ ET ALIGNÉ ---
 def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
     if not fichiers:
         st.info("Aucun QCM disponible.")
-        return None
+        return valeur_actuelle
     
     choix_retenu = valeur_actuelle
     cols = st.columns(3)
@@ -319,10 +319,11 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         est_selectionne = (valeur_actuelle == fichier)
         
         with cols[idx % 3]:
-            # Utilisation des conteneurs natifs Streamlit avec bordure pour un rendu propre sans bugs d'affichage
             with st.container(border=True):
                 if est_selectionne:
                     st.markdown('<div style="background-color: #e0e7ff; padding: 4px; border-radius: 6px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #4338ca; margin-bottom: 8px;">✨ QCM Actif & Sélectionné</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<div style="height: 25px;"></div>', unsafe_allow_html=True)
                 
                 if img and os.path.exists(img):
                     st.image(img, use_container_width=True)
@@ -336,23 +337,27 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
                 badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
                 badge_color = "#ffffff" if est_selectionne else "#4338ca"
                 
+                # Hauteurs fixes pour les blocs de texte afin d'garantir un alignement parfait des cartes
                 st.markdown(f"""
                     <div style="text-align: center;">
                         <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
                             ⚡ {nb_q} Questions
                         </span>
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 6px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{titre}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 8px;">{desc}</div>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 8px; margin-bottom: 6px; height: 44px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">{titre}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 12px;">{desc}</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
                 if not est_selectionne:
-                    if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
-                        choix_retenu = fichier
+                    if st.button("Sélectionner", key=f"{cle_prefixe}_{idx}_{fichier}", use_container_width=True):
+                        if cle_prefixe == "sess_mini":
+                            st.session_state["selected_collec_qcm"] = fichier
+                        elif cle_prefixe == "edit_mini":
+                            st.session_state["selected_edit_qcm"] = fichier
                         st.rerun()
                 else:
-                    st.button("Sélectionné", key=f"{cle_prefixe}_{fichier}_actif", disabled=True, use_container_width=True)
-                
+                    st.button("Sélectionné", key=f"{cle_prefixe}_{idx}_{fichier}_actif", disabled=True, use_container_width=True)
+                    
     return choix_retenu
 
 # ==========================================

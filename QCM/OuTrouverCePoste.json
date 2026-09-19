@@ -42,6 +42,35 @@
         "image": "",
         "video": ""
       }
+    },
+    {
+      "id": 2,
+      "consigne": "Bilan ou hors bilan ? Indiquer les éléments hors bilan",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 15,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Crédit-Bail",
+          "EENE",
+          "Abandon de créances",
+          "Clause de retour à meilleure fortune",
+          "Dépôt de garantie"
+        ],
+        "reponses_correctes": [
+          "Crédit-Bail",
+          "EENE",
+          "Clause de retour à meilleure fortune"
+        ]
+      },
+      "explication": "Abandon de créances sera visible au bilan et au compte de résultat\nDépot de garantie sera en immobilisation financière",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
     }
   ]
 }

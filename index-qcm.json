@@ -3,7 +3,7 @@
     "id": "manhattan",
     "titre": "Cours AnaFi - Cas Manhattan",
     "description": "QCM lié au cas Manhattan dans le cadre du cours du M1",
-    "fichier": "qcm_manhattan - web.json",
+    "fichier": "QCM/qcm_manhattan - web.json",
     "image": "docs/Manhattan.png",
     "questions": 2
   },
@@ -11,7 +11,7 @@
     "id": "quiestce",
     "titre": "Cours AnaFi - Cas 'Qui est-ce ?'",
     "description": "Profils sectoriels et structures financières",
-    "fichier": "QCM_Qui_est_ce_web.json",
+    "fichier": "QCM/QCM_Qui_est_ce_web.json",
     "image": "docs/02.1 qui est ce - Ennoncé.jpg",
     "questions": 21
   },
@@ -19,7 +19,7 @@
     "id": "cemoi",
     "titre": "Cours AnaFi - Cas Cémoi Chocolatier",
     "description": "QCM sur l'analyse financière des comptes 2024 de Cémoi",
-    "fichier": "QCM_cas_Cemoi_web.json",
+    "fichier": "QCM/QCM_cas_Cemoi_web.json",
     "image": "docs/Cemoi001.jpg",
     "questions": 11
   },
@@ -27,7 +27,7 @@
     "id": "bilan",
     "titre": "Le Bilan Comptable en France",
     "description": "QCM complet sur les principes, la structure et l'équilibre du bilan",
-    "fichier": "QCM_Bilan_French.json",
+    "fichier": "QCM/QCM_Bilan_French.json",
     "image": "",
     "questions": 20
   },
@@ -35,7 +35,7 @@
     "id": "cdr",
     "titre": "Le Compte de Résultat en France",
     "description": "QCM complet sur les mécanismes du compte de résultat",
-    "fichier": "QCM_CDR_French.json",
+    "fichier": "QCM/QCM_CDR_French.json",
     "image": "",
     "questions": 20
   }

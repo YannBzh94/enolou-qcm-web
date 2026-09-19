@@ -423,7 +423,7 @@
             "consigne": "Où le résultat net de l'exercice (bénéfice ou perte) est-il intégré au bilan de l'exercice suivant ?",
             "type": "qcm",
             "difficulte": "Moyen",
-            "points": 15,
+            "points": 75,
             "tag": "Compte de résultat",
             "timer_secondes": 25,
             "donnees": {
@@ -437,7 +437,14 @@
                     "Dans les capitaux propres (en report à nouveau ou en instance d'affectation)."
                 ]
             },
-            "explication": "Le résultat net de l'exercice s'intègre dans le passif du bilan au niveau des capitaux propres, traduisant la variation de la valeur nette de l'entreprise avant affectation définitive."
+            "explication": "Le résultat net de l'exercice s'intègre dans le passif du bilan au niveau des capitaux propres, traduisant la variation de la valeur nette de l'entreprise avant affectation définitive.",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "",
+                "video": ""
+            }
         }
     ]
 }

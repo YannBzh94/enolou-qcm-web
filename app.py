@@ -289,7 +289,7 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ & COLORÉ ---
+# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ & CORRIGÉ ---
 def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
     if not fichiers:
@@ -318,59 +318,47 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         
         est_selectionne = (valeur_actuelle == fichier)
         
-        # Styles de la carte selon qu'elle est sélectionnée ou non
-        card_style = """
-            border: 3px solid #6366f1;
-            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.25);
-            margin-bottom: 20px;
-        """ if est_selectionne else """
-            border: 2px solid #e2e8f0;
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        """
-        
         with cols[idx % 3]:
-            st.markdown(f'<div style="{card_style}">', unsafe_allow_html=True)
-            
-            # Photo encadrée directement dans la miniature
-            if img and os.path.exists(img):
-                st.image(img, use_container_width=True)
-            else:
+            # Utilisation d'un conteneur natif Streamlit propre pour éviter les bugs de balises HTML séparées
+            with st.container(border=True):
+                
+                if est_selectionne:
+                    st.markdown("""
+                    <div style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); padding: 4px; border-radius: 8px; margin-bottom: 8px;">
+                    """, unsafe_allow_html=True)
+                
+                # Image ou vignette par défaut
+                if img and os.path.exists(img):
+                    st.image(img, use_container_width=True)
+                else:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 75px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">
+                        🎓 {titre[:18]}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                # Informations textuelles
                 st.markdown(f"""
-                <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 75px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.1rem; margin-bottom: 12px;">
-                    🎓 {titre[:18]}
-                </div>
+                    <div style="text-align: center;">
+                        <span style="background: {'#6366f1' if est_selectionne else '#e0e7ff'}; color: {'#ffffff' if est_selectionne else '#4338ca'}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                            ⚡ {nb_q} Questions
+                        </span>
+                        <div style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 6px; margin-bottom: 4px;">{titre}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; height: 32px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 8px;">{desc}</div>
+                    </div>
                 """, unsafe_allow_html=True)
                 
-            st.markdown(f"""
-                <div style="display: inline-block; background: {'#6366f1' if est_selectionne else '#e0e7ff'}; color: {'#ffffff' if est_selectionne else '#4338ca'}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px;">
-                    ⚡ {nb_q} Questions
-                </div>
-                <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">{titre}</div>
-                <div style="font-size: 0.8rem; color: #64748b; height: 38px; overflow: hidden; text-overflow: ellipsis; margin-bottom: 12px;">{desc}</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if est_selectionne:
-                st.markdown("""
-                <div style="background-color: #6366f1; color: white; text-align: center; padding: 6px; border-radius: 8px; font-weight: bold; font-size: 0.85rem; margin-top: 10px;">
-                    ✨ QCM Actif / Sélectionné
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                if st.button(f"Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
-                    choix_retenu = fichier
-                    st.rerun()
-            
-            st.markdown('</div>', unsafe_allow_html=True)
+                if est_selectionne:
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown("""
+                    <div style="background-color: #6366f1; color: white; text-align: center; padding: 6px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; margin-top: 8px;">
+                        ✨ QCM Actif / Sélectionné
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    if st.button(f"Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                        choix_retenu = fichier
+                        st.rerun()
             
     return choix_retenu
 

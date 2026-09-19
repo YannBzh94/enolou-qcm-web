@@ -13,20 +13,80 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Portail QCM Enolou", page_icon="🎓", layout="wide")
 
-hide_streamlit_style = """
+# --- DESIGN MODERNE & COLORÉ (CSS PERSONNALISÉ) ---
+modern_ui_styles = """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    [data-testid="stAudio"] {
-        display: none !important;
+    [data-testid="stAudio"] { display: none !important; }
+    audio { display: none !important; }
+
+    /* Style général et typographie */
+    .main {
+        background-color: #f8fafc;
     }
-    audio {
-        display: none !important;
+    
+    /* Cartes de miniatures QCM */
+    .qcm-miniature-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .qcm-miniature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 20px -3px rgba(99, 102, 241, 0.15);
+        border-color: #6366f1;
+    }
+    .qcm-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .qcm-desc {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 12px;
+        height: 40px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .qcm-badge {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #4338ca;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    /* En-têtes stylés */
+    h1, h2, h3 {
+        color: #0f172a;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Boutons personnalisés */
+    .stButton > button {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s ease-in-out;
+    }
+    .stButton > button:hover {
+        filter: brightness(1.05);
     }
     </style>
 """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+st.markdown(modern_ui_styles, unsafe_allow_html=True)
 
 DOSSIER_QUIZZES = "QCM"
 DOSSIER_SESSIONS = "SESSIONS"
@@ -73,7 +133,8 @@ default_session_states = {
     'edit_vol_musique': 0.5,
     'edit_vol_sons': 0.8,
     'edit_questions': [],
-    'dernier_choix_edition': None
+    'dernier_choix_edition': None,
+    'selected_qcm_miniature': None
 }
 
 for key, val in default_session_states.items():
@@ -266,8 +327,8 @@ if url_qcm and not st.session_state.qcm_selectionne:
 
 default_mode_idx = 1 if url_session else 0
 
-st.sidebar.title("🧭 Navigation")
-mode = st.sidebar.radio("Choisissez le mode :", [
+st.sidebar.markdown("### 🧭 Navigation Enolou")
+mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🎓 Espace Étudiant (Solo)", 
     "🌐 Espace Collectif (Rejoindre une session)", 
     "👨‍🏫 Espace Professeur"
@@ -277,15 +338,68 @@ mode = st.sidebar.radio("Choisissez le mode :", [
 # 👨‍🏫 ESPACE PROFESSEUR
 # ==========================================
 if mode == "👨‍🏫 Espace Professeur":
-    st.title("👨‍🏫 Espace Professeur - Gestion & Sessions Collectives")
+    st.title("👨‍🏫 Espace Professeur - Pilotage & Création Moderne")
     
-    tab_gen, tab_sess = st.tabs(["📝 Éditeur & QR Codes Solo", "🌐 Gestion des Sessions Collectives"])
+    tab_gen, tab_sess = st.tabs(["📝 Éditeur & Galerie de Miniatures", "🌐 Gestion des Sessions Collectives"])
     fichiers_existants = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith('.json')]
 
+    # Fonction utilitaire pour afficher une grille de miniatures de QCM interactive
+    def afficher_selecteur_miniatures(fichiers, cle_prefixe):
+        st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
+        if not fichiers:
+            st.info("Aucun QCM disponible.")
+            return None
+        
+        cols = st.columns(3)
+        choix_retenu = None
+        
+        for idx, fichier in enumerate(fichiers):
+            chemin = os.path.join(DOSSIER_QUIZZES, fichier)
+            titre = fichier
+            desc = "Pas de description"
+            img = ""
+            nb_q = 0
+            try:
+                with open(chemin, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    info = data.get("quiz_info", {})
+                    titre = info.get("titre", fichier)
+                    desc = info.get("description", "Quiz interactif Enolou")
+                    img = info.get("image", "")
+                    nb_q = len(data.get("questions", []))
+            except:
+                pass
+            
+            with cols[idx % 3]:
+                with st.container():
+                    st.markdown(f"""
+                    <div class="qcm-miniature-card">
+                        <div class="qcm-badge">⚡ {nb_q} Questions</div>
+                        <div class="qcm-title">{titre}</div>
+                        <div class="qcm-desc">{desc[:70]}...</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    if img and os.path.exists(img):
+                        st.image(img, use_container_width=True)
+                    
+                    if st.button(f"✨ Choisir {fichier}", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                        choix_retenu = fichier
+        return choix_retenu
+
     with tab_sess:
-        st.subheader("Lancer un Quiz en mode Collectif")
+        st.subheader("🚀 Lancer un Quiz en mode Collectif")
         if fichiers_existants:
-            qcm_collectif = st.selectbox("Sélectionnez le QCM :", fichiers_existants, key="sel_collec_qcm")
+            # Sélecteur par miniatures ou menu déroulant au choix
+            choix_par_miniature = afficher_selecteur_miniatures(fichiers_existants, "sess_mini")
+            if choix_par_miniature:
+                st.session_state["selected_collec_qcm"] = choix_par_miniature
+
+            default_qcm_val = st.session_state.get("selected_collec_qcm", fichiers_existants[0])
+            if default_qcm_val not in fichiers_existants:
+                default_qcm_val = fichiers_existants[0]
+
+            qcm_collectif = st.selectbox("Ou sélectionnez dans la liste :", fichiers_existants, index=fichiers_existants.index(default_qcm_val), key="sel_collec_qcm_box")
+            
             type_mode_collec = st.radio("Mode de session :", [
                 "🎮 Mode Battle (Synchronisé, rapidité, podium & cuillère de bois)", 
                 "📝 Mode Examen (Synchro au départ, autonomie & export tableur)"
@@ -297,7 +411,7 @@ if mode == "👨‍🏫 Espace Professeur":
                 key="domaine_app_collec"
             )
 
-            if st.button("🚀 Créer une nouvelle session", type="primary"):
+            if st.button("🚀 Créer une nouvelle session", type="primary", use_container_width=True):
                 session_id = f"sess_{int(time.time())}"
                 chemin_qcm = os.path.join(DOSSIER_QUIZZES, qcm_collectif)
                 try:
@@ -330,7 +444,7 @@ if mode == "👨‍🏫 Espace Professeur":
             sessions_existantes = [f.replace('.json', '') for f in os.listdir(DOSSIER_SESSIONS) if f.endswith('.json')]
             if sessions_existantes:
                 st.markdown("---")
-                st.markdown("### 📊 Suivi / Consultation des Sessions")
+                st.markdown("### 📊 Suivi / Consultation des Sessions en cours")
                 
                 if "sel_session_piloter" not in st.session_state or st.session_state["sel_session_piloter"] not in sessions_existantes:
                     st.session_state["sel_session_piloter"] = sessions_existantes[0]
@@ -362,10 +476,10 @@ if mode == "👨‍🏫 Espace Professeur":
 
                         col_btn1, col_btn2, col_btn3 = st.columns(3)
                         with col_btn1:
-                            if st.button("🔄 Rafraîchir l'écran"):
+                            if st.button("🔄 Rafraîchir l'écran", use_container_width=True):
                                 st.rerun()
                         with col_btn2:
-                            if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session", type="primary"):
+                            if s_data["status"] == "waiting" and st.button("▶️ Démarrer la session", type="primary", use_container_width=True):
                                 s_data["status"] = "started"
                                 s_data["current_global_idx"] = 0
                                 s_data["question_start_time"] = time.time()
@@ -374,7 +488,7 @@ if mode == "👨‍🏫 Espace Professeur":
                                 st.success("Session lancée !")
                                 st.rerun()
                         with col_btn3:
-                            if s_data["status"] == "started" and st.button("⏹️ Clôturer la session"):
+                            if s_data["status"] == "started" and st.button("⏹️ Clôturer la session", use_container_width=True):
                                 s_data["status"] = "ended"
                                 sauvegarder_session_securisee(chemin_sess, s_data)
                                 st.rerun()
@@ -387,7 +501,8 @@ if mode == "👨‍🏫 Espace Professeur":
                                 data=csv_data,
                                 file_name=f"resultats_{s_data['mode']}_{sess_choisie}.csv",
                                 mime="text/csv",
-                                type="primary"
+                                type="primary",
+                                use_container_width=True
                             )
 
                         if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":
@@ -405,12 +520,12 @@ if mode == "👨‍🏫 Espace Professeur":
                         st.markdown("---")
                         col_del1, col_del2 = st.columns(2)
                         with col_del1:
-                            if st.button(f"🗑️ Supprimer cette session ({sess_choisie})"):
+                            if st.button(f"🗑️ Supprimer cette session ({sess_choisie})", use_container_width=True):
                                 os.remove(chemin_sess)
                                 st.success(f"Session {sess_choisie} supprimée.")
                                 st.rerun()
                         with col_del2:
-                            if st.button("🔥 Purger toutes les sessions"):
+                            if st.button("🔥 Purger toutes les sessions", use_container_width=True):
                                 for f_s in os.listdir(DOSSIER_SESSIONS):
                                     if f_s.endswith('.json'):
                                         os.remove(os.path.join(DOSSIER_SESSIONS, f_s))
@@ -422,29 +537,36 @@ if mode == "👨‍🏫 Espace Professeur":
             st.info("Aucun QCM disponible pour lancer une session.")
 
     with tab_gen:
-        st.subheader("Générateur de QR Code Solo & Éditeur")
+        st.subheader("🎨 Galerie de Miniatures, Éditeur & QR Codes Solo")
         if fichiers_existants:
-            qcm_pour_qr = st.selectbox("Sélectionnez le QCM (Solo) :", fichiers_existants)
-            domaine_app_solo = st.text_input("URL de l'application :", value="https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/", key="dom_solo")
-            if domaine_app_solo:
-                url_complete = f"{domaine_app_solo.strip('/')}/?qcm={qcm_pour_qr}"
+            choix_par_miniature_edit = afficher_selecteur_miniatures(fichiers_existants, "edit_mini")
+            if choix_par_miniature_edit:
+                st.session_state["selected_edit_qcm"] = choix_par_miniature_edit
+
+            default_edit_val = st.session_state.get("selected_edit_qcm", "-- Créer un nouveau QCM --")
+            options_edition = ["-- Créer un nouveau QCM --"] + fichiers_existants
+            if default_edit_val not in options_edition:
+                default_edit_val = options_edition[0]
+
+            choix_edition = st.selectbox("Sélectionner ou éditer un QCM :", options_edition, index=options_edition.index(default_edit_val))
+            
+            domaine_app_solo = st.text_input("URL de l'application (pour QR Code Solo) :", value="https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/", key="dom_solo")
+            if choix_edition != "-- Créer un nouveau QCM --" and domaine_app_solo:
+                url_complete = f"{domaine_app_solo.strip('/')}/?qcm={choix_edition}"
                 img_qr = qrcode.make(url_complete)
                 buffered = BytesIO()
                 img_qr.save(buffered, format="PNG")
-                st.image(buffered.getvalue(), caption=f"QR Code Solo : {qcm_pour_qr}", width=200)
+                st.image(buffered.getvalue(), caption=f"QR Code Solo : {choix_edition}", width=180)
 
-        choix_edition = st.selectbox("Éditer ou supprimer un QCM :", ["-- Créer un nouveau QCM --"] + fichiers_existants)
-        
-        if choix_edition != "-- Créer un nouveau QCM --":
-            if st.button(f"🗑️ Supprimer définitivement le QCM '{choix_edition}'", type="secondary"):
-                chemin_qcm = os.path.join(DOSSIER_QUIZZES, choix_edition)
-                if os.path.exists(chemin_qcm):
-                    os.remove(chemin_qcm)
-                    supprimer_fichier_github(f"QCM/{choix_edition}")
-                st.success(f"QCM {choix_edition} supprimé avec succès !")
-                if st.session_state.get('qcm_selectionne') == choix_edition:
-                    st.session_state.qcm_selectionne = None
-                st.rerun()
+                if st.button(f"🗑️ Supprimer définitivement le QCM '{choix_edition}'", type="secondary"):
+                    chemin_qcm = os.path.join(DOSSIER_QUIZZES, choix_edition)
+                    if os.path.exists(chemin_qcm):
+                        os.remove(chemin_qcm)
+                        supprimer_fichier_github(f"QCM/{choix_edition}")
+                    st.success(f"QCM {choix_edition} supprimé avec succès !")
+                    if st.session_state.get('qcm_selectionne') == choix_edition:
+                        st.session_state.qcm_selectionne = None
+                    st.rerun()
 
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
@@ -511,7 +633,7 @@ if mode == "👨‍🏫 Espace Professeur":
             with col_s3:
                 son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
 
-            submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux")
+            submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux", use_container_width=True)
             if submitted_meta:
                 if not nom_fichier.endswith(".json"):
                     nom_fichier += ".json"
@@ -538,7 +660,7 @@ if mode == "👨‍🏫 Espace Professeur":
             questions_list_html = ""
             for idx, q in enumerate(st.session_state.edit_questions):
                 consigne_court = q.get('consigne', f'Question {idx+1}')[:65].replace('"', '&quot;')
-                questions_list_html += f'<div class="drag-item" draggable="true" data-index="{idx}"><span style="font-weight:bold; color:#ff4b4b; margin-right:10px;">☰ Q{idx+1}</span> {consigne_court}...</div>'
+                questions_list_html += f'<div class="drag-item" draggable="true" data-index="{idx}"><span style="font-weight:bold; color:#6366f1; margin-right:10px;">☰ Q{idx+1}</span> {consigne_court}...</div>'
 
             drag_drop_html = f"""
             <style>
@@ -554,10 +676,10 @@ if mode == "👨‍🏫 Espace Professeur":
                     padding-right: 8px; 
                     box-sizing: border-box;
                 }}
-                .drag-item {{ background: #f8f9fa; padding: 10px 14px; border-radius: 6px; cursor: grab; border: 1px solid #ced4da; user-select: none; display: flex; align-items: center; transition: background 0.2s; }}
-                .drag-item:hover {{ background: #e9ecef; border-color: #adb5bd; }}
+                .drag-item {{ background: #ffffff; padding: 10px 14px; border-radius: 8px; cursor: grab; border: 1px solid #e2e8f0; user-select: none; display: flex; align-items: center; transition: background 0.2s; }}
+                .drag-item:hover {{ background: #f1f5f9; border-color: #cbd5e1; }}
                 .drag-item:active {{ cursor: grabbing; }}
-                .drag-item.dragging {{ opacity: 0.4; background: #dee2e6; }}
+                .drag-item.dragging {{ opacity: 0.4; background: #e2e8f0; }}
             </style>
             <div class="drag-container" id="dragContainer">
                 {questions_list_html}
@@ -646,7 +768,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         with col_m_vid:
                             mod_vid = st.text_input("Vidéo question (optionnel) :", value=q.get('media', {}).get('video', ''), key=f"mod_vid_{idx}")
 
-                        submitted_mod = st.form_submit_button("💾 Mettre à jour cette question")
+                        submitted_mod = st.form_submit_button("💾 Mettre à jour cette question", use_container_width=True)
                         if submitted_mod:
                             options_liste = [opt.strip() for opt in mod_options_input.split("\n") if opt.strip()]
                             if mod_consigne and options_liste and mod_reponses_correctes:
@@ -675,7 +797,7 @@ if mode == "👨‍🏫 Espace Professeur":
                                 st.success(f"Question {idx+1} mise à jour avec succès !")
                                 st.rerun()
 
-                    if st.button(f"❌ Supprimer la question {idx+1}", key=f"del_q_{idx}"):
+                    if st.button(f"❌ Supprimer la question {idx+1}", key=f"del_q_{idx}", use_container_width=True):
                         st.session_state.edit_questions.pop(idx)
                         for r_idx, rq in enumerate(st.session_state.edit_questions):
                             rq["id"] = r_idx + 1
@@ -705,7 +827,7 @@ if mode == "👨‍🏫 Espace Professeur":
             with col_m_add_vid:
                 add_vid = st.text_input("Vidéo média (optionnel) :", value="")
 
-            submitted_q = st.form_submit_button("➕ Ajouter la question au QCM")
+            submitted_q = st.form_submit_button("➕ Ajouter la question au QCM", use_container_width=True)
             if submitted_q:
                 options_liste = [opt.strip() for opt in options_input.split("\n") if opt.strip()]
                 if consigne_q and options_liste and add_reponses_correctes:
@@ -771,7 +893,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
             if not st.session_state.collec_student_name:
                 st.markdown("### ✍️ Inscription à la session")
                 nom_etudiant = st.text_input("Entrez votre Prénom et Nom :")
-                if st.button("S'inscrire et rejoindre le salon", type="primary"):
+                if st.button("S'inscrire et rejoindre le salon", type="primary", use_container_width=True):
                     if nom_etudiant.strip():
                         st.session_state.collec_student_name = nom_etudiant.strip()
                         if nom_etudiant.strip() not in sess_data["students"]:
@@ -900,7 +1022,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                         st.markdown("🔸 **Type :** *Réponse unique (Choisissez une seule option)*")
 
                                     st.markdown(f"""
-                                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px;">
+                                    <div style="font-size: 1.1rem; font-weight: bold; color: #6366f1; margin-bottom: 10px; background-color: #e0e7ff; padding: 10px 15px; border-radius: 6px;">
                                         ⏱️ Temps restant : {temps_restant} secondes
                                     </div>
                                     """, unsafe_allow_html=True)
@@ -917,7 +1039,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                         choix = st.radio("Sélectionnez votre réponse :", options, key=f"battle_r_{current_global_idx}", index=None, disabled=already_answered)
 
                                     if not already_answered:
-                                        if st.button("Valider la réponse", type="primary"):
+                                        if st.button("Valider la réponse", type="primary", use_container_width=True):
                                             if not choix:
                                                 st.warning("Veuillez sélectionner au moins une option.")
                                             else:
@@ -994,7 +1116,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     choix = st.radio("Sélectionnez votre réponse :", options, key=f"examen_r_{current_idx_student}", index=None, disabled=already_answered)
 
                                 if not already_answered:
-                                    if st.button("Valider la réponse", type="primary"):
+                                    if st.button("Valider la réponse", type="primary", use_container_width=True):
                                         if not choix:
                                             st.warning("Veuillez sélectionner au moins une option.")
                                         else:
@@ -1032,7 +1154,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     else:
                                         st.error(res_msg)
 
-                                    if st.button("Question suivante ➡️", type="primary"):
+                                    if st.button("Question suivante ➡️", type="primary", use_container_width=True):
                                         s_info["current_idx"] += 1
                                         s_info["answered"] = False
                                         s_info["last_result"] = None
@@ -1089,7 +1211,7 @@ else:
                 st.video(vid_gen)
 
             st.info("💡 Cliquez ci-dessous pour démarrer l'évaluation (active la musique de fond et les effets sonores).")
-            if st.button("Commencer le QCM 🎵", type="primary"):
+            if st.button("Commencer le QCM 🎵", type="primary", use_container_width=True):
                 st.session_state.quiz_started = True
                 st.session_state.question_start_time = time.time()
                 st.rerun()
@@ -1134,7 +1256,7 @@ else:
                     temps_restant_initial = max(0, timer_sec - temps_ecoule)
                     
                     components.html(f"""
-                    <div style="font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 10px; background-color: #ffe6e6; padding: 10px 15px; border-radius: 6px; border-left: 5px solid #ff4b4b; font-family: sans-serif;">
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #6366f1; margin-bottom: 10px; background-color: #e0e7ff; padding: 10px 15px; border-radius: 6px; border-left: 5px solid #6366f1; font-family: sans-serif;">
                         ⏱️ Temps restant : <span id="countdown_timer">{temps_restant_initial}</span> secondes
                     </div>
                     <script>
@@ -1164,7 +1286,7 @@ else:
                         choix = st.radio("Sélectionnez votre réponse :", options, key=f"radio_q_{q_id}", index=None, disabled=st.session_state.answered)
 
                     if not st.session_state.answered:
-                        if st.button("Valider la réponse", type="primary"):
+                        if st.button("Valider la réponse", type="primary", use_container_width=True):
                             if not choix:
                                 st.warning("Veuillez sélectionner au moins une option.")
                             else:
@@ -1206,7 +1328,7 @@ else:
                         if explication:
                             st.caption(f"💡 *Explication : {explication}*")
 
-                        if st.button("Question suivante ➡️", type="primary"):
+                        if st.button("Question suivante ➡️", type="primary", use_container_width=True):
                             st.session_state.current_idx += 1
                             st.session_state.answered = False
                             st.session_state.last_result = None
@@ -1216,7 +1338,7 @@ else:
                 st.balloons()
                 st.success("🎉 Évaluation terminée avec succès !")
                 st.markdown(f"### 🏆 Score Final : {st.session_state.score_total} / {st.session_state.max_points} points")
-                if st.button("Recommencer ce QCM"):
+                if st.button("Recommencer ce QCM", use_container_width=True):
                     st.session_state.current_idx = 0
                     st.session_state.score_total = 0
                     st.session_state.max_points = 0

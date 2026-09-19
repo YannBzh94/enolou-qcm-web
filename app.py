@@ -289,87 +289,15 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-# --- SÉLECTEUR DE MINIATURES ENCAPSULÉ, UNIFORME & PASTEL ---
+# --- SÉLECTEUR DE MINIATURES PROPRE ET HARMONISÉ ---
 def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
     if not fichiers:
         st.info("Aucun QCM disponible.")
         return None
     
-    # CSS pour garantir des hauteurs fixes, un alignement parfait et un style pastel distinct
-    st.markdown("""
-    <style>
-    [data-testid="column"] {
-        display: flex;
-        flex-direction: column;
-    }
-    [data-testid="column"] > div {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-    .qcm-card {
-        border-radius: 12px;
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        transition: all 0.2s ease;
-        margin-bottom: 10px;
-    }
-    .qcm-card-selected {
-        background-color: #e0e7ff !important;
-        border: 2px solid #6366f1 !important;
-    }
-    .qcm-card-normal {
-        background-color: #ffffff !important;
-        border: 1px solid #cbd5e1 !important;
-    }
-    .qcm-placeholder {
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        height: 90px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 1rem;
-        margin-bottom: 8px;
-        text-align: center;
-        padding: 0 10px;
-    }
-    .qcm-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #1e293b;
-        height: 28px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-top: 4px;
-        margin-bottom: 4px;
-        text-align: center;
-    }
-    .qcm-desc {
-        font-size: 0.75rem;
-        color: #64748b;
-        height: 38px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        margin-bottom: 8px;
-        text-align: center;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    cols = st.columns(3)
     choix_retenu = valeur_actuelle
+    cols = st.columns(3)
     
     for idx, fichier in enumerate(fichiers):
         chemin = os.path.join(DOSSIER_QUIZZES, fichier)
@@ -389,45 +317,41 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
             pass
         
         est_selectionne = (valeur_actuelle == fichier)
-        card_class = "qcm-card qcm-card-selected" if est_selectionne else "qcm-card qcm-card-normal"
         
         with cols[idx % 3]:
-            st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
-            
-            if img and os.path.exists(img):
-                st.image(img, use_container_width=True)
-            else:
+            # Utilisation des conteneurs natifs Streamlit avec bordure pour un rendu propre sans bugs d'affichage
+            with st.container(border=True):
+                if est_selectionne:
+                    st.markdown('<div style="background-color: #e0e7ff; padding: 4px; border-radius: 6px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #4338ca; margin-bottom: 8px;">✨ QCM Actif & Sélectionné</div>', unsafe_allow_html=True)
+                
+                if img and os.path.exists(img):
+                    st.image(img, use_container_width=True)
+                else:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 90px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.95rem; text-align: center; padding: 0 10px; margin-bottom: 8px;">
+                        🎓 {titre}
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
+                badge_color = "#ffffff" if est_selectionne else "#4338ca"
+                
                 st.markdown(f"""
-                <div class="qcm-placeholder">
-                    🎓 {titre}
-                </div>
+                    <div style="text-align: center;">
+                        <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                            ⚡ {nb_q} Questions
+                        </span>
+                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 6px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{titre}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; height: 34px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 8px;">{desc}</div>
+                    </div>
                 """, unsafe_allow_html=True)
                 
-            badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
-            badge_color = "#ffffff" if est_selectionne else "#4338ca"
-            
-            st.markdown(f"""
-                <div style="text-align: center;">
-                    <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-                        ⚡ {nb_q} Questions
-                    </span>
-                    <div class="qcm-title">{titre}</div>
-                    <div class="qcm-desc">{desc}</div>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            if est_selectionne:
-                st.markdown("""
-                <div style="background-color: #6366f1; color: white; text-align: center; padding: 5px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; margin-top: 6px;">
-                    ✨ QCM Actif & Sélectionné
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
-                    choix_retenu = fichier
-                    st.rerun()
-                    
-            st.markdown("</div>", unsafe_allow_html=True)
+                if not est_selectionne:
+                    if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                        choix_retenu = fichier
+                        st.rerun()
+                else:
+                    st.button("Sélectionné", key=f"{cle_prefixe}_{fichier}_actif", disabled=True, use_container_width=True)
                 
     return choix_retenu
 
@@ -672,7 +596,6 @@ if mode == "👨‍🏫 Espace Professeur":
         with col_v2:
             st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.05)
 
-        # Clé dynamique unique pour forcer le formulaire à se mettre à jour lors d'un changement de QCM
         suffix_key = choix_edition.replace(".", "_").replace(" ", "_")
 
         with st.form(f"form_edition_qcm_{suffix_key}"):

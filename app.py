@@ -299,6 +299,34 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     # CSS pour garantir des hauteurs fixes, un alignement parfait et un style pastel distinct
     st.markdown("""
     <style>
+    [data-testid="column"] {
+        display: flex;
+        flex-direction: column;
+    }
+    [data-testid="column"] > div {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .qcm-card {
+        border-radius: 12px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        margin-bottom: 10px;
+    }
+    .qcm-card-selected {
+        background-color: #e0e7ff !important;
+        border: 2px solid #6366f1 !important;
+    }
+    .qcm-card-normal {
+        background-color: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+    }
     .qcm-placeholder {
         background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
         height: 90px;
@@ -323,6 +351,7 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         white-space: nowrap;
         margin-top: 4px;
         margin-bottom: 4px;
+        text-align: center;
     }
     .qcm-desc {
         font-size: 0.75rem;
@@ -334,6 +363,7 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         margin-bottom: 8px;
+        text-align: center;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -359,51 +389,45 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
             pass
         
         est_selectionne = (valeur_actuelle == fichier)
+        card_class = "qcm-card qcm-card-selected" if est_selectionne else "qcm-card qcm-card-normal"
         
         with cols[idx % 3]:
-            # Fond pastel distinct et bordure prononcée si sélectionné
-            bg_card = "#e0e7ff" if est_selectionne else "#ffffff"
-            border_card = "2px solid #6366f1" if est_selectionne else "1px solid #e2e8f0"
+            st.markdown(f'<div class="{card_class}">', unsafe_allow_html=True)
             
-            with st.container(border=True):
+            if img and os.path.exists(img):
+                st.image(img, use_container_width=True)
+            else:
                 st.markdown(f"""
-                <div style="background-color: {bg_card}; border: {border_card}; padding: 10px; border-radius: 8px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div class="qcm-placeholder">
+                    🎓 {titre}
+                </div>
                 """, unsafe_allow_html=True)
                 
-                if img and os.path.exists(img):
-                    st.image(img, use_container_width=True)
-                else:
-                    st.markdown(f"""
-                    <div class="qcm-placeholder">
-                        🎓 {titre}
-                    </div>
-                    """, unsafe_allow_html=True)
+            badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
+            badge_color = "#ffffff" if est_selectionne else "#4338ca"
+            
+            st.markdown(f"""
+                <div style="text-align: center;">
+                    <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+                        ⚡ {nb_q} Questions
+                    </span>
+                    <div class="qcm-title">{titre}</div>
+                    <div class="qcm-desc">{desc}</div>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if est_selectionne:
+                st.markdown("""
+                <div style="background-color: #6366f1; color: white; text-align: center; padding: 5px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; margin-top: 6px;">
+                    ✨ QCM Actif & Sélectionné
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
+                    choix_retenu = fichier
+                    st.rerun()
                     
-                badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
-                badge_color = "#ffffff" if est_selectionne else "#4338ca"
-                
-                st.markdown(f"""
-                    <div style="text-align: center;">
-                        <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-                            ⚡ {nb_q} Questions
-                        </span>
-                        <div class="qcm-title">{titre}</div>
-                        <div class="qcm-desc">{desc}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                if est_selectionne:
-                    st.markdown("""
-                    <div style="background-color: #6366f1; color: white; text-align: center; padding: 5px; border-radius: 6px; font-weight: bold; font-size: 0.75rem; margin-top: 6px;">
-                        ✨ QCM Actif / Sélectionné
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    if st.button("Sélectionner", key=f"{cle_prefixe}_{fichier}", use_container_width=True):
-                        choix_retenu = fichier
-                        st.rerun()
-                        
-                st.markdown("</div>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
                 
     return choix_retenu
 
@@ -648,8 +672,11 @@ if mode == "👨‍🏫 Espace Professeur":
         with col_v2:
             st.session_state.edit_vol_sons = st.slider("Volume effets sonores", 0.0, 1.0, value=float(st.session_state.edit_vol_sons), step=0.05)
 
-        with st.form("form_edition_qcm"):
-            st.markdown("### ⚙️ Paramètres Généraux du QCM")
+        # Clé dynamique unique pour forcer le formulaire à se mettre à jour lors d'un changement de QCM
+        suffix_key = choix_edition.replace(".", "_").replace(" ", "_")
+
+        with st.form(f"form_edition_qcm_{suffix_key}"):
+            st.markdown(f"### ⚙️ Paramètres Généraux du QCM : `{choix_edition}`")
             nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
             titre_quiz = st.text_input("Titre affiché :", value=st.session_state.edit_titre)
             desc_quiz = st.text_area("Description :", value=st.session_state.edit_desc)
@@ -778,7 +805,7 @@ if mode == "👨‍🏫 Espace Professeur":
             st.subheader("📝 Modification et Édition des Questions")
             for idx, q in enumerate(st.session_state.edit_questions):
                 with st.expander(f"Modifier la Question {idx+1} : {q.get('consigne', '')[:50]}... (Points: {q.get('points', 10)})"):
-                    with st.form(f"form_mod_q_{idx}"):
+                    with st.form(f"form_mod_q_{suffix_key}_{idx}"):
                         mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{idx}")
                         col_p1, col_p2 = st.columns(2)
                         with col_p1:
@@ -846,7 +873,7 @@ if mode == "👨‍🏫 Espace Professeur":
 
         st.markdown("---")
         st.subheader("➕ Ajouter une nouvelle question")
-        with st.form("form_ajout_question"):
+        with st.form(f"form_ajout_question_{suffix_key}"):
             consigne_q = st.text_area("Consigne :")
             col_ap1, col_ap2 = st.columns(2)
             with col_ap1:

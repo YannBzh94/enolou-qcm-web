@@ -289,7 +289,7 @@ mode = st.sidebar.radio("Choisissez l'espace :", [
     "👨‍🏫 Espace Professeur"
 ], index=default_mode_idx)
 
-# --- SÉLECTEUR DE MINIATURES HARMONISÉ ET ALIGNÉ ---
+# --- SÉLECTEUR DE MINIATURES (DIMENSIONS RÉDUITES DE 40%) ---
 def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
     st.markdown("#### 🖼️ Sélectionnez un QCM par sa miniature :")
     if not fichiers:
@@ -321,15 +321,15 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
         with cols[idx % 3]:
             with st.container(border=True):
                 if est_selectionne:
-                    st.markdown('<div style="background-color: #e0e7ff; padding: 4px; border-radius: 6px; text-align: center; font-size: 0.75rem; font-weight: bold; color: #4338ca; margin-bottom: 8px;">✨ QCM Actif & Sélectionné</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="background-color: #e0e7ff; padding: 2px; border-radius: 4px; text-align: center; font-size: 0.65rem; font-weight: bold; color: #4338ca; margin-bottom: 4px;">✨ Actif</div>', unsafe_allow_html=True)
                 else:
-                    st.markdown('<div style="height: 25px;"></div>', unsafe_allow_html=True)
+                    st.markdown('<div style="height: 15px;"></div>', unsafe_allow_html=True)
                 
                 if img and os.path.exists(img):
                     st.image(img, use_container_width=True)
                 else:
                     st.markdown(f"""
-                    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 90px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.95rem; text-align: center; padding: 0 10px; margin-bottom: 8px;">
+                    <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); height: 54px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8rem; text-align: center; padding: 0 6px; margin-bottom: 4px;">
                         🎓 {titre}
                     </div>
                     """, unsafe_allow_html=True)
@@ -337,14 +337,13 @@ def afficher_selecteur_miniatures(fichiers, cle_prefixe, valeur_actuelle):
                 badge_bg = "#6366f1" if est_selectionne else "#e0e7ff"
                 badge_color = "#ffffff" if est_selectionne else "#4338ca"
                 
-                # Hauteurs fixes pour les blocs de texte afin d'garantir un alignement parfait des cartes
                 st.markdown(f"""
                     <div style="text-align: center;">
-                        <span style="background: {badge_bg}; color: {badge_color}; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
-                            ⚡ {nb_q} Questions
+                        <span style="background: {badge_bg}; color: {badge_color}; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; font-weight: 600;">
+                            ⚡ {nb_q} Q.
                         </span>
-                        <div style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-top: 8px; margin-bottom: 6px; height: 44px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">{titre}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; height: 36px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 12px;">{desc}</div>
+                        <div style="font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-top: 4px; margin-bottom: 4px; height: 32px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;">{titre}</div>
+                        <div style="font-size: 0.65rem; color: #64748b; height: 24px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom: 6px;">{desc}</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -603,27 +602,28 @@ if mode == "👨‍🏫 Espace Professeur":
 
         suffix_key = choix_edition.replace(".", "_").replace(" ", "_")
 
+        # Formulaire avec clés dynamiques basées sur suffix_key pour forcer la mise à jour à la sélection
         with st.form(f"form_edition_qcm_{suffix_key}"):
             st.markdown(f"### ⚙️ Paramètres Généraux du QCM : `{choix_edition}`")
-            nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier)
-            titre_quiz = st.text_input("Titre affiché :", value=st.session_state.edit_titre)
-            desc_quiz = st.text_area("Description :", value=st.session_state.edit_desc)
+            nom_fichier = st.text_input("Nom du fichier JSON :", value=st.session_state.edit_nom_fichier, key=f"f_nom_{suffix_key}")
+            titre_quiz = st.text_input("Titre affiché :", value=st.session_state.edit_titre, key=f"f_titre_{suffix_key}")
+            desc_quiz = st.text_area("Description :", value=st.session_state.edit_desc, key=f"f_desc_{suffix_key}")
             
             col_m1, col_m2, col_m3 = st.columns(3)
             with col_m1:
-                quiz_image = st.text_input("Image générale (chemin ex: docs/image.png) :", value=st.session_state.edit_quiz_image)
+                quiz_image = st.text_input("Image générale (chemin ex: docs/image.png) :", value=st.session_state.edit_quiz_image, key=f"f_img_{suffix_key}")
             with col_m2:
-                document_appui = st.text_input("PDF d'appui / Doc (chemin ex: docs/cas.pdf) :", value=st.session_state.edit_document_appui)
+                document_appui = st.text_input("PDF d'appui / Doc (chemin ex: docs/cas.pdf) :", value=st.session_state.edit_document_appui, key=f"f_doc_{suffix_key}")
             with col_m3:
-                quiz_video = st.text_input("Vidéo générale (chemin ex: docs/video.mp4) :", value=st.session_state.edit_quiz_video)
+                quiz_video = st.text_input("Vidéo générale (chemin ex: docs/video.mp4) :", value=st.session_state.edit_quiz_video, key=f"f_vid_{suffix_key}")
 
             col_s1, col_s2, col_s3 = st.columns(3)
             with col_s1:
-                musique_path = st.text_input("Musique de fond :", value=st.session_state.edit_musique)
+                musique_path = st.text_input("Musique de fond :", value=st.session_state.edit_musique, key=f"f_mus_{suffix_key}")
             with col_s2:
-                son_good = st.text_input("Son bonne réponse :", value=st.session_state.edit_son_good)
+                son_good = st.text_input("Son bonne réponse :", value=st.session_state.edit_son_good, key=f"f_sgood_{suffix_key}")
             with col_s3:
-                son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad)
+                son_bad = st.text_input("Son mauvaise réponse :", value=st.session_state.edit_son_bad, key=f"f_sbad_{suffix_key}")
 
             submitted_meta = st.form_submit_button("💾 Enregistrer les paramètres généraux", use_container_width=True)
             if submitted_meta:
@@ -734,15 +734,15 @@ if mode == "👨‍🏫 Espace Professeur":
             for idx, q in enumerate(st.session_state.edit_questions):
                 with st.expander(f"Modifier la Question {idx+1} : {q.get('consigne', '')[:50]}... (Points: {q.get('points', 10)})"):
                     with st.form(f"form_mod_q_{suffix_key}_{idx}"):
-                        mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{idx}")
+                        mod_consigne = st.text_area("Consigne :", value=q.get('consigne', ''), key=f"mod_c_{suffix_key}_{idx}")
                         col_p1, col_p2 = st.columns(2)
                         with col_p1:
-                            mod_points = st.number_input("Points :", min_value=1, value=q.get('points', 10), key=f"mod_pts_{idx}")
+                            mod_points = st.number_input("Points :", min_value=1, value=q.get('points', 10), key=f"mod_pts_{suffix_key}_{idx}")
                         with col_p2:
-                            mod_timer = st.number_input("Chronomètre (sec) :", min_value=5, value=q.get('timer_secondes', 30), key=f"mod_tim_{idx}")
+                            mod_timer = st.number_input("Chronomètre (sec) :", min_value=5, value=q.get('timer_secondes', 30), key=f"mod_tim_{suffix_key}_{idx}")
                         
                         options_actuelles = q.get('donnees', {}).get('options', [])
-                        mod_options_input = st.text_area("Options (une par ligne) :", value="\n".join(options_actuelles), key=f"mod_opt_{idx}")
+                        mod_options_input = st.text_area("Options (une par ligne) :", value="\n".join(options_actuelles), key=f"mod_opt_{suffix_key}_{idx}")
                         
                         reponses_actuelles = q.get('donnees', {}).get('reponses_correctes', [])
                         options_temp_list = [o.strip() for o in mod_options_input.split("\n") if o.strip()]
@@ -751,16 +751,16 @@ if mode == "👨‍🏫 Espace Professeur":
                             "Réponses correctes (cochez une ou plusieurs options) :", 
                             options=options_temp_list, 
                             default=def_reps, 
-                            key=f"mod_rep_{idx}"
+                            key=f"mod_rep_{suffix_key}_{idx}"
                         )
                         
-                        mod_explication = st.text_area("Explication :", value=q.get('explication', ''), key=f"mod_exp_{idx}")
+                        mod_explication = st.text_area("Explication :", value=q.get('explication', ''), key=f"mod_exp_{suffix_key}_{idx}")
                         
                         col_m_img, col_m_vid = st.columns(2)
                         with col_m_img:
-                            mod_img = st.text_input("Image question (optionnel) :", value=q.get('media', {}).get('image', ''), key=f"mod_img_{idx}")
+                            mod_img = st.text_input("Image question (optionnel) :", value=q.get('media', {}).get('image', ''), key=f"mod_img_{suffix_key}_{idx}")
                         with col_m_vid:
-                            mod_vid = st.text_input("Vidéo question (optionnel) :", value=q.get('media', {}).get('video', ''), key=f"mod_vid_{idx}")
+                            mod_vid = st.text_input("Vidéo question (optionnel) :", value=q.get('media', {}).get('video', ''), key=f"mod_vid_{suffix_key}_{idx}")
 
                         submitted_mod = st.form_submit_button("💾 Mettre à jour cette question", use_container_width=True)
                         if submitted_mod:
@@ -791,7 +791,7 @@ if mode == "👨‍🏫 Espace Professeur":
                                 st.success(f"Question {idx+1} mise à jour avec succès !")
                                 st.rerun()
 
-                    if st.button(f"❌ Supprimer la question {idx+1}", key=f"del_q_{idx}", use_container_width=True):
+                    if st.button(f"❌ Supprimer la question {idx+1}", key=f"del_q_{suffix_key}_{idx}", use_container_width=True):
                         st.session_state.edit_questions.pop(idx)
                         for r_idx, rq in enumerate(st.session_state.edit_questions):
                             rq["id"] = r_idx + 1
@@ -802,24 +802,24 @@ if mode == "👨‍🏫 Espace Professeur":
         st.markdown("---")
         st.subheader("➕ Ajouter une nouvelle question")
         with st.form(f"form_ajout_question_{suffix_key}"):
-            consigne_q = st.text_area("Consigne :")
+            consigne_q = st.text_area("Consigne :", key=f"add_c_{suffix_key}")
             col_ap1, col_ap2 = st.columns(2)
             with col_ap1:
-                points_q = st.number_input("Points :", min_value=1, value=10)
+                points_q = st.number_input("Points :", min_value=1, value=10, key=f"add_pts_{suffix_key}")
             with col_ap2:
-                timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30)
+                timer_q = st.number_input("Chronomètre (secondes) :", min_value=5, value=30, key=f"add_tim_{suffix_key}")
             
-            options_input = st.text_area("Options (une par ligne) :")
+            options_input = st.text_area("Options (une par ligne) :", key=f"add_opt_{suffix_key}")
             options_ajout_list = [o.strip() for o in options_input.split("\n") if o.strip()]
             
-            add_reponses_correctes = st.multiselect("Réponses correctes (cochez une ou plusieurs options) :", options=options_ajout_list)
-            explication_q = st.text_area("Explication :")
+            add_reponses_correctes = st.multiselect("Réponses correctes (cochez une ou plusieurs options) :", options=options_ajout_list, key=f"add_rep_{suffix_key}")
+            explication_q = st.text_area("Explication :", key=f"add_exp_{suffix_key}")
             
             col_m_add_img, col_m_add_vid = st.columns(2)
             with col_m_add_img:
-                add_img = st.text_input("Image média (optionnel) :", value="")
+                add_img = st.text_input("Image média (optionnel) :", value="", key=f"add_img_{suffix_key}")
             with col_m_add_vid:
-                add_vid = st.text_input("Vidéo média (optionnel) :", value="")
+                add_vid = st.text_input("Vidéo média (optionnel) :", value="", key=f"add_vid_{suffix_key}")
 
             submitted_q = st.form_submit_button("➕ Ajouter la question au QCM", use_container_width=True)
             if submitted_q:

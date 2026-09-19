@@ -43,16 +43,23 @@
             "timer_secondes": 25,
             "donnees": {
                 "options": [
-                    "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période.",
                     "Le bilan ne concerne que les banques, le compte de résultat concerne l'État.",
                     "Il n'y a aucune différence, ce sont les mêmes documents.",
+                    "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période.",
                     "Le compte de résultat est établi en début d'exercice et le bilan en fin d'exercice."
                 ],
                 "reponses_correctes": [
                     "Le bilan est une photo du patrimoine à un instant T, tandis que le compte de résultat est un film de l'activité sur une période."
                 ]
             },
-            "explication": "Le bilan présente l'actif et le passif à la clôture (photographie), alors que le compte de résultat cumule les flux de l'exercice (film)."
+            "explication": "Le bilan présente l'actif et le passif à la clôture (photographie), alors que le compte de résultat cumule les flux de l'exercice (film).",
+            "document_texte": "",
+            "document_image_a4": "",
+            "document_appui": "",
+            "media": {
+                "image": "",
+                "video": ""
+            }
         },
         {
             "id": 3,

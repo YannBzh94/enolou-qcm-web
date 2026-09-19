@@ -5,6 +5,7 @@ import time
 import qrcode
 import base64
 import requests
+import tempfile
 from io import BytesIO
 import pandas as pd
 import streamlit as st
@@ -34,6 +35,19 @@ if not os.path.exists(DOSSIER_QUIZZES):
     os.makedirs(DOSSIER_QUIZZES)
 if not os.path.exists(DOSSIER_SESSIONS):
     os.makedirs(DOSSIER_SESSIONS)
+
+# --- FONCTION D'ÉCRITURE ATOMIQUE SÉCURISÉE ---
+def sauvegarder_session_securisee(chemin_sess, sess_data):
+    try:
+        dossier = os.path.dirname(chemin_sess)
+        if not os.path.exists(dossier):
+            os.makedirs(dossier)
+        with tempfile.NamedTemporaryFile('w', dir=dossier, delete=False, encoding='utf-8') as tf:
+            json.dump(sess_data, tf, ensure_ascii=False, indent=4)
+            temp_name = tf.name
+        os.replace(temp_name, chemin_sess)
+    except Exception as e:
+        print(f"Erreur écriture sécurisée session: {e}")
 
 # --- INITIALISATION ROBUSTE DE SESSION STATE ---
 default_session_states = {
@@ -305,8 +319,7 @@ if mode == "👨‍🏫 Espace Professeur":
                         "students": {}
                     }
                     
-                    with open(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), 'w', encoding='utf-8') as f:
-                        json.dump(session_data, f, ensure_ascii=False, indent=4)
+                    sauvegarder_session_securisee(os.path.join(DOSSIER_SESSIONS, f"{session_id}.json"), session_data)
                     
                     st.session_state["sel_session_piloter"] = session_id
                     st.success(f"Nouvelle session créée avec succès ! (ID: {session_id})")
@@ -357,15 +370,13 @@ if mode == "👨‍🏫 Espace Professeur":
                                 s_data["current_global_idx"] = 0
                                 s_data["question_start_time"] = time.time()
                                 s_data["in_transition"] = False
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(s_data, f, ensure_ascii=False, indent=4)
+                                sauvegarder_session_securisee(chemin_sess, s_data)
                                 st.success("Session lancée !")
                                 st.rerun()
                         with col_btn3:
                             if s_data["status"] == "started" and st.button("⏹️ Clôturer la session"):
                                 s_data["status"] = "ended"
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(s_data, f, ensure_ascii=False, indent=4)
+                                sauvegarder_session_securisee(chemin_sess, s_data)
                                 st.rerun()
 
                         if s_data["status"] in ["started", "ended"]:
@@ -778,8 +789,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 "question_order": indices_questions,
                                 "answers_detail": []
                             }
-                            with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                json.dump(sess_data, f, ensure_ascii=False, indent=4)
+                            sauvegarder_session_securisee(chemin_sess, sess_data)
                         st.rerun()
                     else:
                         st.warning("Veuillez entrer un nom valide.")
@@ -840,8 +850,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                         for s_name in current_sess_data["students"]:
                                             current_sess_data["students"][s_name]["answered_current"] = False
                                             current_sess_data["students"][s_name]["last_result"] = None
-                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                        json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                    sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                     st.rerun()
                                 else:
                                     st.info(f"⏸️ Fin de la manche ! Question suivante dans **{remaining_trans} secondes**...")
@@ -849,8 +858,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                 if current_global_idx >= len(questions_list):
                                     s_info["finished"] = True
                                     current_sess_data["students"][st.session_state.collec_student_name] = s_info
-                                    with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                        json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                    sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                     st.balloons()
                                     st.success("🎉 Battle terminée !")
                                     st.markdown(f"### 🏆 Score : {s_info['score']} / {s_info['max_points']} pts")
@@ -879,8 +887,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                     if temps_restant == 0 or all_answered:
                                         current_sess_data["in_transition"] = True
                                         current_sess_data["transition_start_time"] = time.time()
-                                        with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                            json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                        sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                         st.rerun()
 
                                     st.subheader(f"⚡ Question {current_global_idx + 1} sur {len(questions_list)} (Mode Battle)")
@@ -941,8 +948,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                                 })
 
                                                 current_sess_data["students"][st.session_state.collec_student_name] = s_info
-                                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                                    json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                                sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                                 st.rerun()
                                     else:
                                         res_type, res_msg = s_info.get("last_result", ("info", "Réponse enregistrée."))
@@ -1015,8 +1021,7 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                             })
 
                                             current_sess_data["students"][st.session_state.collec_student_name] = s_info
-                                            with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                                json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                            sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                             st.rerun()
                                 else:
                                     res_type, res_msg = s_info.get("last_result", ("info", ""))
@@ -1030,14 +1035,12 @@ elif mode == "🌐 Espace Collectif (Rejoindre une session)":
                                         s_info["answered"] = False
                                         s_info["last_result"] = None
                                         current_sess_data["students"][st.session_state.collec_student_name] = s_info
-                                        with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                            json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                        sauvegarder_session_securisee(chemin_sess, current_sess_data)
                                         st.rerun()
                             else:
                                 s_info["finished"] = True
                                 current_sess_data["students"][st.session_state.collec_student_name] = s_info
-                                with open(chemin_sess, 'w', encoding='utf-8') as f:
-                                    json.dump(current_sess_data, f, ensure_ascii=False, indent=4)
+                                sauvegarder_session_securisee(chemin_sess, current_sess_data)
 
                                 st.balloons()
                                 st.success("🎉 Vous avez terminé l'examen !")

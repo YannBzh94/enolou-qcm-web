@@ -1,0 +1,15 @@
+{
+  "quiz_info": {
+    "titre": "Où trouvez-vous...",
+    "description": "permettre à l'étudiant de maîtriser le compte de résultat et le bilan et de situer les différents postes comptables ",
+    "image": "docs/bilan.jpg",
+    "document_appui": "",
+    "video": "",
+    "musique": "musique/Scott Buckley - Call To Adventure.mp3",
+    "son_good": "sons/sons_good/bonnereponse002.mp3",
+    "son_bad": "sons/sons_bad/Docteur maboul.wav",
+    "volume_musique": 0.5,
+    "volume_sons": 0.8
+  },
+  "questions": []
+}

@@ -379,13 +379,15 @@ if mode == "👨‍🏫 Espace Professeur":
                                 sauvegarder_session_securisee(chemin_sess, s_data)
                                 st.rerun()
 
+                        # Bouton de téléchargement CSV/Excel disponible pour TOUS les modes (Examen et Battle)
                         if s_data["status"] in ["started", "ended"]:
                             csv_data = generer_csv_session(s_data)
                             st.download_button(
-                                label="📥 Télécharger le rapport des notes (.csv compatible Excel)",
+                                label=f"📥 Télécharger le rapport des notes (.csv compatible Excel) - Mode {s_data['mode'].upper()}",
                                 data=csv_data,
-                                file_name=f"resultats_{sess_choisie}.csv",
-                                mime="text/csv"
+                                file_name=f"resultats_{s_data['mode']}_{sess_choisie}.csv",
+                                mime="text/csv",
+                                type="primary"
                             )
 
                         if s_data["status"] in ["started", "ended"] and s_data["mode"] == "battle":

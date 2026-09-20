@@ -14,29 +14,34 @@
   "questions": [
     {
       "id": 1,
-      "consigne": "Attribuer chaque poste comptable à sa catégorie",
+      "consigne": "Associez chaque type d'engagement hors bilan à sa catégorie.",
       "type": "association",
-      "difficulte": "Facile",
+      "difficulte": "Moyen",
       "points": 15,
+      "double_points": true,
       "tag": "Général",
-      "timer_secondes": 20,
+      "timer_secondes": 30,
       "donnees": {
         "paires": [
           [
-            "Titres de participations",
-            "Immobilisation financière"
+            "Caution accordée",
+            "Engagement donné"
           ],
           [
-            "Produits de participations",
-            "Produits financiers"
+            "Aval obtenu",
+            "Engagement reçu"
           ],
           [
-            "Participations des salariés",
-            "charges différées"
+            "EENE (Effets escomptés)",
+            "Engagement donné"
+          ],
+          [
+            "Crédit-bail",
+            "Engagement donné"
           ]
         ]
       },
-      "explication": "faire la différence entre les éléments financiers du compte de résultat et du bilan",
+      "explication": "Les engagements donnés sont des risques potentiels pour l'entreprise, tandis que les reçus constituent des garanties à son profit.",
       "document_texte": "",
       "media": {
         "image": "",
@@ -45,10 +50,11 @@
     },
     {
       "id": 2,
-      "consigne": "Bilan ou hors bilan ? Indiquer les éléments hors bilan",
+      "consigne": "Bilan ou hors bilan ? Indiquer les éléments considérés comme du hors bilan.",
       "type": "qcm",
       "difficulte": "Facile",
       "points": 15,
+      "double_points": true,
       "tag": "Général",
       "timer_secondes": 20,
       "donnees": {
@@ -65,7 +71,216 @@
           "Clause de retour à meilleure fortune"
         ]
       },
-      "explication": "Abandon de créances sera visible au bilan et au compte de résultat\nDépot de garantie sera en immobilisation financière",
+      "explication": "L'abandon de créances et le dépôt de garantie figurent respectivement au compte de résultat et à l'actif du bilan. Les autres éléments sont mentionnés en annexe.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 3,
+      "consigne": "Quelle est la définition comptable exacte d'un engagement hors bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Une obligation ou un droit potentiel dont la réalisation est incertaine",
+          "Une dette certaine inscrite au passif",
+          "Une provision pour risques et charges",
+          "Une immobilisation financière incorporelle"
+        ],
+        "reponses_correctes": [
+          "Une obligation ou un droit potentiel dont la réalisation est incertaine"
+        ]
+      },
+      "explication": "Ces engagements ne traduisent pas encore une modification certaine du patrimoine, d'où leur absence dans le bilan.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 4,
+      "consigne": "Les provisions pour risques et charges sont comptabilisées dans les engagements hors bilan.",
+      "type": "vrai_faux",
+      "difficulte": "Facile",
+      "points": 10,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 15,
+      "donnees": {
+        "reponse": false
+      },
+      "explication": "Les provisions pour risques figurent au passif du bilan car elles ont un caractère probable, contrairement au hors bilan où la réalisation n'est qu'éventuelle.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 5,
+      "consigne": "Dans quel document de synthèse mentionne-t-on obligatoirement les engagements hors bilan ?",
+      "type": "qcm",
+      "difficulte": "Facile",
+      "points": 10,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "L'annexe des comptes annuels",
+          "Le compte de résultat",
+          "L'actif du bilan",
+          "Le tableau des flux de trésorerie"
+        ],
+        "reponses_correctes": [
+          "L'annexe des comptes annuels"
+        ]
+      },
+      "explication": "Les engagements hors bilan doivent faire l'objet d'une information détaillée dans l'annexe pour donner une image fidèle de l'entreprise.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 6,
+      "consigne": "Associez l'opération à son traitement comptable (selon le PCG français).",
+      "type": "association",
+      "difficulte": "Moyen",
+      "points": 15,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 30,
+      "donnees": {
+        "paires": [
+          [
+            "Achat d'une machine",
+            "Bilan (Actif)"
+          ],
+          [
+            "Emprunt bancaire",
+            "Bilan (Passif)"
+          ],
+          [
+            "Caution solidaire accordée",
+            "Hors bilan"
+          ],
+          [
+            "Redevance de crédit-bail",
+            "Compte de résultat"
+          ]
+        ]
+      },
+      "explication": "Le contrat de crédit-bail génère des engagements hors bilan, la redevance passe en charges et l'achat classique s'inscrit au bilan.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 7,
+      "consigne": "Parmi ces exemples, lequel constitue un \"engagement reçu\" ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "options": [
+          "Une caution obtenue d'une banque",
+          "Une hypothèque accordée sur un bâtiment",
+          "Un aval donné à une filiale",
+          "L'escompte d'effets de commerce"
+        ],
+        "reponses_correctes": [
+          "Une caution obtenue d'une banque"
+        ]
+      },
+      "explication": "Une caution obtenue garantit l'entreprise contre la défaillance d'un tiers, ce qui constitue une sécurité supplémentaire (engagement reçu).",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 8,
+      "consigne": "En normes IFRS (IFRS 16), comment la majorité des contrats de location (comme le crédit-bail) sont-ils traités par le preneur ?",
+      "type": "qcm",
+      "difficulte": "Difficile",
+      "points": 20,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 30,
+      "donnees": {
+        "options": [
+          "Ils sont inscrits au bilan (droit d'utilisation et dette)",
+          "Ils restent exclusivement en hors bilan",
+          "Ils sont déduits des capitaux propres",
+          "Ils n'apparaissent qu'au compte de résultat"
+        ],
+        "reponses_correctes": [
+          "Ils sont inscrits au bilan (droit d'utilisation et dette)"
+        ]
+      },
+      "explication": "Contrairement au PCG français, la norme IFRS 16 oblige à inscrire la quasi-totalité des locations au bilan afin d'améliorer la transparence.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 9,
+      "consigne": "Les Effets Escomptés Non Échus (EENE) font partie des engagements donnés.",
+      "type": "vrai_faux",
+      "difficulte": "Moyen",
+      "points": 10,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 20,
+      "donnees": {
+        "reponse": true
+      },
+      "explication": "Si le client ne paie pas à l'échéance, la banque se retournera contre l'entreprise qui a escompté l'effet, ce qui crée un risque de décaissement futur.",
+      "document_texte": "",
+      "media": {
+        "image": "",
+        "video": ""
+      }
+    },
+    {
+      "id": 10,
+      "consigne": "Quel est l'objectif principal de l'analyse des engagements hors bilan pour un analyste financier ?",
+      "type": "qcm",
+      "difficulte": "Moyen",
+      "points": 15,
+      "double_points": true,
+      "tag": "Général",
+      "timer_secondes": 25,
+      "donnees": {
+        "options": [
+          "Évaluer les risques cachés et la solvabilité réelle",
+          "Calculer le montant de l'impôt sur les sociétés",
+          "Vérifier le nombre d'actions en circulation",
+          "Analyser le Besoin en Fonds de Roulement (BFR)"
+        ],
+        "reponses_correctes": [
+          "Évaluer les risques cachés et la solvabilité réelle"
+        ]
+      },
+      "explication": "Une entreprise peut afficher un bilan sain mais porter de lourds engagements hors bilan qui menaceraient sa survie si les risques venaient à se réaliser.",
       "document_texte": "",
       "media": {
         "image": "",

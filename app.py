@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-ENOLOU QUIZ — v2.0 "Arcade"
-Application de quiz interactif multi-joueurs (jusqu'a 40 participants)
-Refonte : design, navigation, multi-types de questions, robustesse multi-utilisateurs, mobile iOS/Android.
+ENOLOU QUIZ — v2.1 "Arcade"
+Application de quiz interactif multi-joueurs (jusqu'a 40 participants).
+Nouveautes v2.1 (Lot 1 / etape 1) : codes de session a 6 chiffres.
 """
 
 import os
@@ -41,7 +41,7 @@ for d in (DOSSIER_QUIZZES, DOSSIER_SESSIONS):
     os.makedirs(d, exist_ok=True)
 
 # ==========================================================
-# 1. DESIGN SYSTEM (CSS) — moderne, colore, mobile-first
+# 1. DESIGN SYSTEM (CSS)
 # ==========================================================
 PALETTES = {
     "Nebula": ["#6366f1", "#a855f7", "#ec4899"],
@@ -71,10 +71,7 @@ def injecter_design(palette="Nebula"):
 #MainMenu, footer, header {visibility: hidden;}
 [data-testid="stAudio"], audio { display:none !important; }
 
-:root {
-  --c1: __C1__; --c2: __C2__; --c3: __C3__;
-  --ink:#0b1020; --muted:#64748b; --card:#ffffff;
-}
+:root { --c1: __C1__; --c2: __C2__; --c3: __C3__; --ink:#0b1020; --muted:#64748b; --card:#ffffff; }
 
 .stApp {
   background:
@@ -86,100 +83,74 @@ def injecter_design(palette="Nebula"):
 html, body, [class*="css"] { font-family:'Inter',system-ui,-apple-system,sans-serif; }
 h1,h2,h3 { font-family:'Baloo 2','Inter',sans-serif !important; color:var(--ink) !important; letter-spacing:-.02em; }
 
-/* ---- Cartes ---- */
-.eno-card{
-  background:var(--card); border-radius:20px; padding:22px 24px;
-  box-shadow:0 10px 30px rgba(15,23,42,.08); border:1px solid rgba(15,23,42,.06);
-  margin-bottom:16px;
-}
-.eno-hero{
-  background:linear-gradient(120deg,var(--c1),var(--c2) 55%,var(--c3));
+.eno-card{ background:var(--card); border-radius:20px; padding:22px 24px;
+  box-shadow:0 10px 30px rgba(15,23,42,.08); border:1px solid rgba(15,23,42,.06); margin-bottom:16px; }
+.eno-hero{ background:linear-gradient(120deg,var(--c1),var(--c2) 55%,var(--c3));
   color:#fff; border-radius:24px; padding:26px 28px; margin-bottom:18px;
-  box-shadow:0 18px 40px color-mix(in srgb, var(--c2) 35%, transparent);
-}
+  box-shadow:0 18px 40px color-mix(in srgb, var(--c2) 35%, transparent); }
 .eno-hero h1{ color:#fff !important; margin:0 0 6px 0; font-size:2rem; }
 .eno-hero p{ margin:0; opacity:.92; font-size:.95rem; }
 
-.eno-pill{
-  display:inline-block; padding:4px 12px; border-radius:999px; font-size:.72rem;
-  font-weight:700; background:rgba(255,255,255,.22); color:#fff; margin-right:6px;
-  backdrop-filter:blur(6px);
-}
-.eno-badge{
-  display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:800;
-  background:color-mix(in srgb,var(--c1) 14%, #fff); color:var(--c1); border:1px solid color-mix(in srgb,var(--c1) 30%,#fff);
-}
+.eno-pill{ display:inline-block; padding:4px 12px; border-radius:999px; font-size:.72rem;
+  font-weight:700; background:rgba(255,255,255,.22); color:#fff; margin-right:6px; backdrop-filter:blur(6px); }
+.eno-badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:800;
+  background:color-mix(in srgb,var(--c1) 14%, #fff); color:var(--c1); border:1px solid color-mix(in srgb,var(--c1) 30%,#fff); }
 
-/* ---- Boutons ---- */
-.stButton > button{
-  border-radius:14px !important; font-weight:700 !important; padding:.65rem 1rem !important;
+/* ---- Code de session a 6 chiffres ---- */
+.eno-code-wrap{ text-align:center; margin:10px 0 4px 0; }
+.eno-code-label{ font-size:.8rem; font-weight:700; color:var(--muted); letter-spacing:.14em; text-transform:uppercase; }
+.eno-code{ display:inline-flex; gap:8px; margin-top:8px; }
+.eno-digit{
+  width:52px; height:66px; border-radius:14px; display:grid; place-items:center;
+  font-family:'Baloo 2',sans-serif; font-size:2.2rem; font-weight:800; color:#fff;
+  background:linear-gradient(145deg,var(--c1),var(--c2));
+  box-shadow:0 10px 22px color-mix(in srgb,var(--c2) 32%, transparent);
+}
+.eno-code-xl .eno-digit{ width:92px; height:120px; font-size:4rem; border-radius:20px; }
+
+.stButton > button{ border-radius:14px !important; font-weight:700 !important; padding:.65rem 1rem !important;
   border:1px solid rgba(15,23,42,.10) !important;
-  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
-  min-height:48px;
-}
+  transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; min-height:48px; }
 .stButton > button:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(15,23,42,.14); }
-.stButton > button[kind="primary"]{
-  background:linear-gradient(120deg,var(--c1),var(--c2)) !important; border:none !important; color:#fff !important;
-}
+.stButton > button[kind="primary"]{ background:linear-gradient(120deg,var(--c1),var(--c2)) !important; border:none !important; color:#fff !important; }
 
-/* ---- Tuiles reponses type arcade ---- */
 __TILES__
-div[class*="st-key-tile_"] button{
-  min-height:92px !important; font-size:1.05rem !important; font-weight:800 !important;
+div[class*="st-key-tile_"] button{ min-height:92px !important; font-size:1.05rem !important; font-weight:800 !important;
   border-radius:18px !important; box-shadow:0 8px 20px rgba(15,23,42,.16) !important;
-  white-space:normal !important; line-height:1.25 !important;
-}
+  white-space:normal !important; line-height:1.25 !important; }
 div[class*="st-key-tile_"] button p{ font-size:1.05rem !important; font-weight:800 !important; }
 
-/* ---- Chrono ---- */
-.eno-timer{
-  display:flex; align-items:center; gap:12px; font-weight:800; color:var(--ink);
+.eno-timer{ display:flex; align-items:center; gap:12px; font-weight:800; color:var(--ink);
   background:#fff; border-radius:16px; padding:10px 16px; border:1px solid rgba(15,23,42,.08);
-  box-shadow:0 6px 18px rgba(15,23,42,.06);
-}
+  box-shadow:0 6px 18px rgba(15,23,42,.06); }
 .eno-bar{ height:12px; border-radius:99px; background:#e2e8f0; overflow:hidden; flex:1; }
 .eno-bar > span{ display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,var(--c1),var(--c3)); transition:width .8s linear; }
 
-/* ---- Leaderboard ---- */
-.eno-row{
-  display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px;
-  padding:10px 14px; margin-bottom:8px; border:1px solid rgba(15,23,42,.06);
-  box-shadow:0 4px 12px rgba(15,23,42,.05);
-}
+.eno-row{ display:flex; align-items:center; gap:12px; background:#fff; border-radius:14px;
+  padding:10px 14px; margin-bottom:8px; border:1px solid rgba(15,23,42,.06); box-shadow:0 4px 12px rgba(15,23,42,.05); }
 .eno-rank{ width:34px; height:34px; border-radius:12px; display:grid; place-items:center; font-weight:900; color:#fff;
   background:linear-gradient(120deg,var(--c1),var(--c2)); flex:none; }
 .eno-name{ font-weight:700; flex:1; }
 .eno-score{ font-weight:900; color:var(--c1); }
 .eno-avatar{ width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.1rem;flex:none;}
 
-/* ---- Lobby ---- */
 .eno-lobby{ display:flex; flex-wrap:wrap; gap:10px; }
-.eno-chip{
-  background:#fff; border-radius:999px; padding:8px 14px; font-weight:700; font-size:.85rem;
-  border:1px solid rgba(15,23,42,.08); box-shadow:0 4px 12px rgba(15,23,42,.06);
-  animation:pop .35s ease;
-}
+.eno-chip{ background:#fff; border-radius:999px; padding:8px 14px; font-weight:700; font-size:.85rem;
+  border:1px solid rgba(15,23,42,.08); box-shadow:0 4px 12px rgba(15,23,42,.06); animation:pop .35s ease; }
 @keyframes pop{ from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
 
-/* ---- Feedback ---- */
 .eno-ok, .eno-ko{ border-radius:18px; padding:18px; color:#fff; font-weight:800; font-size:1.1rem; text-align:center; }
 .eno-ok{ background:linear-gradient(120deg,#10b981,#22c55e); }
 .eno-ko{ background:linear-gradient(120deg,#ef4444,#f43f5e); }
 
-/* ---- Inputs ---- */
 [data-baseweb="input"] input, [data-baseweb="select"] > div, .stTextArea textarea{
-  border-radius:12px !important; font-size:16px !important; /* 16px = pas de zoom auto iOS */
-}
+  border-radius:12px !important; font-size:16px !important; }
 [data-testid="stMetricValue"]{ font-family:'Baloo 2',sans-serif; }
 
-/* ---- Navigation onglets ---- */
 .stTabs [data-baseweb="tab-list"]{ gap:6px; }
-.stTabs [data-baseweb="tab"]{
-  border-radius:12px 12px 0 0; padding:8px 16px; font-weight:700; background:rgba(255,255,255,.6);
-}
+.stTabs [data-baseweb="tab"]{ border-radius:12px 12px 0 0; padding:8px 16px; font-weight:700; background:rgba(255,255,255,.6); }
 .stTabs [aria-selected="true"]{ background:#fff !important; color:var(--c1) !important; }
 
-/* ---- MOBILE (iOS / Android) ---- */
 @media (max-width: 820px){
   .block-container{ padding:0.6rem 0.7rem 5rem 0.7rem !important; }
   .eno-hero{ padding:18px; border-radius:18px; }
@@ -187,12 +158,12 @@ div[class*="st-key-tile_"] button p{ font-size:1.05rem !important; font-weight:8
   .eno-card{ padding:16px; border-radius:16px; }
   div[class*="st-key-tile_"] button{ min-height:76px !important; }
   h1{ font-size:1.5rem !important; } h2{ font-size:1.2rem !important; }
+  .eno-digit{ width:40px; height:54px; font-size:1.7rem; }
+  .eno-code-xl .eno-digit{ width:48px; height:66px; font-size:2.1rem; }
   [data-testid="stHorizontalBlock"]{ flex-wrap:wrap !important; gap:.4rem !important; }
   [data-testid="column"]{ min-width:46% !important; }
 }
-@supports (-webkit-touch-callout: none){
-  .stApp{ -webkit-text-size-adjust:100%; }
-}
+@supports (-webkit-touch-callout: none){ .stApp{ -webkit-text-size-adjust:100%; } }
 </style>
 """
     css = css.replace("__C1__", c1).replace("__C2__", c2).replace("__C3__", c3).replace("__TILES__", tiles_css)
@@ -207,12 +178,46 @@ div[class*="st-key-tile_"] button p{ font-size:1.05rem !important; font-weight:8
 
 
 # ==========================================================
-# 2. STOCKAGE — architecture multi-joueurs sans collision
-#    SESSIONS/<id>/session.json      (ecrit par le prof / le pilote)
-#    SESSIONS/<id>/players/<slug>.json (1 fichier par joueur -> zero conflit)
+# 2. STOCKAGE MULTI-JOUEURS + CODES DE SESSION A 6 CHIFFRES
+#    SESSIONS/<code>/session.json
+#    SESSIONS/<code>/players/<slug>.json  (1 fichier par joueur)
 # ==========================================================
 def slug(txt):
     return hashlib.md5(txt.strip().lower().encode("utf-8")).hexdigest()[:12]
+
+
+def normaliser_code(saisie):
+    """Accepte '123 456', '123-456', 'sess_1758…' (ancien format) et renvoie un identifiant utilisable."""
+    if saisie is None:
+        return ""
+    s = str(saisie).strip()
+    if s.lower().startswith("sess_"):          # retrocompatibilite ancien format
+        return s
+    chiffres = re.sub(r"\D", "", s)
+    return chiffres if len(chiffres) == 6 else ""
+
+
+def code_valide(code):
+    return bool(re.fullmatch(r"\d{6}", str(code))) or str(code).lower().startswith("sess_")
+
+
+def generer_code_session(essais=200):
+    """Code a 6 chiffres, unique, sans 0 en tete et sans sequence triviale."""
+    existants = set(lister_sessions())
+    for _ in range(essais):
+        code = str(random.randint(100000, 999999))
+        if code in existants:
+            continue
+        if len(set(code)) == 1:                 # 111111, 222222…
+            continue
+        if code in ("123456", "654321", "000000"):
+            continue
+        return code
+    # repli : premier code libre
+    for c in range(100000, 1000000):
+        if str(c) not in existants:
+            return str(c)
+    return f"sess_{int(time.time())}"
 
 
 def ecrire_json_atomique(chemin, data):
@@ -230,7 +235,7 @@ def ecrire_json_atomique(chemin, data):
 
 
 def lire_json(chemin, defaut=None):
-    for _ in range(3):  # tolerance aux lectures pendant un remplacement
+    for _ in range(3):
         try:
             with open(chemin, "r", encoding="utf-8") as f:
                 return json.load(f)
@@ -242,7 +247,7 @@ def lire_json(chemin, defaut=None):
 
 
 def dossier_session(sid):
-    return os.path.join(DOSSIER_SESSIONS, sid)
+    return os.path.join(DOSSIER_SESSIONS, str(sid))
 
 
 def chemin_session(sid):
@@ -254,6 +259,8 @@ def dossier_joueurs(sid):
 
 
 def charger_session(sid):
+    if not sid or not code_valide(sid):
+        return None
     return lire_json(chemin_session(sid))
 
 
@@ -299,10 +306,11 @@ def prendre_verrou(sid, cle, ttl=10):
 
 def lister_sessions():
     out = []
-    for d in os.listdir(DOSSIER_SESSIONS):
-        if os.path.isfile(chemin_session(d)):
-            out.append(d)
-    return sorted(out, reverse=True)
+    if os.path.isdir(DOSSIER_SESSIONS):
+        for d in os.listdir(DOSSIER_SESSIONS):
+            if os.path.isfile(chemin_session(d)):
+                out.append(d)
+    return sorted(out, key=lambda s: os.path.getmtime(chemin_session(s)), reverse=True)
 
 
 def supprimer_session(sid):
@@ -313,13 +321,12 @@ def supprimer_session(sid):
         print(f"[suppression] {e}")
 
 
-# ---------- Synchronisation GitHub (inchangee) ----------
+# ---------- Synchronisation GitHub ----------
 def sauvegarder_fichier_github(chemin_relatif, contenu_str):
     try:
         if "GITHUB_TOKEN" in st.secrets:
             token = st.secrets["GITHUB_TOKEN"]
-            owner_repo = "YannBzh94/enolou-qcm-web"
-            url = f"https://api.github.com/repos/{owner_repo}/contents/{chemin_relatif}"
+            url = f"https://api.github.com/repos/YannBzh94/enolou-qcm-web/contents/{chemin_relatif}"
             headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"}
             resp = requests.get(url, headers=headers)
             sha = resp.json().get("sha") if resp.status_code == 200 else None
@@ -414,14 +421,14 @@ def evaluer_reponse(q, reponse):
         correctes = set(d.get("reponses_correctes", []))
         if not correctes:
             return False, 0.0
-        donnees_rep = set(reponse if isinstance(reponse, list) else [reponse])
+        rep = set(reponse if isinstance(reponse, list) else [reponse])
         if len(correctes) == 1:
-            ok = donnees_rep == correctes
+            ok = rep == correctes
             return ok, 1.0 if ok else 0.0
-        bonnes = len(donnees_rep & correctes)
-        fausses = len(donnees_rep - correctes)
+        bonnes = len(rep & correctes)
+        fausses = len(rep - correctes)
         ratio = max(0.0, (bonnes - fausses) / len(correctes))
-        return donnees_rep == correctes, round(ratio, 3)
+        return rep == correctes, round(ratio, 3)
 
     if t == "vrai_faux":
         attendu = bool(d.get("reponse", True))
@@ -450,8 +457,7 @@ def evaluer_reponse(q, reponse):
             return False, 0.0
         rep = reponse or {}
         bonnes = sum(1 for g, dr in paires if normaliser(rep.get(g, "")) == normaliser(dr))
-        ratio = bonnes / len(paires)
-        return bonnes == len(paires), round(ratio, 3)
+        return bonnes == len(paires), round(bonnes / len(paires), 3)
 
     if t == "texte":
         acceptees = d.get("reponses_acceptees", [])
@@ -468,7 +474,7 @@ def evaluer_reponse(q, reponse):
         if ecart == 0:
             return True, 1.0
         if ecart <= tol:
-            return True, round(1.0 - 0.5 * (ecart / tol), 3)  # 100% -> 50% dans la tolerance
+            return True, round(1.0 - 0.5 * (ecart / tol), 3)
         return False, 0.0
 
     return False, 0.0
@@ -514,11 +520,25 @@ def hero(titre, sous_titre="", pills=None):
     )
 
 
+def afficher_code(code, label="Code de session", xl=False):
+    """Affiche le code a 6 chiffres sous forme de pavés lisibles à distance."""
+    code = str(code)
+    if code.lower().startswith("sess_"):
+        st.markdown(f"**{label} :** `{code}`")
+        return
+    digits = "".join(f'<div class="eno-digit">{c}</div>' for c in code)
+    st.markdown(
+        f"""<div class="eno-code-wrap {'eno-code-xl' if xl else ''}">
+        <div class="eno-code-label">{label}</div>
+        <div class="eno-code">{digits}</div></div>""",
+        unsafe_allow_html=True,
+    )
+
+
 def chrono(restant, total):
     pct = int(100 * restant / total) if total else 0
-    couleur = "⏱️" if pct > 30 else "🔥"
     st.markdown(
-        f"""<div class="eno-timer">{couleur}<div class="eno-bar"><span style="width:{pct}%"></span></div>
+        f"""<div class="eno-timer">{'⏱️' if pct > 30 else '🔥'}<div class="eno-bar"><span style="width:{pct}%"></span></div>
         <div style="min-width:52px;text-align:right">{restant}s</div></div>""",
         unsafe_allow_html=True,
     )
@@ -559,17 +579,16 @@ def entete_question(q, index, total, points_affiches=True):
 
 def afficher_medias(q, quiz_info=None):
     media = q.get("media", {}) or {}
-    img = media.get("image") or ""
-    vid = media.get("video") or ""
     if q.get("document_texte"):
         st.info(q["document_texte"])
+    img = media.get("image") or ""
+    vid = media.get("video") or ""
     if img and os.path.exists(img):
         st.image(img, use_container_width=True)
     if vid and os.path.exists(vid):
         st.video(vid)
 
 
-# ---------- Widgets de reponse par type ----------
 def widget_reponse(q, cle, desactive=False):
     """Affiche le widget adapte au type et renvoie la reponse courante (ou None)."""
     t = q.get("type", "qcm")
@@ -579,8 +598,7 @@ def widget_reponse(q, cle, desactive=False):
         options = d.get("options", [])
         multi = t == "qcm" and len(d.get("reponses_correctes", [])) > 1
         sel_key = f"sel_{cle}"
-        if sel_key not in st.session_state:
-            st.session_state[sel_key] = []
+        st.session_state.setdefault(sel_key, [])
         if multi:
             st.caption("🔷 Plusieurs bonnes réponses possibles — touchez toutes les tuiles correctes.")
         cols = st.columns(2)
@@ -590,10 +608,7 @@ def widget_reponse(q, cle, desactive=False):
                 libelle = f"{TILE_SHAPES[i % len(TILE_SHAPES)]}  {opt}" + ("  ✅" if actif else "")
                 if st.button(libelle, key=f"tile_{i}_{cle}", use_container_width=True, disabled=desactive):
                     if multi:
-                        if actif:
-                            st.session_state[sel_key].remove(opt)
-                        else:
-                            st.session_state[sel_key].append(opt)
+                        st.session_state[sel_key].remove(opt) if actif else st.session_state[sel_key].append(opt)
                     else:
                         st.session_state[sel_key] = [] if actif else [opt]
                     st.rerun()
@@ -622,8 +637,7 @@ def widget_reponse(q, cle, desactive=False):
         melange = list(elements)
         random.Random(q.get("id", 0) * 7 + 13).shuffle(melange)
         ordre_key = f"ord_{cle}"
-        if ordre_key not in st.session_state:
-            st.session_state[ordre_key] = []
+        st.session_state.setdefault(ordre_key, [])
         st.caption(f"🔢 {d.get('consigne_ordre','Touchez les éléments dans le bon ordre (1er → dernier).')}")
         restants = [e for e in melange if e not in st.session_state[ordre_key]]
         cols = st.columns(2)
@@ -659,16 +673,13 @@ def widget_reponse(q, cle, desactive=False):
         return rep if len(rep) == len(paires) else None
 
     if t == "texte":
-        val = st.text_input("✍️ Votre réponse", key=f"txt_{cle}", disabled=desactive,
-                            placeholder="Tapez votre réponse…")
+        val = st.text_input("✍️ Votre réponse", key=f"txt_{cle}", disabled=desactive, placeholder="Tapez votre réponse…")
         return val.strip() if val and val.strip() else None
 
     if t == "curseur":
-        mini = float(d.get("min", 0))
-        maxi = float(d.get("max", 100))
-        pas = float(d.get("pas", 1))
-        val = st.slider(d.get("unite", "Votre estimation"), mini, maxi, (mini + maxi) / 2, step=pas,
-                        key=f"cur_{cle}", disabled=desactive)
+        mini, maxi = float(d.get("min", 0)), float(d.get("max", 100))
+        val = st.slider(d.get("unite", "Votre estimation"), mini, maxi, (mini + maxi) / 2,
+                        step=float(d.get("pas", 1)), key=f"cur_{cle}", disabled=desactive)
         return float(val)
 
     return None
@@ -704,7 +715,7 @@ def generer_csv_session(sid):
         lignes.append({
             "Participant": j.get("name"), "Score": j.get("score", 0),
             "Score max": j.get("max_points", 0),
-            "Réussite %": round(100 * j.get("score", 0) / j.get("max_points", 1), 1),
+            "Réussite %": round(100 * j.get("score", 0) / max(1, j.get("max_points", 1)), 1),
             "Statut": "Terminé" if j.get("finished") else "En cours",
             "Question": "", "Réponse": "", "Correct": "", "Points": "",
         })
@@ -760,7 +771,6 @@ ETATS_DEFAUT = {
     "question_start_time": time.time(),
     "declencher_son": None,
     "joueur_nom": "",
-    "session_active": None,
     "edit_nom_fichier": "nouveau_qcm.json",
     "edit_titre": "",
     "edit_desc": "",
@@ -785,7 +795,7 @@ injecter_design(st.session_state.palette)
 
 query_params = st.query_params
 url_qcm = query_params.get("qcm")
-url_session = query_params.get("session")
+url_session = normaliser_code(query_params.get("session"))
 
 # --- Reordonnancement drag & drop (editeur) ---
 if "reorder" in query_params and st.session_state.get("edit_questions"):
@@ -814,22 +824,15 @@ if url_qcm and not st.session_state.qcm_selectionne:
         st.session_state.quiz_started = False
         st.session_state.answered = False
 
-# --- Determination de l'espace (navigation) ---
 if st.session_state.espace is None:
     st.session_state.espace = "session" if url_session else ("solo" if url_qcm else "accueil")
 
-ESPACES = {
-    "accueil": "🏠 Accueil",
-    "session": "🎮 Rejoindre",
-    "solo": "🎧 Solo",
-    "prof": "🛠️ Animateur",
-}
+ESPACES = {"accueil": "🏠 Accueil", "session": "🎮 Rejoindre", "solo": "🎧 Solo", "prof": "🛠️ Animateur"}
 
 with st.sidebar:
     st.markdown("### 🚀 Enolou Quiz")
-    st.caption("v2.0 — jusqu'à 40 joueurs")
-    nouveau = st.radio("Espace", list(ESPACES.values()),
-                       index=list(ESPACES).index(st.session_state.espace))
+    st.caption("v2.1 — jusqu'à 40 joueurs")
+    nouveau = st.radio("Espace", list(ESPACES.values()), index=list(ESPACES).index(st.session_state.espace))
     cle_nouveau = [k for k, v in ESPACES.items() if v == nouveau][0]
     if cle_nouveau != st.session_state.espace:
         st.session_state.espace = cle_nouveau
@@ -854,22 +857,34 @@ espace = st.session_state.espace
 if espace == "accueil":
     hero("Enolou Quiz", "Des quiz vivants, colorés et jouables à 40 — sur mobile comme sur grand écran.",
          ["🎮 Battle temps réel", "📝 Mode examen", "🔢 7 types de questions", "📱 iOS & Android"])
-    c1, c2, c3 = st.columns(3)
+
+    st.markdown('<div class="eno-card"><h3>🎮 Rejoindre une partie</h3>'
+                '<p>Saisissez le code à 6 chiffres affiché par l\'animateur.</p></div>', unsafe_allow_html=True)
+    c_code, c_go = st.columns([3, 1])
+    with c_code:
+        code_rapide = st.text_input("Code à 6 chiffres", max_chars=11, placeholder="• • •   • • •",
+                                    label_visibility="collapsed", key="code_accueil")
+    with c_go:
+        if st.button("Entrer ▶", type="primary", use_container_width=True):
+            c = normaliser_code(code_rapide)
+            if not c:
+                st.warning("Le code doit comporter 6 chiffres.")
+            elif not charger_session(c):
+                st.error("Aucune partie ne correspond à ce code.")
+            else:
+                st.query_params["session"] = c
+                st.session_state.espace = "session"
+                st.rerun()
+
+    c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="eno-card"><h3>🎮 Rejoindre une partie</h3>'
-                    '<p>Scannez le QR code de l\'animateur ou saisissez le code de session.</p></div>',
-                    unsafe_allow_html=True)
-        if st.button("Rejoindre maintenant", type="primary", use_container_width=True):
-            st.session_state.espace = "session"
-            st.rerun()
-    with c2:
         st.markdown('<div class="eno-card"><h3>🎧 Jouer en solo</h3>'
                     '<p>Entraînez-vous à votre rythme sur un quiz partagé par votre formateur.</p></div>',
                     unsafe_allow_html=True)
         if st.button("Mode solo", use_container_width=True):
             st.session_state.espace = "solo"
             st.rerun()
-    with c3:
+    with c2:
         st.markdown('<div class="eno-card"><h3>🛠️ Espace animateur</h3>'
                     '<p>Créez vos quiz, lancez une session, projetez le classement en direct.</p></div>',
                     unsafe_allow_html=True)
@@ -877,17 +892,16 @@ if espace == "accueil":
             st.session_state.espace = "prof"
             st.rerun()
 
-    sessions = lister_sessions()
-    if sessions:
-        st.markdown("#### 🔴 Sessions ouvertes")
-        for sid in sessions[:5]:
-            s = charger_session(sid) or {}
-            if s.get("status") in ("waiting", "started"):
-                nb = len(charger_tous_joueurs(sid))
-                st.markdown(
-                    f"""<div class="eno-row"><div class="eno-avatar">{'🟢' if s.get('status')=='waiting' else '🔴'}</div>
-                    <div class="eno-name">{s.get('quiz_info',{}).get('titre','Quiz')} — code <code>{sid}</code></div>
-                    <div class="eno-score">{nb}/{MAX_JOUEURS} 👥</div></div>""", unsafe_allow_html=True)
+    ouvertes = [(s, charger_session(s)) for s in lister_sessions()[:6]]
+    ouvertes = [(s, d) for s, d in ouvertes if d and d.get("status") in ("waiting", "started")]
+    if ouvertes:
+        st.markdown("#### 🔴 Parties ouvertes")
+        for sid, s in ouvertes:
+            nb = len(charger_tous_joueurs(sid))
+            st.markdown(
+                f"""<div class="eno-row"><div class="eno-avatar">{'🟢' if s.get('status')=='waiting' else '🔴'}</div>
+                <div class="eno-name">{s.get('quiz_info',{}).get('titre','Quiz')} — code <b>{sid}</b></div>
+                <div class="eno-score">{nb}/{MAX_JOUEURS} 👥</div></div>""", unsafe_allow_html=True)
 
 
 # ==========================================================
@@ -895,18 +909,24 @@ if espace == "accueil":
 # ==========================================================
 elif espace == "session":
     if not url_session:
-        hero("🎮 Rejoindre une partie", "Entrez le code affiché par l'animateur, ou scannez son QR code.")
-        code = st.text_input("Code de session", placeholder="sess_1758000000")
-        if st.button("Entrer dans le salon", type="primary", use_container_width=True) and code.strip():
-            st.query_params["session"] = code.strip()
-            st.rerun()
+        hero("🎮 Rejoindre une partie", "Saisissez le code à 6 chiffres affiché par l'animateur, ou scannez son QR code.")
+        code = st.text_input("Code de session", max_chars=11, placeholder="• • •   • • •")
+        if st.button("Entrer dans le salon", type="primary", use_container_width=True):
+            c = normaliser_code(code)
+            if not c:
+                st.warning("Le code doit comporter 6 chiffres.")
+            elif not charger_session(c):
+                st.error("Aucune partie ne correspond à ce code. Vérifiez auprès de l'animateur.")
+            else:
+                st.query_params["session"] = c
+                st.rerun()
         st.stop()
 
     sid = url_session
     sess = charger_session(sid)
     if not sess:
-        st.error("❌ Session introuvable ou terminée.")
-        if st.button("Retour"):
+        st.error("❌ Partie introuvable ou terminée.")
+        if st.button("Saisir un autre code"):
             st.query_params.clear()
             st.rerun()
         st.stop()
@@ -919,8 +939,7 @@ elif espace == "session":
 
     # ---------- Inscription ----------
     if not st.session_state.joueur_nom:
-        hero(quiz_info.get("titre", "Quiz"),
-             quiz_info.get("description", ""),
+        hero(quiz_info.get("titre", "Quiz"), quiz_info.get("description", ""),
              [f"Mode {mode_sess.upper()}", f"{len(questions)} questions", f"Code {sid}"])
         joueurs = charger_tous_joueurs(sid)
         st.markdown(f"**{len(joueurs)}/{MAX_JOUEURS}** joueurs déjà dans le salon.")
@@ -957,7 +976,6 @@ elif espace == "session":
 
     nom_joueur = st.session_state.joueur_nom
 
-    # ---------- Audio ----------
     son = st.session_state.get("declencher_son")
     son_path = quiz_info.get("son_good") if son == "good" else quiz_info.get("son_bad")
     if sess.get("status") == "started":
@@ -968,7 +986,7 @@ elif espace == "session":
     def ecran_joueur():
         sess = charger_session(sid)
         if not sess:
-            st.error("Session supprimée par l'animateur.")
+            st.error("Partie supprimée par l'animateur.")
             return
         moi = charger_joueur(sid, nom_joueur)
         if not moi:
@@ -978,7 +996,6 @@ elif espace == "session":
         questions = sess.get("questions", [])
         mode_sess = sess.get("mode", "battle")
 
-        # ---- SALON D'ATTENTE ----
         if statut == "waiting":
             hero("⏳ Salon d'attente", "La partie démarre dès que l'animateur lance le compte à rebours.",
                  [f"{avatar_de(nom_joueur)} {nom_joueur}", f"Code {sid}"])
@@ -989,7 +1006,6 @@ elif espace == "session":
                 unsafe_allow_html=True)
             return
 
-        # ---- FIN DE PARTIE ----
         if statut == "ended":
             joueurs = charger_tous_joueurs(sid)
             rang = next((i + 1 for i, j in enumerate(joueurs) if j["name"] == nom_joueur), "-")
@@ -999,7 +1015,7 @@ elif espace == "session":
             leaderboard(joueurs, 10, "🏆 Podium final")
             return
 
-        # =========== MODE BATTLE (synchronise) ===========
+        # =========== MODE BATTLE ===========
         if mode_sess == "battle":
             idx = sess.get("current_global_idx", 0)
             joueurs = charger_tous_joueurs(sid)
@@ -1060,7 +1076,7 @@ elif espace == "session":
                     pts = calculer_points(q, ratio, elapsed, timer_sec, bonus_rapidite=True)
                     serie = moi.get("serie", 0) + 1 if correct else 0
                     if correct and serie >= 3:
-                        pts = int(pts * 1.2)  # bonus serie
+                        pts = int(pts * 1.2)
                     moi["score"] += pts
                     moi["serie"] = serie
                     moi["meilleure_serie"] = max(moi.get("meilleure_serie", 0), serie)
@@ -1076,12 +1092,11 @@ elif espace == "session":
             else:
                 r = moi.get("last_result") or {}
                 afficher_feedback(q, r.get("correct"), r.get("ratio", 0), r.get("points", 0))
-                nb_rep = sum(1 for j in joueurs if j.get("answered_current"))
-                st.info(f"⏳ {nb_rep}/{len(joueurs)} joueurs ont répondu…")
+                st.info(f"⏳ {sum(1 for j in joueurs if j.get('answered_current'))}/{len(joueurs)} joueurs ont répondu…")
                 leaderboard(joueurs, 5, "🏆 Classement en direct")
             return
 
-        # =========== MODE EXAMEN (autonome) ===========
+        # =========== MODE EXAMEN ===========
         ordre = moi.get("question_order", list(range(len(questions))))
         i_etu = moi.get("current_idx", 0)
         if i_etu >= len(ordre):
@@ -1160,18 +1175,16 @@ elif espace == "solo":
 
     quiz_info = st.session_state.banque.get("quiz_info", {})
     questions = st.session_state.banque.get("questions", [])
-    vol_mus = quiz_info.get("volume_musique", 0.5)
-    vol_sfx = quiz_info.get("volume_sons", 0.8)
     son = st.session_state.get("declencher_son")
     son_path = quiz_info.get("son_good") if son == "good" else quiz_info.get("son_bad")
     if st.session_state.quiz_started:
-        rendre_moteur_audio(quiz_info.get("musique"), vol_mus, son, son_path, vol_sfx)
+        rendre_moteur_audio(quiz_info.get("musique"), quiz_info.get("volume_musique", 0.5),
+                            son, son_path, quiz_info.get("volume_sons", 0.8))
         st.session_state.declencher_son = None
 
     if not st.session_state.quiz_started:
         hero(quiz_info.get("titre", "Quiz"), quiz_info.get("description", ""),
-             [f"{len(questions)} questions",
-              f"{sum(int(q.get('points',10)) for q in questions)} points en jeu"])
+             [f"{len(questions)} questions", f"{sum(int(q.get('points',10)) for q in questions)} points en jeu"])
         img = quiz_info.get("image")
         if img and os.path.exists(img):
             st.image(img, use_container_width=True)
@@ -1195,7 +1208,8 @@ elif espace == "solo":
     if idx >= len(questions):
         pct = round(100 * st.session_state.score_total / max(1, st.session_state.max_points))
         st.balloons()
-        hero("🎉 Évaluation terminée !", f"Score final : **{st.session_state.score_total} / {st.session_state.max_points}** ({pct}%)",
+        hero("🎉 Évaluation terminée !",
+             f"Score final : **{st.session_state.score_total} / {st.session_state.max_points}** ({pct}%)",
              ["🏆 Bravo !" if pct >= 70 else "💪 Encore un effort !"])
         st.progress(pct / 100)
         c1, c2 = st.columns(2)
@@ -1218,9 +1232,10 @@ elif espace == "solo":
     timer_sec = int(q.get("timer_secondes", 30))
     elapsed = int(time.time() - st.session_state.question_start_time)
     restant = max(0, timer_sec - elapsed)
-    st.progress((idx) / len(questions), text=f"Progression {idx}/{len(questions)} — {st.session_state.score_total} pts")
+    st.progress(idx / len(questions), text=f"Progression {idx}/{len(questions)} — {st.session_state.score_total} pts")
 
-    col_doc, col_q = st.columns([2, 3], gap="large") if (q.get("document_texte") or (q.get("media", {}) or {}).get("image")) else (None, st.container())
+    a_support = bool(q.get("document_texte") or (q.get("media", {}) or {}).get("image"))
+    col_doc, col_q = st.columns([2, 3], gap="large") if a_support else (None, st.container())
     if col_doc is not None:
         with col_doc:
             st.markdown("#### 📄 Support")
@@ -1261,11 +1276,10 @@ elif espace == "solo":
 # ==========================================================
 elif espace == "prof":
     hero("🛠️ Espace animateur", "Créez, lancez, pilotez et analysez vos quiz.",
-         ["Multi-types", f"Jusqu'à {MAX_JOUEURS} joueurs", "Export Excel"])
+         ["Codes à 6 chiffres", f"Jusqu'à {MAX_JOUEURS} joueurs", "Export Excel"])
     fichiers_existants = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith(".json")]
     tab_sess, tab_edit, tab_ecran = st.tabs(["🎮 Sessions en direct", "📝 Éditeur de quiz", "📺 Écran de projection"])
 
-    # ---------------- Galerie de selection ----------------
     def galerie(fichiers, prefixe, cle_etat):
         if not fichiers:
             st.info("Aucun quiz disponible.")
@@ -1309,26 +1323,31 @@ elif espace == "prof":
 
             if st.button("🚀 Créer la session", type="primary", use_container_width=True):
                 data = lire_json(os.path.join(DOSSIER_QUIZZES, qcm_collectif), {}) or {}
-                sid = f"sess_{int(time.time())}"
+                sid = generer_code_session()
                 os.makedirs(dossier_joueurs(sid), exist_ok=True)
                 sauver_session(sid, {
-                    "session_id": sid, "qcm_filename": qcm_collectif,
+                    "session_id": sid, "code": sid, "qcm_filename": qcm_collectif,
                     "mode": "battle" if "Battle" in mode_label else "examen",
                     "status": "waiting", "current_global_idx": 0, "question_start_time": 0,
                     "in_transition": False, "transition_start_time": 0,
                     "feedback_immediat": feedback_imm, "melanger": melanger,
-                    "max_joueurs": MAX_JOUEURS,
+                    "max_joueurs": MAX_JOUEURS, "cree_le": time.time(),
                     "quiz_info": data.get("quiz_info", {}), "questions": data.get("questions", []),
                 })
                 st.session_state["sel_session"] = sid
-                st.success(f"Session créée : {sid}")
+                st.success("Session créée !")
                 st.rerun()
 
         st.markdown("---")
         sessions = lister_sessions()
         if sessions:
             st.subheader("📊 Pilotage")
-            sid = st.selectbox("Session", sessions, key="sel_session")
+
+            def libelle_session(s):
+                d = charger_session(s) or {}
+                return f"{s} — {d.get('quiz_info',{}).get('titre','Quiz')} ({d.get('status','?')})"
+
+            sid = st.selectbox("Session", sessions, key="sel_session", format_func=libelle_session)
             sess = charger_session(sid)
             if sess:
                 url_complete = f"{st.session_state.get('dom_collec', URL_APP_DEFAUT).strip('/')}/?session={sid}"
@@ -1338,8 +1357,9 @@ elif espace == "prof":
                     qrcode.make(url_complete).save(buf, format="PNG")
                     st.image(buf.getvalue(), caption="Scannez pour rejoindre", width=190)
                 with cB:
-                    st.markdown(f"**Lien joueurs :** [{url_complete}]({url_complete})")
-                    st.code(sid, language=None)
+                    afficher_code(sid, "Code à communiquer")
+                    st.caption("Les joueurs peuvent aussi saisir ce code depuis la page d'accueil.")
+                    st.markdown(f"**Lien direct :** [{url_complete}]({url_complete})")
                     st.markdown(f"**Mode :** `{sess['mode'].upper()}` — **Statut :** `{sess['status'].upper()}`")
 
                 @st.fragment(run_every=3)
@@ -1351,7 +1371,8 @@ elif espace == "prof":
                     joueurs = charger_tous_joueurs(sid)
                     m1, m2, m3 = st.columns(3)
                     m1.metric("👥 Joueurs", f"{len(joueurs)}/{MAX_JOUEURS}")
-                    m2.metric("❓ Question", f"{min(s.get('current_global_idx',0)+1, len(s.get('questions',[])))}/{len(s.get('questions',[]))}")
+                    m2.metric("❓ Question",
+                              f"{min(s.get('current_global_idx',0)+1, len(s.get('questions',[])))}/{len(s.get('questions',[]))}")
                     m3.metric("✅ Ont répondu", sum(1 for j in joueurs if j.get("answered_current") or j.get("answered")))
                     if joueurs:
                         st.markdown('<div class="eno-lobby">' + "".join(
@@ -1414,7 +1435,9 @@ elif espace == "prof":
                 qs = s.get("questions", [])
                 idx = s.get("current_global_idx", 0)
                 if s["status"] == "waiting":
-                    hero("Rejoignez la partie !", f"Code : {sid_p}", [f"{len(joueurs)}/{MAX_JOUEURS} joueurs"])
+                    hero("Rejoignez la partie !", "Rendez-vous sur l'application et saisissez le code ci-dessous.",
+                         [f"{len(joueurs)}/{MAX_JOUEURS} joueurs"])
+                    afficher_code(sid_p, "Code de la partie", xl=True)
                     st.markdown('<div class="eno-lobby">' + "".join(
                         f'<span class="eno-chip" style="font-size:1.1rem">{avatar_de(j["name"])} {j["name"]}</span>'
                         for j in joueurs) + "</div>", unsafe_allow_html=True)
@@ -1423,8 +1446,9 @@ elif espace == "prof":
                     leaderboard(joueurs, 10, "🏆 Podium")
                 elif idx < len(qs):
                     q = qs[idx]
-                    restant = max(0, int(q.get("timer_secondes", 30)) - int(time.time() - s.get("question_start_time", time.time())))
-                    chrono(restant, int(q.get("timer_secondes", 30)))
+                    total = int(q.get("timer_secondes", 30))
+                    restant = max(0, total - int(time.time() - s.get("question_start_time", time.time())))
+                    chrono(restant, total)
                     entete_question(q, idx + 1, len(qs))
                     if q.get("type") in ("qcm", "sondage"):
                         opts = q.get("donnees", {}).get("options", [])
@@ -1453,7 +1477,6 @@ elif espace == "prof":
             galerie(fichiers_existants, "edit_mini", "selected_edit_qcm")
         choix_edition = st.session_state.selected_edit_qcm
 
-        # --- chargement en memoire ---
         if choix_edition != st.session_state.dernier_choix_edition:
             st.session_state.dernier_choix_edition = choix_edition
             if choix_edition == "✨ Nouveau quiz":
@@ -1531,7 +1554,6 @@ elif espace == "prof":
                     st.session_state.dernier_choix_edition = None
                     st.rerun()
 
-        # ---------- Formulaire de saisie des donnees selon le type ----------
         def champs_donnees(type_q, pfx, d=None):
             d = d or {}
             if type_q in ("qcm", "sondage"):
@@ -1552,7 +1574,8 @@ elif espace == "prof":
                 txt = st.text_area("Éléments dans le BON ordre (un par ligne, du 1er au dernier)",
                                    value="\n".join(d.get("elements", [])), key=f"{pfx}_ordre", height=140)
                 els = [e.strip() for e in txt.split("\n") if e.strip()]
-                cons = st.text_input("Consigne d'ordre", value=d.get("consigne_ordre", "Classez du plus petit au plus grand"),
+                cons = st.text_input("Consigne d'ordre",
+                                     value=d.get("consigne_ordre", "Classez du plus petit au plus grand"),
                                      key=f"{pfx}_cons_ordre")
                 return ({"elements": els, "consigne_ordre": cons}, len(els) >= 2)
             if type_q == "association":
@@ -1590,7 +1613,8 @@ elif espace == "prof":
             st.caption("💡 Glissez-déposez pour réordonner.")
             items = "".join(
                 f'<div class="drag-item" draggable="true" data-index="{i}">'
-                f'<span style="font-weight:800;color:#6366f1;margin-right:10px">☰ {TYPES_QUESTION.get(q.get("type","qcm"),{}).get("icone","❓")} Q{i+1}</span>'
+                f'<span style="font-weight:800;color:#6366f1;margin-right:10px">☰ '
+                f'{TYPES_QUESTION.get(q.get("type","qcm"),{}).get("icone","❓")} Q{i+1}</span>'
                 f'{(q.get("consigne","")[:60]).replace(chr(34), "&quot;")}…</div>'
                 for i, q in enumerate(st.session_state.edit_questions))
             dnd = """
@@ -1682,7 +1706,7 @@ elif espace == "prof":
             "vrai_faux": "Duel express en deux tuiles — idéal pour rythmer une session.",
             "classement": "Les joueurs touchent les éléments dans l'ordre. Notation par paires bien ordonnées.",
             "association": "Relier deux colonnes. Crédit partiel proportionnel aux bonnes paires.",
-            "texte": "Saisie libre, comparaison insensible aux accents/majuscules.",
+            "texte": "Saisie libre, comparaison insensible aux accents et majuscules.",
             "curseur": "Estimation numérique avec tolérance : plus on est proche, plus on marque.",
             "sondage": "Aucune bonne réponse, aucun point : pour lancer un débat.",
         }[type_new])

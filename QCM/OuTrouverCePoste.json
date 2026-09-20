@@ -271,10 +271,10 @@
       "timer_secondes": 25,
       "donnees": {
         "options": [
-          "Évaluer les risques cachés et la solvabilité réelle",
           "Calculer le montant de l'impôt sur les sociétés",
           "Vérifier le nombre d'actions en circulation",
-          "Analyser le Besoin en Fonds de Roulement (BFR)"
+          "Analyser le Besoin en Fonds de Roulement (BFR)",
+          "Évaluer les risques cachés et la solvabilité réelle"
         ],
         "reponses_correctes": [
           "Évaluer les risques cachés et la solvabilité réelle"

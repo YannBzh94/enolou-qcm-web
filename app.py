@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ENOLOU QUIZ — v2.2 "Arcade"
+ENOLOU QUIZ — v2.3 "Arcade"
 Application de quiz interactif multi-joueurs (jusqu'a 40 participants).
 
 Historique :
@@ -11,6 +11,7 @@ Historique :
                  reactions emoji en direct
          + bouton retour accueil sur tous les sous-menus
          + publication selective des quiz pour le mode entrainement
+  v2.3 — Lot 3 : import / export Excel des questions (creation en masse)
 """
 
 import os
@@ -1121,6 +1122,472 @@ def enregistrer_qcm_actuel():
 
 
 # ==========================================================
+# 6 bis. IMPORT / EXPORT EXCEL DES QUESTIONS  (v2.3 — Lot 3)
+#
+#   Un classeur = un quiz.
+#     Feuille "Questions"  -> une ligne par question
+#     Feuille "Quiz"       -> metadonnees (titre, description, medias, sons)
+#     Feuille "Aide"       -> mode d'emploi + syntaxe par type
+#
+#   Colonne "Donnees" : syntaxe compacte, une seule cellule, selon le type.
+#     qcm / sondage : options separees par "|", bonne(s) reponse(s) prefixee(s) par "*"
+#                     ex : *Paris | Lyon | Nice | Brest
+#     vrai_faux     : VRAI  ou  FAUX
+#     classement    : elements dans le BON ordre, separes par ">"
+#                     ex : 1900 > 1950 > 2000 > 2020
+#     association   : paires "gauche = droite", separees par "|"
+#                     ex : ACPR = Superviseur | EBA = Autorite europeenne
+#     texte         : reponses acceptees separees par "|"
+#     curseur       : min ; max ; valeur ; tolerance ; pas ; unite
+#                     ex : 0 ; 200 ; 100 ; 20 ; 1 ; Nombre de vehicules
+# ==========================================================
+COLONNES_EXCEL = [
+    "N°", "Type", "Consigne", "Donnees", "Points", "Double points",
+    "Chrono (s)", "Difficulte", "Explication", "Image", "Video", "Texte d'appui",
+]
+
+SEP_OPTIONS = "|"
+SEP_ORDRE = ">"
+SEP_PAIRE = "="
+SEP_CURSEUR = ";"
+
+ALIAS_TYPES = {
+    "qcm": "qcm", "choix multiple": "qcm", "choix": "qcm", "multiple": "qcm", "mcq": "qcm",
+    "vrai_faux": "vrai_faux", "vrai faux": "vrai_faux", "vrai/faux": "vrai_faux",
+    "vf": "vrai_faux", "vrai ou faux": "vrai_faux", "boolean": "vrai_faux",
+    "classement": "classement", "ordre": "classement", "ordonner": "classement", "ranking": "classement",
+    "association": "association", "associer": "association", "relier": "association",
+    "appariement": "association", "matching": "association",
+    "texte": "texte", "reponse libre": "texte", "libre": "texte", "saisie": "texte", "open": "texte",
+    "curseur": "curseur", "estimation": "curseur", "slider": "curseur", "numerique": "curseur",
+    "sondage": "sondage", "poll": "sondage", "opinion": "sondage",
+}
+
+
+def _vrai(valeur):
+    """Interprete une cellule comme un booleen (tolerant : oui/non, x, 1/0, vrai/faux…)."""
+    if valeur is None:
+        return False
+    if isinstance(valeur, bool):
+        return valeur
+    if isinstance(valeur, (int, float)):
+        return float(valeur) != 0
+    return normaliser(valeur) in {"oui", "o", "x", "vrai", "true", "1", "yes", "y"}
+
+
+def _texte(valeur):
+    """Cellule -> chaine propre (les cellules vides pandas deviennent '')."""
+    if valeur is None:
+        return ""
+    s = str(valeur)
+    if s.strip().lower() in ("nan", "none", "nat"):
+        return ""
+    return s.strip()
+
+
+def _entier(valeur, defaut):
+    try:
+        return int(float(str(valeur).replace(",", ".").strip()))
+    except (TypeError, ValueError):
+        return defaut
+
+
+def _reel(valeur, defaut):
+    try:
+        return float(str(valeur).replace(",", ".").strip())
+    except (TypeError, ValueError):
+        return defaut
+
+
+def resoudre_type(valeur):
+    """Accepte le code exact, le libelle affiche ou un synonyme courant."""
+    brut = _texte(valeur)
+    if not brut:
+        return None
+    if brut in TYPES_QUESTION:
+        return brut
+    n = normaliser(brut)
+    if n in ALIAS_TYPES:
+        return ALIAS_TYPES[n]
+    for code, meta in TYPES_QUESTION.items():
+        if n == normaliser(meta["label"]) or n.startswith(normaliser(code)):
+            return code
+    return None
+
+
+# ---------------------------------------------------------
+# Serialisation : question JSON -> cellule "Donnees"
+# ---------------------------------------------------------
+def donnees_vers_cellule(q):
+    t = q.get("type", "qcm")
+    d = q.get("donnees", {}) or {}
+
+    if t in ("qcm", "sondage"):
+        correctes = set(d.get("reponses_correctes", []))
+        return f" {SEP_OPTIONS} ".join(
+            ("*" if o in correctes else "") + str(o) for o in d.get("options", []))
+
+    if t == "vrai_faux":
+        return "VRAI" if d.get("reponse", True) else "FAUX"
+
+    if t == "classement":
+        return f" {SEP_ORDRE} ".join(str(e) for e in d.get("elements", []))
+
+    if t == "association":
+        return f" {SEP_OPTIONS} ".join(f"{a} {SEP_PAIRE} {b}" for a, b in d.get("paires", []))
+
+    if t == "texte":
+        return f" {SEP_OPTIONS} ".join(str(a) for a in d.get("reponses_acceptees", []))
+
+    if t == "curseur":
+        return f" {SEP_CURSEUR} ".join(str(x) for x in [
+            d.get("min", 0), d.get("max", 100), d.get("valeur", 50),
+            d.get("tolerance", 5), d.get("pas", 1), d.get("unite", "Votre estimation")])
+
+    return ""
+
+
+# ---------------------------------------------------------
+# Deserialisation : cellule "Donnees" -> dict JSON
+# Retourne (donnees, liste_d_erreurs)
+# ---------------------------------------------------------
+def cellule_vers_donnees(type_q, cellule, q_existante=None):
+    brut = _texte(cellule)
+    erreurs = []
+
+    if type_q in ("qcm", "sondage"):
+        options, correctes = [], []
+        for morceau in brut.split(SEP_OPTIONS):
+            m = morceau.strip()
+            if not m:
+                continue
+            if m.startswith("*"):
+                m = m[1:].strip()
+                if m:
+                    correctes.append(m)
+            if m:
+                options.append(m)
+        if len(options) < 2:
+            erreurs.append("au moins 2 options attendues, séparées par « | »")
+        if type_q == "qcm":
+            if not correctes:
+                erreurs.append("aucune bonne réponse : préfixez-la par « * »")
+            return {"options": options, "reponses_correctes": correctes}, erreurs
+        return {"options": options}, erreurs
+
+    if type_q == "vrai_faux":
+        n = normaliser(brut)
+        if n in ("vrai", "v", "true", "oui", "1", "x"):
+            return {"reponse": True}, erreurs
+        if n in ("faux", "f", "false", "non", "0"):
+            return {"reponse": False}, erreurs
+        erreurs.append("attendu « VRAI » ou « FAUX »")
+        return {"reponse": True}, erreurs
+
+    if type_q == "classement":
+        els = [e.strip() for e in brut.split(SEP_ORDRE) if e.strip()]
+        if len(els) < 2:
+            erreurs.append("au moins 2 éléments attendus, séparés par « > », dans le bon ordre")
+        cons = (q_existante or {}).get("donnees", {}).get("consigne_ordre", "Classez du plus petit au plus grand")
+        return {"elements": els, "consigne_ordre": cons}, erreurs
+
+    if type_q == "association":
+        paires = []
+        for morceau in brut.split(SEP_OPTIONS):
+            if SEP_PAIRE not in morceau:
+                continue
+            g, dte = morceau.split(SEP_PAIRE, 1)
+            if g.strip() and dte.strip():
+                paires.append([g.strip(), dte.strip()])
+        if len(paires) < 2:
+            erreurs.append("au moins 2 paires attendues, au format « gauche = droite », séparées par « | »")
+        return {"paires": paires}, erreurs
+
+    if type_q == "texte":
+        acc = [a.strip() for a in brut.split(SEP_OPTIONS) if a.strip()]
+        if not acc:
+            erreurs.append("au moins une réponse acceptée attendue")
+        tol = (q_existante or {}).get("donnees", {}).get("tolerance_partielle", True)
+        return {"reponses_acceptees": acc, "tolerance_partielle": tol}, erreurs
+
+    if type_q == "curseur":
+        parts = [p.strip() for p in brut.split(SEP_CURSEUR)]
+        while len(parts) < 6:
+            parts.append("")
+        mini = _reel(parts[0], 0.0)
+        maxi = _reel(parts[1], 100.0)
+        valeur = _reel(parts[2], (mini + maxi) / 2)
+        tolerance = _reel(parts[3], max(1.0, abs(maxi - mini) * 0.05))
+        pas = _reel(parts[4], 1.0)
+        unite = parts[5] or "Votre estimation"
+        if maxi <= mini:
+            erreurs.append("le maximum doit être supérieur au minimum (format : min ; max ; valeur ; tolérance ; pas ; unité)")
+        elif not (mini <= valeur <= maxi):
+            erreurs.append("la valeur exacte doit être comprise entre le minimum et le maximum")
+        return {"min": mini, "max": maxi, "valeur": valeur,
+                "tolerance": tolerance, "pas": pas, "unite": unite}, erreurs
+
+    erreurs.append(f"type « {type_q} » inconnu")
+    return {}, erreurs
+
+
+# ---------------------------------------------------------
+# EXPORT : quiz -> classeur Excel
+# ---------------------------------------------------------
+def exporter_quiz_excel(quiz_info, questions, nom_fichier=""):
+    """Construit le classeur Excel du quiz et renvoie les octets."""
+    lignes = []
+    for i, q in enumerate(questions):
+        lignes.append({
+            "N°": i + 1,
+            "Type": q.get("type", "qcm"),
+            "Consigne": q.get("consigne", ""),
+            "Donnees": donnees_vers_cellule(q),
+            "Points": int(q.get("points", 10)),
+            "Double points": "OUI" if q.get("double_points") else "",
+            "Chrono (s)": int(q.get("timer_secondes", 30)),
+            "Difficulte": q.get("difficulte", "Moyen"),
+            "Explication": q.get("explication", ""),
+            "Image": (q.get("media", {}) or {}).get("image", ""),
+            "Video": (q.get("media", {}) or {}).get("video", ""),
+            "Texte d'appui": q.get("document_texte", ""),
+        })
+    df_q = pd.DataFrame(lignes, columns=COLONNES_EXCEL)
+
+    df_meta = pd.DataFrame(
+        [{"Paramètre": k, "Valeur": v} for k, v in [
+            ("Nom du fichier JSON", nom_fichier),
+            ("Titre", quiz_info.get("titre", "")),
+            ("Description", quiz_info.get("description", "")),
+            ("Image", quiz_info.get("image", "")),
+            ("Document d'appui", quiz_info.get("document_appui", "")),
+            ("Vidéo", quiz_info.get("video", "")),
+            ("Musique de fond", quiz_info.get("musique", "")),
+            ("Son bonne réponse", quiz_info.get("son_good", "")),
+            ("Son mauvaise réponse", quiz_info.get("son_bad", "")),
+            ("Volume musique", quiz_info.get("volume_musique", 0.5)),
+            ("Volume effets", quiz_info.get("volume_sons", 0.8)),
+        ]])
+
+    aide = [
+        ("Principe", "Une ligne = une question. Ne modifiez pas les intitulés de colonnes."),
+        ("Colonne Type", "Valeurs acceptées : " + ", ".join(TYPES_QUESTION.keys())),
+        ("Colonne Donnees", "Syntaxe compacte, voir les exemples ci-dessous selon le type."),
+        ("", ""),
+        ("qcm", "Options séparées par « | ». Préfixez d'une « * » chaque bonne réponse."),
+        ("  exemple", "*Paris | Lyon | Nice | Brest"),
+        ("  plusieurs bonnes", "*ACPR | *EBA | Ministère | Préfecture"),
+        ("vrai_faux", "VRAI ou FAUX"),
+        ("classement", "Éléments dans le BON ordre, séparés par « > »"),
+        ("  exemple", "1900 > 1950 > 2000 > 2020"),
+        ("association", "Paires « gauche = droite », séparées par « | »"),
+        ("  exemple", "ACPR = Superviseur | EBA = Autorité européenne | GAFI = LCB-FT"),
+        ("texte", "Réponses acceptées séparées par « | » (accents et majuscules ignorés)"),
+        ("  exemple", "Crédit-bail | Leasing | Location avec option d'achat"),
+        ("curseur", "min ; max ; valeur exacte ; tolérance ; pas ; libellé"),
+        ("  exemple", "0 ; 200 ; 100 ; 20 ; 1 ; Nombre de véhicules"),
+        ("sondage", "Options séparées par « | », sans « * » : aucune bonne réponse, aucun point"),
+        ("  exemple", "Dynamique | Technique | Trop rapide | Clair"),
+        ("", ""),
+        ("Double points", "Écrivez OUI pour une question bonus (points ×2)"),
+        ("Points / Chrono", "Nombres entiers. Valeurs par défaut : 10 points, 30 secondes."),
+        ("Difficulte", "Facile, Moyen ou Difficile"),
+        ("Import", "L'import remplace l'intégralité des questions du quiz sélectionné."),
+    ]
+    df_aide = pd.DataFrame(aide, columns=["Rubrique", "Explication"])
+
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df_q.to_excel(writer, sheet_name="Questions", index=False)
+        df_meta.to_excel(writer, sheet_name="Quiz", index=False)
+        df_aide.to_excel(writer, sheet_name="Aide", index=False)
+        largeurs = {"Questions": {"A": 6, "B": 14, "C": 52, "D": 58, "E": 9, "F": 14,
+                                  "G": 11, "H": 12, "I": 42, "J": 22, "K": 22, "L": 34},
+                    "Quiz": {"A": 26, "B": 52},
+                    "Aide": {"A": 22, "B": 86}}
+        for feuille, cols in largeurs.items():
+            ws = writer.sheets[feuille]
+            for col, w in cols.items():
+                ws.column_dimensions[col].width = w
+            ws.freeze_panes = "A2"
+    return buf.getvalue()
+
+
+def modele_excel_vierge():
+    """Classeur d'exemple couvrant les 7 types, pret a completer."""
+    exemples = [
+        {"id": 1, "type": "qcm", "consigne": "Quel organisme supervise les établissements de crédit en France ?",
+         "points": 10, "timer_secondes": 20, "difficulte": "Facile",
+         "donnees": {"options": ["ACPR", "AMF", "INSEE", "URSSAF"], "reponses_correctes": ["ACPR"]},
+         "explication": "L'ACPR est l'autorité de contrôle prudentiel et de résolution.", "media": {}},
+        {"id": 2, "type": "qcm", "consigne": "Lesquels relèvent de la LCB-FT ? (plusieurs réponses)",
+         "points": 15, "timer_secondes": 30, "difficulte": "Moyen",
+         "donnees": {"options": ["Connaissance client", "Gel des avoirs", "Politique tarifaire", "Déclaration de soupçon"],
+                     "reponses_correctes": ["Connaissance client", "Gel des avoirs", "Déclaration de soupçon"]},
+         "explication": "", "media": {}},
+        {"id": 3, "type": "vrai_faux", "consigne": "Le crédit-bail transfère la propriété dès la signature.",
+         "points": 10, "timer_secondes": 15, "difficulte": "Facile",
+         "donnees": {"reponse": False}, "explication": "La propriété reste au bailleur jusqu'à la levée d'option.",
+         "media": {}},
+        {"id": 4, "type": "classement", "consigne": "Classez ces étapes du plus tôt au plus tard.",
+         "points": 15, "timer_secondes": 45, "difficulte": "Moyen",
+         "donnees": {"elements": ["Demande de financement", "Analyse crédit", "Accord", "Mise en place"],
+                     "consigne_ordre": "Du plus tôt au plus tard"}, "explication": "", "media": {}},
+        {"id": 5, "type": "association", "consigne": "Associez chaque sigle à sa définition.",
+         "points": 12, "timer_secondes": 60, "difficulte": "Moyen",
+         "donnees": {"paires": [["ACPR", "Superviseur français"], ["EBA", "Autorité bancaire européenne"],
+                                ["GAFI", "Normes anti-blanchiment"]]}, "explication": "", "media": {}},
+        {"id": 6, "type": "texte", "consigne": "Comment nomme-t-on la location avec option d'achat ?",
+         "points": 10, "timer_secondes": 30, "difficulte": "Moyen",
+         "donnees": {"reponses_acceptees": ["Crédit-bail", "Leasing", "LOA"], "tolerance_partielle": True},
+         "explication": "", "media": {}},
+        {"id": 7, "type": "curseur", "consigne": "Estimez la durée moyenne d'un contrat, en mois.",
+         "points": 10, "timer_secondes": 25, "difficulte": "Difficile",
+         "donnees": {"min": 12, "max": 72, "valeur": 48, "tolerance": 6, "pas": 1, "unite": "Durée en mois"},
+         "explication": "", "media": {}},
+        {"id": 8, "type": "sondage", "consigne": "Quel mot décrit le mieux cette séance ?",
+         "points": 0, "timer_secondes": 30, "difficulte": "Facile",
+         "donnees": {"options": ["Dynamique", "Technique", "Trop rapide", "Clair"]},
+         "explication": "", "media": {}},
+        {"id": 9, "type": "qcm", "consigne": "Question finale à points doublés : quel est le rôle du KYC ?",
+         "points": 20, "timer_secondes": 30, "difficulte": "Difficile", "double_points": True,
+         "donnees": {"options": ["Connaître son client", "Fixer les taux", "Gérer la trésorerie", "Recruter"],
+                     "reponses_correctes": ["Connaître son client"]}, "explication": "", "media": {}},
+    ]
+    info = {"titre": "Modèle Enolou Quiz", "description": "Exemple couvrant les 7 types de questions",
+            "volume_musique": 0.5, "volume_sons": 0.8}
+    return exporter_quiz_excel(info, exemples, "mon_nouveau_quiz.json")
+
+
+# ---------------------------------------------------------
+# IMPORT : classeur Excel -> (questions, quiz_info, rapport)
+# ---------------------------------------------------------
+def importer_quiz_excel(fichier):
+    """
+    Lit un classeur et renvoie (questions, quiz_info, rapport).
+    `rapport` = {"erreurs": [...], "avertissements": [...], "lues": n, "retenues": n}
+    Les lignes invalides sont ecartees : l'import n'est propose que si aucune erreur.
+    """
+    rapport = {"erreurs": [], "avertissements": [], "lues": 0, "retenues": 0}
+    try:
+        feuilles = pd.read_excel(fichier, sheet_name=None, dtype=object, engine="openpyxl")
+    except Exception as e:
+        rapport["erreurs"].append(f"Fichier illisible : {e}")
+        return [], {}, rapport
+
+    # --- Feuille Questions ---
+    nom_feuille = next((n for n in feuilles if normaliser(n) == "questions"), None)
+    if nom_feuille is None:
+        nom_feuille = list(feuilles)[0]
+        rapport["avertissements"].append(
+            f"Aucune feuille « Questions » : la feuille « {nom_feuille} » a été utilisée.")
+    df = feuilles[nom_feuille]
+
+    colonnes = {normaliser(c): c for c in df.columns}
+
+    def col(*noms):
+        for n in noms:
+            if normaliser(n) in colonnes:
+                return colonnes[normaliser(n)]
+        return None
+
+    c_type = col("Type")
+    c_cons = col("Consigne", "Question", "Énoncé", "Enonce")
+    c_don = col("Donnees", "Données", "Reponses", "Réponses")
+    if not (c_type and c_cons and c_don):
+        manquantes = [n for n, c in (("Type", c_type), ("Consigne", c_cons), ("Donnees", c_don)) if not c]
+        rapport["erreurs"].append("Colonne(s) obligatoire(s) absente(s) : " + ", ".join(manquantes))
+        return [], {}, rapport
+
+    c_pts, c_dbl = col("Points"), col("Double points", "Bonus")
+    c_tmr = col("Chrono (s)", "Chrono", "Timer", "Temps")
+    c_diff, c_expl = col("Difficulte", "Difficulté"), col("Explication")
+    c_img, c_vid = col("Image"), col("Video", "Vidéo")
+    c_doc = col("Texte d'appui", "Texte d appui", "Support")
+
+    questions = []
+    for pos, (_, ligne) in enumerate(df.iterrows()):
+        num_excel = pos + 2  # +1 en-tete, +1 index 1-based
+        type_brut, consigne = ligne.get(c_type), _texte(ligne.get(c_cons))
+        if not _texte(type_brut) and not consigne:
+            continue  # ligne vide : ignoree silencieusement
+        rapport["lues"] += 1
+
+        type_q = resoudre_type(type_brut)
+        if not type_q:
+            rapport["erreurs"].append(
+                f"Ligne {num_excel} : type « {_texte(type_brut)} » non reconnu "
+                f"(attendu : {', '.join(TYPES_QUESTION.keys())}).")
+            continue
+        if not consigne:
+            rapport["erreurs"].append(f"Ligne {num_excel} : consigne vide.")
+            continue
+
+        donnees, erreurs = cellule_vers_donnees(type_q, ligne.get(c_don))
+        if erreurs:
+            for e in erreurs:
+                rapport["erreurs"].append(f"Ligne {num_excel} ({type_q}) : {e}.")
+            continue
+
+        pts = _entier(ligne.get(c_pts) if c_pts else None, 0 if type_q == "sondage" else 10)
+        pts = max(0, min(200, pts))
+        tmr = _entier(ligne.get(c_tmr) if c_tmr else None, 30)
+        if not (5 <= tmr <= 300):
+            rapport["avertissements"].append(
+                f"Ligne {num_excel} : chrono {tmr}s hors bornes, ramené dans l'intervalle 5–300 s.")
+            tmr = max(5, min(300, tmr))
+        diff = _texte(ligne.get(c_diff)) if c_diff else ""
+        if normaliser(diff) not in ("facile", "moyen", "difficile"):
+            diff = "Moyen"
+        else:
+            diff = {"facile": "Facile", "moyen": "Moyen", "difficile": "Difficile"}[normaliser(diff)]
+
+        questions.append({
+            "id": len(questions) + 1,
+            "consigne": consigne,
+            "type": type_q,
+            "difficulte": diff,
+            "points": pts,
+            "double_points": _vrai(ligne.get(c_dbl)) if c_dbl else False,
+            "tag": "Général",
+            "timer_secondes": tmr,
+            "donnees": donnees,
+            "explication": _texte(ligne.get(c_expl)) if c_expl else "",
+            "document_texte": _texte(ligne.get(c_doc)) if c_doc else "",
+            "media": {"image": _texte(ligne.get(c_img)) if c_img else "",
+                      "video": _texte(ligne.get(c_vid)) if c_vid else ""},
+        })
+
+    rapport["retenues"] = len(questions)
+    if rapport["lues"] == 0:
+        rapport["erreurs"].append("Aucune question trouvée dans le classeur.")
+
+    # --- Feuille Quiz (metadonnees, facultative) ---
+    quiz_info = {}
+    nom_meta = next((n for n in feuilles if normaliser(n) == "quiz"), None)
+    if nom_meta:
+        correspondance = {
+            "titre": "titre", "description": "description", "image": "image",
+            "document d appui": "document_appui", "video": "video", "musique de fond": "musique",
+            "son bonne reponse": "son_good", "son mauvaise reponse": "son_bad",
+            "volume musique": "volume_musique", "volume effets": "volume_sons",
+            "nom du fichier json": "_nom_fichier",
+        }
+        dfm = feuilles[nom_meta]
+        if dfm.shape[1] >= 2:
+            for _, l in dfm.iterrows():
+                cle = correspondance.get(normaliser(l.iloc[0]))
+                if not cle:
+                    continue
+                val = l.iloc[1]
+                if cle in ("volume_musique", "volume_sons"):
+                    quiz_info[cle] = max(0.0, min(1.0, _reel(val, 0.5)))
+                else:
+                    quiz_info[cle] = _texte(val)
+    return questions, quiz_info, rapport
+
+
+# ==========================================================
 # 7. ETAT APPLICATIF & NAVIGATION
 # ==========================================================
 ETATS_DEFAUT = {
@@ -1198,7 +1665,7 @@ ESPACES = {"accueil": "🏠 Accueil", "session": "🎮 Rejoindre", "solo": "🎧
 
 with st.sidebar:
     st.markdown("### 🚀 Enolou Quiz")
-    st.caption("v2.2 — jusqu'à 40 joueurs")
+    st.caption("v2.3 — jusqu'à 40 joueurs")
     nouveau = st.radio("Espace", list(ESPACES.values()), index=list(ESPACES).index(st.session_state.espace))
     cle_nouveau = [k for k, v in ESPACES.items() if v == nouveau][0]
     if cle_nouveau != st.session_state.espace:
@@ -1698,8 +2165,9 @@ elif espace == "prof":
     hero("🛠️ Espace animateur", "Créez, lancez, pilotez et analysez vos quiz.",
          ["Codes à 6 chiffres", f"Jusqu'à {MAX_JOUEURS} joueurs", "Publication entraînement", "Export Excel"])
     fichiers_existants = lister_fichiers_quiz()
-    tab_sess, tab_edit, tab_pub, tab_ecran = st.tabs(
-        ["🎮 Sessions en direct", "📝 Éditeur de quiz", "📚 Mode entraînement", "📺 Écran de projection"])
+    tab_sess, tab_edit, tab_excel, tab_pub, tab_ecran = st.tabs(
+        ["🎮 Sessions en direct", "📝 Éditeur de quiz", "📊 Import / Export Excel",
+         "📚 Mode entraînement", "📺 Écran de projection"])
 
     def galerie(fichiers, prefixe, cle_etat):
         if not fichiers:
@@ -1960,6 +2428,139 @@ elif espace == "prof":
                     afficher_reactions(joueurs)
                     leaderboard(joueurs, 5, "🏆 Top 5")
             projection()
+
+    # ================= ONGLET IMPORT / EXPORT EXCEL =================
+    with tab_excel:
+        st.subheader("📊 Créer et modifier vos questions dans Excel")
+        st.caption("Exportez un quiz, travaillez confortablement dans le tableur, puis réimportez. "
+                   "Idéal pour saisir ou réviser des dizaines de questions d'un coup.")
+
+        st.markdown("##### 1️⃣ Partir d'un modèle")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.download_button(
+                "📥 Modèle commenté (8 exemples, 7 types)",
+                data=modele_excel_vierge(),
+                file_name="modele_enolou_quiz.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True)
+        with c2:
+            if fichiers_existants:
+                quiz_exp = st.selectbox("Exporter un quiz existant", fichiers_existants,
+                                        format_func=lambda f: (lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {})
+                                        .get("quiz_info", {}).get("titre", f),
+                                        key="excel_export_src")
+                data_exp = lire_json(os.path.join(DOSSIER_QUIZZES, quiz_exp), {}) or {}
+                st.download_button(
+                    f"📤 Exporter « {quiz_exp} »",
+                    data=exporter_quiz_excel(data_exp.get("quiz_info", {}),
+                                             data_exp.get("questions", []), quiz_exp),
+                    file_name=quiz_exp.replace(".json", "") + ".xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True)
+            else:
+                st.info("Aucun quiz à exporter pour l'instant.")
+
+        with st.expander("📖 Syntaxe de la colonne « Donnees »"):
+            st.markdown(
+                "| Type | Syntaxe | Exemple |\n|---|---|---|\n"
+                "| `qcm` | options séparées par `\\|`, bonne réponse préfixée par `*` | `*Paris \\| Lyon \\| Nice` |\n"
+                "| `vrai_faux` | `VRAI` ou `FAUX` | `FAUX` |\n"
+                "| `classement` | éléments dans le bon ordre, séparés par `>` | `1900 > 1950 > 2000` |\n"
+                "| `association` | paires `gauche = droite` séparées par `\\|` | `ACPR = Superviseur \\| EBA = Europe` |\n"
+                "| `texte` | réponses acceptées séparées par `\\|` | `Crédit-bail \\| Leasing \\| LOA` |\n"
+                "| `curseur` | `min ; max ; valeur ; tolérance ; pas ; libellé` | `0 ; 200 ; 100 ; 20 ; 1 ; Véhicules` |\n"
+                "| `sondage` | options séparées par `\\|`, sans `*` | `Dynamique \\| Technique \\| Clair` |\n")
+            st.caption("Colonne « Double points » : écrivez OUI pour une question bonus. "
+                       "La feuille « Aide » du classeur reprend ces règles.")
+
+        st.markdown("---")
+        st.markdown("##### 2️⃣ Réimporter le classeur")
+        fichier_xl = st.file_uploader("Classeur Excel (.xlsx)", type=["xlsx", "xlsm"], key="excel_upload")
+
+        if fichier_xl is not None:
+            questions_imp, info_imp, rapport = importer_quiz_excel(fichier_xl)
+
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Lignes lues", rapport["lues"])
+            m2.metric("Questions valides", rapport["retenues"])
+            m3.metric("Erreurs", len(rapport["erreurs"]))
+
+            if rapport["erreurs"]:
+                st.error(f"❌ {len(rapport['erreurs'])} erreur(s) — corrigez le classeur puis réimportez. "
+                         "Aucune modification n'a été appliquée.")
+                with st.expander("Détail des erreurs", expanded=True):
+                    for e in rapport["erreurs"][:60]:
+                        st.markdown(f"- {e}")
+                    if len(rapport["erreurs"]) > 60:
+                        st.caption(f"… et {len(rapport['erreurs']) - 60} autre(s).")
+            if rapport["avertissements"]:
+                with st.expander(f"⚠️ {len(rapport['avertissements'])} avertissement(s)"):
+                    for a in rapport["avertissements"]:
+                        st.markdown(f"- {a}")
+
+            if questions_imp and not rapport["erreurs"]:
+                st.success(f"✅ {len(questions_imp)} question(s) prête(s) à être importée(s).")
+                apercu = pd.DataFrame([{
+                    "N°": i + 1,
+                    "Type": TYPES_QUESTION[q["type"]]["icone"] + " " + q["type"],
+                    "Consigne": q["consigne"][:70],
+                    "Points": q["points"] * (2 if q.get("double_points") else 1),
+                    "Chrono": f"{q['timer_secondes']}s",
+                } for i, q in enumerate(questions_imp)])
+                st.dataframe(apercu, use_container_width=True, hide_index=True)
+                repartition = Counter(q["type"] for q in questions_imp)
+                st.caption("Répartition : " + " · ".join(
+                    f"{TYPES_QUESTION[t]['icone']} {t} ({n})" for t, n in repartition.most_common())
+                    + f" — {points_max_session(questions_imp)} points en jeu.")
+
+                st.markdown("###### 3️⃣ Destination")
+                nom_suggere = _texte(info_imp.get("_nom_fichier")) or (
+                    re.sub(r"\W+", "_", os.path.splitext(fichier_xl.name)[0]).strip("_").lower() + ".json")
+                dest = st.radio("Importer vers",
+                                ["✨ Nouveau quiz", "♻️ Remplacer un quiz existant"],
+                                horizontal=True, key="excel_dest")
+                if dest.startswith("✨"):
+                    cible = st.text_input("Nom du fichier JSON", value=nom_suggere, key="excel_nom_cible")
+                    if cible and not cible.endswith(".json"):
+                        cible += ".json"
+                    if cible in fichiers_existants:
+                        st.warning(f"⚠️ « {cible} » existe déjà et sera écrasé.")
+                else:
+                    cible = st.selectbox("Quiz à remplacer", fichiers_existants,
+                                         key="excel_cible") if fichiers_existants else None
+                    if cible:
+                        actuel = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
+                        st.warning(f"⚠️ Les {len(actuel.get('questions', []))} question(s) actuelles de "
+                                   f"« {cible} » seront intégralement remplacées.")
+
+                titre_defaut = _texte(info_imp.get("titre")) or os.path.splitext(str(cible or "Quiz"))[0]
+                confirme = st.checkbox("Je confirme l'import", key="excel_confirme")
+                if st.button("💾 Importer dans la bibliothèque", type="primary",
+                             use_container_width=True, disabled=not (cible and confirme)):
+                    existant = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
+                    info_finale = dict(existant.get("quiz_info", {}))
+                    for k, v in info_imp.items():
+                        if k.startswith("_"):
+                            continue
+                        if v not in ("", None):
+                            info_finale[k] = v
+                    info_finale.setdefault("titre", titre_defaut)
+                    info_finale.setdefault("description", "")
+                    info_finale.setdefault("volume_musique", 0.5)
+                    info_finale.setdefault("volume_sons", 0.8)
+
+                    contenu = json.dumps({"quiz_info": info_finale, "questions": questions_imp},
+                                         ensure_ascii=False, indent=2)
+                    with open(os.path.join(DOSSIER_QUIZZES, cible), "w", encoding="utf-8") as f:
+                        f.write(contenu)
+                    sauvegarder_fichier_github(f"QCM/{cible}", contenu)
+                    st.session_state.selected_edit_qcm = cible
+                    st.session_state.dernier_choix_edition = None  # force le rechargement de l'éditeur
+                    st.success(f"✅ {len(questions_imp)} question(s) importée(s) dans « {cible} ». "
+                               "Le quiz reste privé tant que vous ne l'ouvrez pas au mode entraînement.")
+                    st.balloons()
+                    st.rerun()
 
     # ================= ONGLET EDITEUR =================
     with tab_edit:

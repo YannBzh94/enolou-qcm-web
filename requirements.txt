@@ -1,3 +1,6 @@
 streamlit
-pygame-ce
-qrcode[pil]
+pandas
+requests
+qrcode
+pillow
+openpyxl>=3.1

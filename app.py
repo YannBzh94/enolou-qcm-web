@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ENOLOU QUIZ — v2.3 "Arcade"
+ENOLOU QUIZ — v2.3.1 "Arcade"
 Application de quiz interactif multi-joueurs (jusqu'a 40 participants).
 
 Historique :
@@ -12,6 +12,8 @@ Historique :
          + bouton retour accueil sur tous les sous-menus
          + publication selective des quiz pour le mode entrainement
   v2.3 — Lot 3 : import / export Excel des questions (creation en masse)
+  v2.3.1 — openpyxl detecte au demarrage : l'onglet Excel se desactive
+           proprement si la dependance est absente, sans planter l'application
 """
 
 import os
@@ -1122,7 +1124,7 @@ def enregistrer_qcm_actuel():
 
 
 # ==========================================================
-# 6 bis. IMPORT / EXPORT EXCEL DES QUESTIONS  (v2.3 — Lot 3)
+# 6 bis. IMPORT / EXPORT EXCEL DES QUESTIONS  (v2.3.1 — Lot 3)
 #
 #   Un classeur = un quiz.
 #     Feuille "Questions"  -> une ligne par question
@@ -1131,16 +1133,40 @@ def enregistrer_qcm_actuel():
 #
 #   Colonne "Donnees" : syntaxe compacte, une seule cellule, selon le type.
 #     qcm / sondage : options separees par "|", bonne(s) reponse(s) prefixee(s) par "*"
-#                     ex : *Paris | Lyon | Nice | Brest
 #     vrai_faux     : VRAI  ou  FAUX
 #     classement    : elements dans le BON ordre, separes par ">"
-#                     ex : 1900 > 1950 > 2000 > 2020
 #     association   : paires "gauche = droite", separees par "|"
-#                     ex : ACPR = Superviseur | EBA = Autorite europeenne
 #     texte         : reponses acceptees separees par "|"
 #     curseur       : min ; max ; valeur ; tolerance ; pas ; unite
-#                     ex : 0 ; 200 ; 100 ; 20 ; 1 ; Nombre de vehicules
+#
+#   DEPENDANCE : la lecture/ecriture .xlsx exige openpyxl (ou xlsxwriter en
+#   ecriture seule). Si aucune bibliotheque n'est disponible, l'onglet Excel
+#   s'affiche desactive avec la marche a suivre, sans faire planter l'appli.
 # ==========================================================
+def _detecter_moteurs_excel():
+    """Renvoie (moteur_ecriture, moteur_lecture) ; None si indisponible."""
+    ecriture = lecture = None
+    try:
+        import openpyxl  # noqa: F401
+        ecriture = lecture = "openpyxl"
+    except ImportError:
+        try:
+            import xlsxwriter  # noqa: F401
+            ecriture = "xlsxwriter"   # ecriture possible, lecture impossible
+        except ImportError:
+            pass
+    return ecriture, lecture
+
+
+MOTEUR_ECRITURE, MOTEUR_LECTURE = _detecter_moteurs_excel()
+EXCEL_DISPONIBLE = bool(MOTEUR_ECRITURE and MOTEUR_LECTURE)
+
+MESSAGE_DEPENDANCE = (
+    "La bibliothèque **openpyxl** est absente de l'environnement. "
+    "Ajoutez la ligne `openpyxl>=3.1` au fichier `requirements.txt` de votre dépôt, "
+    "puis redémarrez l'application (Streamlit Cloud : *Manage app* → *Reboot*)."
+)
+
 COLONNES_EXCEL = [
     "N°", "Type", "Consigne", "Donnees", "Points", "Double points",
     "Chrono (s)", "Difficulte", "Explication", "Image", "Video", "Texte d'appui",
@@ -1335,7 +1361,10 @@ def cellule_vers_donnees(type_q, cellule, q_existante=None):
 # EXPORT : quiz -> classeur Excel
 # ---------------------------------------------------------
 def exporter_quiz_excel(quiz_info, questions, nom_fichier=""):
-    """Construit le classeur Excel du quiz et renvoie les octets."""
+    """Construit le classeur Excel du quiz et renvoie les octets (b'' si dépendance absente)."""
+    if not MOTEUR_ECRITURE:
+        return b""
+
     lignes = []
     for i, q in enumerate(questions):
         lignes.append({
@@ -1396,20 +1425,29 @@ def exporter_quiz_excel(quiz_info, questions, nom_fichier=""):
     ]
     df_aide = pd.DataFrame(aide, columns=["Rubrique", "Explication"])
 
+    largeurs = {"Questions": [6, 14, 52, 58, 9, 14, 11, 12, 42, 22, 22, 34],
+                "Quiz": [26, 52],
+                "Aide": [22, 86]}
     buf = BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df_q.to_excel(writer, sheet_name="Questions", index=False)
-        df_meta.to_excel(writer, sheet_name="Quiz", index=False)
-        df_aide.to_excel(writer, sheet_name="Aide", index=False)
-        largeurs = {"Questions": {"A": 6, "B": 14, "C": 52, "D": 58, "E": 9, "F": 14,
-                                  "G": 11, "H": 12, "I": 42, "J": 22, "K": 22, "L": 34},
-                    "Quiz": {"A": 26, "B": 52},
-                    "Aide": {"A": 22, "B": 86}}
-        for feuille, cols in largeurs.items():
-            ws = writer.sheets[feuille]
-            for col, w in cols.items():
-                ws.column_dimensions[col].width = w
-            ws.freeze_panes = "A2"
+    try:
+        with pd.ExcelWriter(buf, engine=MOTEUR_ECRITURE) as writer:
+            df_q.to_excel(writer, sheet_name="Questions", index=False)
+            df_meta.to_excel(writer, sheet_name="Quiz", index=False)
+            df_aide.to_excel(writer, sheet_name="Aide", index=False)
+            for feuille, cols in largeurs.items():
+                ws = writer.sheets[feuille]
+                if MOTEUR_ECRITURE == "openpyxl":
+                    from openpyxl.utils import get_column_letter
+                    for i, w in enumerate(cols, start=1):
+                        ws.column_dimensions[get_column_letter(i)].width = w
+                    ws.freeze_panes = "A2"
+                else:  # xlsxwriter
+                    for i, w in enumerate(cols):
+                        ws.set_column(i, i, w)
+                    ws.freeze_panes(1, 0)
+    except Exception as e:
+        print(f"[excel/export] {e}")
+        return b""
     return buf.getvalue()
 
 
@@ -1469,8 +1507,12 @@ def importer_quiz_excel(fichier):
     Les lignes invalides sont ecartees : l'import n'est propose que si aucune erreur.
     """
     rapport = {"erreurs": [], "avertissements": [], "lues": 0, "retenues": 0}
+    if not MOTEUR_LECTURE:
+        rapport["erreurs"].append(
+            "Lecture Excel indisponible : la bibliothèque openpyxl n'est pas installée.")
+        return [], {}, rapport
     try:
-        feuilles = pd.read_excel(fichier, sheet_name=None, dtype=object, engine="openpyxl")
+        feuilles = pd.read_excel(fichier, sheet_name=None, dtype=object, engine=MOTEUR_LECTURE)
     except Exception as e:
         rapport["erreurs"].append(f"Fichier illisible : {e}")
         return [], {}, rapport
@@ -1665,7 +1707,7 @@ ESPACES = {"accueil": "🏠 Accueil", "session": "🎮 Rejoindre", "solo": "🎧
 
 with st.sidebar:
     st.markdown("### 🚀 Enolou Quiz")
-    st.caption("v2.3 — jusqu'à 40 joueurs")
+    st.caption("v2.3.1 — jusqu'à 40 joueurs")
     nouveau = st.radio("Espace", list(ESPACES.values()), index=list(ESPACES).index(st.session_state.espace))
     cle_nouveau = [k for k, v in ESPACES.items() if v == nouveau][0]
     if cle_nouveau != st.session_state.espace:
@@ -2432,135 +2474,143 @@ elif espace == "prof":
     # ================= ONGLET IMPORT / EXPORT EXCEL =================
     with tab_excel:
         st.subheader("📊 Créer et modifier vos questions dans Excel")
-        st.caption("Exportez un quiz, travaillez confortablement dans le tableur, puis réimportez. "
-                   "Idéal pour saisir ou réviser des dizaines de questions d'un coup.")
 
-        st.markdown("##### 1️⃣ Partir d'un modèle")
-        c1, c2 = st.columns(2)
-        with c1:
-            st.download_button(
-                "📥 Modèle commenté (8 exemples, 7 types)",
-                data=modele_excel_vierge(),
-                file_name="modele_enolou_quiz.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True)
-        with c2:
-            if fichiers_existants:
-                quiz_exp = st.selectbox("Exporter un quiz existant", fichiers_existants,
-                                        format_func=lambda f: (lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {})
-                                        .get("quiz_info", {}).get("titre", f),
-                                        key="excel_export_src")
-                data_exp = lire_json(os.path.join(DOSSIER_QUIZZES, quiz_exp), {}) or {}
+        if not EXCEL_DISPONIBLE:
+            st.warning("⚠️ Fonctionnalité indisponible sur cet environnement.")
+            st.markdown(MESSAGE_DEPENDANCE)
+            st.code("streamlit\nqrcode\npandas\nrequests\npillow\nopenpyxl>=3.1", language="text")
+            st.caption("Le reste de l'application fonctionne normalement.")
+        else:
+            st.caption("Exportez un quiz, travaillez confortablement dans le tableur, puis réimportez. "
+                       "Idéal pour saisir ou réviser des dizaines de questions d'un coup.")
+
+            st.markdown("##### 1️⃣ Partir d'un modèle")
+            c1, c2 = st.columns(2)
+            with c1:
                 st.download_button(
-                    f"📤 Exporter « {quiz_exp} »",
-                    data=exporter_quiz_excel(data_exp.get("quiz_info", {}),
-                                             data_exp.get("questions", []), quiz_exp),
-                    file_name=quiz_exp.replace(".json", "") + ".xlsx",
+                    "📥 Modèle commenté (8 exemples, 7 types)",
+                    data=modele_excel_vierge(),
+                    file_name="modele_enolou_quiz.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True)
-            else:
-                st.info("Aucun quiz à exporter pour l'instant.")
-
-        with st.expander("📖 Syntaxe de la colonne « Donnees »"):
-            st.markdown(
-                "| Type | Syntaxe | Exemple |\n|---|---|---|\n"
-                "| `qcm` | options séparées par `\\|`, bonne réponse préfixée par `*` | `*Paris \\| Lyon \\| Nice` |\n"
-                "| `vrai_faux` | `VRAI` ou `FAUX` | `FAUX` |\n"
-                "| `classement` | éléments dans le bon ordre, séparés par `>` | `1900 > 1950 > 2000` |\n"
-                "| `association` | paires `gauche = droite` séparées par `\\|` | `ACPR = Superviseur \\| EBA = Europe` |\n"
-                "| `texte` | réponses acceptées séparées par `\\|` | `Crédit-bail \\| Leasing \\| LOA` |\n"
-                "| `curseur` | `min ; max ; valeur ; tolérance ; pas ; libellé` | `0 ; 200 ; 100 ; 20 ; 1 ; Véhicules` |\n"
-                "| `sondage` | options séparées par `\\|`, sans `*` | `Dynamique \\| Technique \\| Clair` |\n")
-            st.caption("Colonne « Double points » : écrivez OUI pour une question bonus. "
-                       "La feuille « Aide » du classeur reprend ces règles.")
-
-        st.markdown("---")
-        st.markdown("##### 2️⃣ Réimporter le classeur")
-        fichier_xl = st.file_uploader("Classeur Excel (.xlsx)", type=["xlsx", "xlsm"], key="excel_upload")
-
-        if fichier_xl is not None:
-            questions_imp, info_imp, rapport = importer_quiz_excel(fichier_xl)
-
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Lignes lues", rapport["lues"])
-            m2.metric("Questions valides", rapport["retenues"])
-            m3.metric("Erreurs", len(rapport["erreurs"]))
-
-            if rapport["erreurs"]:
-                st.error(f"❌ {len(rapport['erreurs'])} erreur(s) — corrigez le classeur puis réimportez. "
-                         "Aucune modification n'a été appliquée.")
-                with st.expander("Détail des erreurs", expanded=True):
-                    for e in rapport["erreurs"][:60]:
-                        st.markdown(f"- {e}")
-                    if len(rapport["erreurs"]) > 60:
-                        st.caption(f"… et {len(rapport['erreurs']) - 60} autre(s).")
-            if rapport["avertissements"]:
-                with st.expander(f"⚠️ {len(rapport['avertissements'])} avertissement(s)"):
-                    for a in rapport["avertissements"]:
-                        st.markdown(f"- {a}")
-
-            if questions_imp and not rapport["erreurs"]:
-                st.success(f"✅ {len(questions_imp)} question(s) prête(s) à être importée(s).")
-                apercu = pd.DataFrame([{
-                    "N°": i + 1,
-                    "Type": TYPES_QUESTION[q["type"]]["icone"] + " " + q["type"],
-                    "Consigne": q["consigne"][:70],
-                    "Points": q["points"] * (2 if q.get("double_points") else 1),
-                    "Chrono": f"{q['timer_secondes']}s",
-                } for i, q in enumerate(questions_imp)])
-                st.dataframe(apercu, use_container_width=True, hide_index=True)
-                repartition = Counter(q["type"] for q in questions_imp)
-                st.caption("Répartition : " + " · ".join(
-                    f"{TYPES_QUESTION[t]['icone']} {t} ({n})" for t, n in repartition.most_common())
-                    + f" — {points_max_session(questions_imp)} points en jeu.")
-
-                st.markdown("###### 3️⃣ Destination")
-                nom_suggere = _texte(info_imp.get("_nom_fichier")) or (
-                    re.sub(r"\W+", "_", os.path.splitext(fichier_xl.name)[0]).strip("_").lower() + ".json")
-                dest = st.radio("Importer vers",
-                                ["✨ Nouveau quiz", "♻️ Remplacer un quiz existant"],
-                                horizontal=True, key="excel_dest")
-                if dest.startswith("✨"):
-                    cible = st.text_input("Nom du fichier JSON", value=nom_suggere, key="excel_nom_cible")
-                    if cible and not cible.endswith(".json"):
-                        cible += ".json"
-                    if cible in fichiers_existants:
-                        st.warning(f"⚠️ « {cible} » existe déjà et sera écrasé.")
+            with c2:
+                if fichiers_existants:
+                    quiz_exp = st.selectbox(
+                        "Exporter un quiz existant", fichiers_existants,
+                        format_func=lambda f: (lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {})
+                        .get("quiz_info", {}).get("titre", f),
+                        key="excel_export_src")
+                    data_exp = lire_json(os.path.join(DOSSIER_QUIZZES, quiz_exp), {}) or {}
+                    st.download_button(
+                        f"📤 Exporter « {quiz_exp} »",
+                        data=exporter_quiz_excel(data_exp.get("quiz_info", {}),
+                                                 data_exp.get("questions", []), quiz_exp),
+                        file_name=quiz_exp.replace(".json", "") + ".xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True)
                 else:
-                    cible = st.selectbox("Quiz à remplacer", fichiers_existants,
-                                         key="excel_cible") if fichiers_existants else None
-                    if cible:
-                        actuel = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
-                        st.warning(f"⚠️ Les {len(actuel.get('questions', []))} question(s) actuelles de "
-                                   f"« {cible} » seront intégralement remplacées.")
+                    st.info("Aucun quiz à exporter pour l'instant.")
 
-                titre_defaut = _texte(info_imp.get("titre")) or os.path.splitext(str(cible or "Quiz"))[0]
-                confirme = st.checkbox("Je confirme l'import", key="excel_confirme")
-                if st.button("💾 Importer dans la bibliothèque", type="primary",
-                             use_container_width=True, disabled=not (cible and confirme)):
-                    existant = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
-                    info_finale = dict(existant.get("quiz_info", {}))
-                    for k, v in info_imp.items():
-                        if k.startswith("_"):
-                            continue
-                        if v not in ("", None):
-                            info_finale[k] = v
-                    info_finale.setdefault("titre", titre_defaut)
-                    info_finale.setdefault("description", "")
-                    info_finale.setdefault("volume_musique", 0.5)
-                    info_finale.setdefault("volume_sons", 0.8)
+            with st.expander("📖 Syntaxe de la colonne « Donnees »"):
+                st.markdown(
+                    "| Type | Syntaxe | Exemple |\n|---|---|---|\n"
+                    "| `qcm` | options séparées par `\\|`, bonne réponse préfixée par `*` | `*Paris \\| Lyon \\| Nice` |\n"
+                    "| `vrai_faux` | `VRAI` ou `FAUX` | `FAUX` |\n"
+                    "| `classement` | éléments dans le bon ordre, séparés par `>` | `1900 > 1950 > 2000` |\n"
+                    "| `association` | paires `gauche = droite` séparées par `\\|` | `ACPR = Superviseur \\| EBA = Europe` |\n"
+                    "| `texte` | réponses acceptées séparées par `\\|` | `Crédit-bail \\| Leasing \\| LOA` |\n"
+                    "| `curseur` | `min ; max ; valeur ; tolérance ; pas ; libellé` | `0 ; 200 ; 100 ; 20 ; 1 ; Véhicules` |\n"
+                    "| `sondage` | options séparées par `\\|`, sans `*` | `Dynamique \\| Technique \\| Clair` |\n")
+                st.caption("Colonne « Double points » : écrivez OUI pour une question bonus. "
+                           "La feuille « Aide » du classeur reprend ces règles.")
 
-                    contenu = json.dumps({"quiz_info": info_finale, "questions": questions_imp},
-                                         ensure_ascii=False, indent=2)
-                    with open(os.path.join(DOSSIER_QUIZZES, cible), "w", encoding="utf-8") as f:
-                        f.write(contenu)
-                    sauvegarder_fichier_github(f"QCM/{cible}", contenu)
-                    st.session_state.selected_edit_qcm = cible
-                    st.session_state.dernier_choix_edition = None  # force le rechargement de l'éditeur
-                    st.success(f"✅ {len(questions_imp)} question(s) importée(s) dans « {cible} ». "
-                               "Le quiz reste privé tant que vous ne l'ouvrez pas au mode entraînement.")
-                    st.balloons()
-                    st.rerun()
+            st.markdown("---")
+            st.markdown("##### 2️⃣ Réimporter le classeur")
+            fichier_xl = st.file_uploader("Classeur Excel (.xlsx)", type=["xlsx", "xlsm"], key="excel_upload")
+
+            if fichier_xl is not None:
+                questions_imp, info_imp, rapport = importer_quiz_excel(fichier_xl)
+
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Lignes lues", rapport["lues"])
+                m2.metric("Questions valides", rapport["retenues"])
+                m3.metric("Erreurs", len(rapport["erreurs"]))
+
+                if rapport["erreurs"]:
+                    st.error(f"❌ {len(rapport['erreurs'])} erreur(s) — corrigez le classeur puis réimportez. "
+                             "Aucune modification n'a été appliquée.")
+                    with st.expander("Détail des erreurs", expanded=True):
+                        for e in rapport["erreurs"][:60]:
+                            st.markdown(f"- {e}")
+                        if len(rapport["erreurs"]) > 60:
+                            st.caption(f"… et {len(rapport['erreurs']) - 60} autre(s).")
+                if rapport["avertissements"]:
+                    with st.expander(f"⚠️ {len(rapport['avertissements'])} avertissement(s)"):
+                        for a in rapport["avertissements"]:
+                            st.markdown(f"- {a}")
+
+                if questions_imp and not rapport["erreurs"]:
+                    st.success(f"✅ {len(questions_imp)} question(s) prête(s) à être importée(s).")
+                    apercu = pd.DataFrame([{
+                        "N°": i + 1,
+                        "Type": TYPES_QUESTION[q["type"]]["icone"] + " " + q["type"],
+                        "Consigne": q["consigne"][:70],
+                        "Points": q["points"] * (2 if q.get("double_points") else 1),
+                        "Chrono": f"{q['timer_secondes']}s",
+                    } for i, q in enumerate(questions_imp)])
+                    st.dataframe(apercu, use_container_width=True, hide_index=True)
+                    repartition = Counter(q["type"] for q in questions_imp)
+                    st.caption("Répartition : " + " · ".join(
+                        f"{TYPES_QUESTION[t]['icone']} {t} ({n})" for t, n in repartition.most_common())
+                        + f" — {points_max_session(questions_imp)} points en jeu.")
+
+                    st.markdown("###### 3️⃣ Destination")
+                    nom_suggere = _texte(info_imp.get("_nom_fichier")) or (
+                        re.sub(r"\W+", "_", os.path.splitext(fichier_xl.name)[0]).strip("_").lower() + ".json")
+                    dest = st.radio("Importer vers",
+                                    ["✨ Nouveau quiz", "♻️ Remplacer un quiz existant"],
+                                    horizontal=True, key="excel_dest")
+                    if dest.startswith("✨"):
+                        cible = st.text_input("Nom du fichier JSON", value=nom_suggere, key="excel_nom_cible")
+                        if cible and not cible.endswith(".json"):
+                            cible += ".json"
+                        if cible in fichiers_existants:
+                            st.warning(f"⚠️ « {cible} » existe déjà et sera écrasé.")
+                    else:
+                        cible = st.selectbox("Quiz à remplacer", fichiers_existants,
+                                             key="excel_cible") if fichiers_existants else None
+                        if cible:
+                            actuel = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
+                            st.warning(f"⚠️ Les {len(actuel.get('questions', []))} question(s) actuelles de "
+                                       f"« {cible} » seront intégralement remplacées.")
+
+                    titre_defaut = _texte(info_imp.get("titre")) or os.path.splitext(str(cible or "Quiz"))[0]
+                    confirme = st.checkbox("Je confirme l'import", key="excel_confirme")
+                    if st.button("💾 Importer dans la bibliothèque", type="primary",
+                                 use_container_width=True, disabled=not (cible and confirme)):
+                        existant = lire_json(os.path.join(DOSSIER_QUIZZES, cible), {}) or {}
+                        info_finale = dict(existant.get("quiz_info", {}))
+                        for k, v in info_imp.items():
+                            if k.startswith("_"):
+                                continue
+                            if v not in ("", None):
+                                info_finale[k] = v
+                        info_finale.setdefault("titre", titre_defaut)
+                        info_finale.setdefault("description", "")
+                        info_finale.setdefault("volume_musique", 0.5)
+                        info_finale.setdefault("volume_sons", 0.8)
+
+                        contenu = json.dumps({"quiz_info": info_finale, "questions": questions_imp},
+                                             ensure_ascii=False, indent=2)
+                        with open(os.path.join(DOSSIER_QUIZZES, cible), "w", encoding="utf-8") as f:
+                            f.write(contenu)
+                        sauvegarder_fichier_github(f"QCM/{cible}", contenu)
+                        st.session_state.selected_edit_qcm = cible
+                        st.session_state.dernier_choix_edition = None  # force le rechargement de l'éditeur
+                        st.success(f"✅ {len(questions_imp)} question(s) importée(s) dans « {cible} ». "
+                                   "Le quiz reste privé tant que vous ne l'ouvrez pas au mode entraînement.")
+                        st.balloons()
+                        st.rerun()
 
     # ================= ONGLET EDITEUR =================
     with tab_edit:

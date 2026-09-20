@@ -198,9 +198,9 @@
       "timer_secondes": 20,
       "donnees": {
         "options": [
-          "Une caution obtenue d'une banque",
           "Une hypothèque accordée sur un bâtiment",
           "Un aval donné à une filiale",
+          "Une caution obtenue d'une banque",
           "L'escompte d'effets de commerce"
         ],
         "reponses_correctes": [

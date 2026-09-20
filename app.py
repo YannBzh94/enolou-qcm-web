@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-ENOLOU QUIZ — v2.1 "Arcade"
+ENOLOU QUIZ — v2.2 "Arcade"
 Application de quiz interactif multi-joueurs (jusqu'a 40 participants).
-Nouveautes v2.1 (Lot 1 / etape 1) : codes de session a 6 chiffres.
+
+Historique :
+  v2.0 — refonte design, multi-types, robustesse multi-joueurs, mobile iOS/Android
+  v2.1 — Lot 1 : codes de session a 6 chiffres
+  v2.2 — Lot 2 : question bonus / double points, chrono synchronise serveur,
+                 nuage de mots (sondages + reponses libres), avatars personnalisables,
+                 reactions emoji en direct
+         + bouton retour accueil sur tous les sous-menus
+         + publication selective des quiz pour le mode entrainement
 """
 
 import os
@@ -15,6 +23,7 @@ import unicodedata
 import tempfile
 import base64
 from io import BytesIO
+from collections import Counter
 
 import qrcode
 import requests
@@ -34,6 +43,7 @@ st.set_page_config(
 
 DOSSIER_QUIZZES = "QCM"
 DOSSIER_SESSIONS = "SESSIONS"
+FICHIER_PUBLICATION = os.path.join(DOSSIER_QUIZZES, "_publication.json")
 MAX_JOUEURS = 40
 URL_APP_DEFAUT = "https://yannbzh94-enolou-qcm-web-app-ngwrt8.streamlit.app/"
 
@@ -53,6 +63,10 @@ PALETTES = {
 
 TILE_COLORS = ["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#14b8a6", "#f43f5e"]
 TILE_SHAPES = ["▲", "◆", "●", "■", "★", "⬟", "✦", "❤"]
+
+AVATARS = ["🦊", "🐼", "🦁", "🐨", "🐸", "🦉", "🐙", "🦄", "🐝", "🐧", "🦖", "🐬", "🦋", "🐺", "🦕", "🐳",
+           "🐢", "🦔", "🐝", "🦓", "🦒", "🐉", "🦩", "🐅"]
+REACTIONS = ["👏", "🔥", "😂", "😱", "🤔", "💪", "🎉", "😅"]
 
 
 def injecter_design(palette="Nebula"):
@@ -95,6 +109,7 @@ h1,h2,h3 { font-family:'Baloo 2','Inter',sans-serif !important; color:var(--ink)
   font-weight:700; background:rgba(255,255,255,.22); color:#fff; margin-right:6px; backdrop-filter:blur(6px); }
 .eno-badge{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:.7rem; font-weight:800;
   background:color-mix(in srgb,var(--c1) 14%, #fff); color:var(--c1); border:1px solid color-mix(in srgb,var(--c1) 30%,#fff); }
+.eno-badge-or{ background:linear-gradient(120deg,#f59e0b,#f97316); color:#fff; border:none; }
 
 /* ---- Code de session a 6 chiffres ---- */
 .eno-code-wrap{ text-align:center; margin:10px 0 4px 0; }
@@ -113,6 +128,23 @@ h1,h2,h3 { font-family:'Baloo 2','Inter',sans-serif !important; color:var(--ink)
   transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; min-height:48px; }
 .stButton > button:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(15,23,42,.14); }
 .stButton > button[kind="primary"]{ background:linear-gradient(120deg,var(--c1),var(--c2)) !important; border:none !important; color:#fff !important; }
+
+/* ---- Bouton retour accueil ---- */
+div[class*="st-key-home_"] button{
+  background:#fff !important; color:var(--c1) !important; font-weight:800 !important;
+  border:1px solid color-mix(in srgb,var(--c1) 26%, #fff) !important; min-height:42px !important;
+}
+
+/* ---- Avatars selectionnables ---- */
+div[class*="st-key-av_"] button{ min-height:56px !important; font-size:1.7rem !important; border-radius:16px !important; padding:0 !important; }
+div[class*="st-key-avon_"] button{ min-height:56px !important; font-size:1.7rem !important; border-radius:16px !important; padding:0 !important;
+  background:linear-gradient(120deg,var(--c1),var(--c2)) !important; border:none !important; }
+
+/* ---- Reactions ---- */
+div[class*="st-key-react_"] button{ min-height:46px !important; font-size:1.4rem !important; border-radius:14px !important; padding:0 !important; }
+.eno-reacts{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+.eno-react{ background:#fff; border-radius:999px; padding:6px 12px; font-size:1rem; font-weight:700;
+  border:1px solid rgba(15,23,42,.08); animation:pop .35s ease; }
 
 __TILES__
 div[class*="st-key-tile_"] button{ min-height:92px !important; font-size:1.05rem !important; font-weight:800 !important;
@@ -133,11 +165,30 @@ div[class*="st-key-tile_"] button p{ font-size:1.05rem !important; font-weight:8
 .eno-name{ font-weight:700; flex:1; }
 .eno-score{ font-weight:900; color:var(--c1); }
 .eno-avatar{ width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#eef2ff;font-size:1.1rem;flex:none;}
+.eno-delta{ font-size:.78rem; font-weight:800; padding:2px 8px; border-radius:999px; }
+.eno-up{ background:#dcfce7; color:#15803d; }
+.eno-down{ background:#fee2e2; color:#b91c1c; }
+.eno-flat{ background:#f1f5f9; color:#64748b; }
 
 .eno-lobby{ display:flex; flex-wrap:wrap; gap:10px; }
 .eno-chip{ background:#fff; border-radius:999px; padding:8px 14px; font-weight:700; font-size:.85rem;
   border:1px solid rgba(15,23,42,.08); box-shadow:0 4px 12px rgba(15,23,42,.06); animation:pop .35s ease; }
 @keyframes pop{ from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* ---- Podium anime ---- */
+.eno-podium{ display:flex; align-items:flex-end; justify-content:center; gap:14px; margin:18px 0 8px 0; }
+.eno-pod{ width:120px; border-radius:18px 18px 0 0; background:linear-gradient(180deg,var(--c1),var(--c2));
+  color:#fff; text-align:center; padding:12px 8px 10px 8px; animation:grow .7s cubic-bezier(.2,.9,.3,1.2); transform-origin:bottom; }
+.eno-pod .a{ font-size:2rem; }
+.eno-pod .n{ font-weight:800; font-size:.9rem; margin-top:4px; word-break:break-word; }
+.eno-pod .s{ font-weight:900; font-size:1.1rem; }
+.eno-pod1{ height:170px; } .eno-pod2{ height:132px; } .eno-pod3{ height:110px; }
+@keyframes grow{ from{transform:scaleY(.15);opacity:.2} to{transform:scaleY(1);opacity:1} }
+
+/* ---- Nuage de mots ---- */
+.eno-cloud{ background:#fff; border-radius:18px; padding:20px; text-align:center; line-height:2.1;
+  border:1px solid rgba(15,23,42,.06); box-shadow:0 6px 18px rgba(15,23,42,.05); }
+.eno-word{ display:inline-block; margin:4px 10px; font-weight:800; font-family:'Baloo 2',sans-serif; animation:pop .4s ease; }
 
 .eno-ok, .eno-ko{ border-radius:18px; padding:18px; color:#fff; font-weight:800; font-size:1.1rem; text-align:center; }
 .eno-ok{ background:linear-gradient(120deg,#10b981,#22c55e); }
@@ -160,6 +211,7 @@ div[class*="st-key-tile_"] button p{ font-size:1.05rem !important; font-weight:8
   h1{ font-size:1.5rem !important; } h2{ font-size:1.2rem !important; }
   .eno-digit{ width:40px; height:54px; font-size:1.7rem; }
   .eno-code-xl .eno-digit{ width:48px; height:66px; font-size:2.1rem; }
+  .eno-pod{ width:88px; } .eno-pod1{ height:140px; } .eno-pod2{ height:108px; } .eno-pod3{ height:90px; }
   [data-testid="stHorizontalBlock"]{ flex-wrap:wrap !important; gap:.4rem !important; }
   [data-testid="column"]{ min-width:46% !important; }
 }
@@ -187,11 +239,11 @@ def slug(txt):
 
 
 def normaliser_code(saisie):
-    """Accepte '123 456', '123-456', 'sess_1758…' (ancien format) et renvoie un identifiant utilisable."""
+    """Accepte '123 456', '123-456', 'sess_1758…' (ancien format)."""
     if saisie is None:
         return ""
     s = str(saisie).strip()
-    if s.lower().startswith("sess_"):          # retrocompatibilite ancien format
+    if s.lower().startswith("sess_"):
         return s
     chiffres = re.sub(r"\D", "", s)
     return chiffres if len(chiffres) == 6 else ""
@@ -208,12 +260,11 @@ def generer_code_session(essais=200):
         code = str(random.randint(100000, 999999))
         if code in existants:
             continue
-        if len(set(code)) == 1:                 # 111111, 222222…
+        if len(set(code)) == 1:
             continue
         if code in ("123456", "654321", "000000"):
             continue
         return code
-    # repli : premier code libre
     for c in range(100000, 1000000):
         if str(c) not in existants:
             return str(c)
@@ -321,6 +372,45 @@ def supprimer_session(sid):
         print(f"[suppression] {e}")
 
 
+# ==========================================================
+# 2 bis. PUBLICATION DES QUIZ POUR LE MODE ENTRAINEMENT
+#    QCM/_publication.json  ->  {"fichier.json": true/false, ...}
+#    Par defaut un quiz n'est PAS publie (choix volontairement restrictif).
+# ==========================================================
+def lister_fichiers_quiz():
+    """Tous les quiz de la bibliotheque (le fichier de publication est exclu)."""
+    if not os.path.isdir(DOSSIER_QUIZZES):
+        return []
+    return sorted(f for f in os.listdir(DOSSIER_QUIZZES)
+                  if f.endswith(".json") and not f.startswith("_"))
+
+
+def charger_publication():
+    data = lire_json(FICHIER_PUBLICATION, {}) or {}
+    return data if isinstance(data, dict) else {}
+
+
+def sauver_publication(mapping):
+    contenu = json.dumps(mapping, ensure_ascii=False, indent=2)
+    ecrire_json_atomique(FICHIER_PUBLICATION, mapping)
+    sauvegarder_fichier_github("QCM/_publication.json", contenu)
+
+
+def est_publie(fichier):
+    return bool(charger_publication().get(fichier, False))
+
+
+def definir_publication(fichier, publie):
+    mapping = charger_publication()
+    mapping[fichier] = bool(publie)
+    sauver_publication(mapping)
+
+
+def lister_quiz_publies():
+    mapping = charger_publication()
+    return [f for f in lister_fichiers_quiz() if mapping.get(f, False)]
+
+
 # ---------- Synchronisation GitHub ----------
 def sauvegarder_fichier_github(chemin_relatif, contenu_str):
     try:
@@ -358,7 +448,7 @@ def supprimer_fichier_github(chemin_relatif):
 
 
 # ==========================================================
-# 3. MOTEUR AUDIO
+# 3. MOTEUR AUDIO (musique de fond + effets + tic-tac synchronise)
 # ==========================================================
 def fichier_en_base64(chemin):
     if chemin and os.path.exists(chemin):
@@ -389,6 +479,7 @@ def rendre_moteur_audio(musique_path, vol_musique, son_declenche=None, son_path=
     </script>"""
     components.html(html, height=0, width=0)
 
+
 # ==========================================================
 # 4. TYPES DE QUESTIONS & MOTEUR DE NOTATION
 # ==========================================================
@@ -400,6 +491,13 @@ TYPES_QUESTION = {
     "texte":      {"label": "Réponse libre (saisie)", "icone": "⌨️"},
     "curseur":    {"label": "Estimation (curseur)",   "icone": "🎚️"},
     "sondage":    {"label": "Sondage (sans points)",  "icone": "📊"},
+}
+
+MOTS_VIDES = {
+    "le", "la", "les", "un", "une", "des", "de", "du", "au", "aux", "et", "ou", "a", "en",
+    "pour", "par", "sur", "dans", "avec", "sans", "que", "qui", "est", "sont", "ce", "cet",
+    "cette", "ces", "il", "elle", "on", "nous", "vous", "ils", "elles", "se", "sa", "son",
+    "ses", "plus", "moins", "the", "of", "to", "and",
 }
 
 
@@ -480,7 +578,16 @@ def evaluer_reponse(q, reponse):
     return False, 0.0
 
 
-def calculer_points(q, ratio, elapsed=None, timer_sec=None, bonus_rapidite=False):
+def multiplicateur_question(q, index=None, total=None, bonus_finale=False):
+    """Double points : soit la question est marquee, soit c'est la derniere et le bonus finale est actif."""
+    if q.get("double_points"):
+        return 2
+    if bonus_finale and index is not None and total and index == total - 1:
+        return 2
+    return 1
+
+
+def calculer_points(q, ratio, elapsed=None, timer_sec=None, bonus_rapidite=False, multiplicateur=1):
     points = int(q.get("points", 10))
     if q.get("type") == "sondage":
         return 0
@@ -488,7 +595,17 @@ def calculer_points(q, ratio, elapsed=None, timer_sec=None, bonus_rapidite=False
     if bonus_rapidite and ratio > 0 and timer_sec:
         reste = max(0.0, (timer_sec - (elapsed or 0)) / timer_sec)
         base = base * (0.5 + 0.5 * reste)
-    return int(round(base))
+    return int(round(base * max(1, int(multiplicateur))))
+
+
+def points_max_session(questions, bonus_finale=False):
+    total = 0
+    n = len(questions)
+    for i, q in enumerate(questions):
+        if q.get("type") == "sondage":
+            continue
+        total += int(q.get("points", 10)) * multiplicateur_question(q, i, n, bonus_finale)
+    return total
 
 
 def texte_reponse(rep):
@@ -504,11 +621,16 @@ def texte_reponse(rep):
 # ==========================================================
 # 5. COMPOSANTS D'INTERFACE
 # ==========================================================
-AVATARS = ["🦊", "🐼", "🦁", "🐨", "🐸", "🦉", "🐙", "🦄", "🐝", "🐧", "🦖", "🐬", "🦋", "🐺", "🦕", "🐳"]
-
-
 def avatar_de(nom):
+    """Avatar deduit du pseudo (valeur de repli)."""
     return AVATARS[int(hashlib.md5(nom.encode()).hexdigest(), 16) % len(AVATARS)]
+
+
+def avatar_joueur(j):
+    """Avatar reellement choisi par le joueur, sinon celui deduit du pseudo."""
+    if isinstance(j, dict):
+        return j.get("avatar") or avatar_de(j.get("name", ""))
+    return avatar_de(str(j))
 
 
 def hero(titre, sous_titre="", pills=None):
@@ -520,8 +642,40 @@ def hero(titre, sous_titre="", pills=None):
     )
 
 
+def bouton_accueil(cle, libelle="🏠 Accueil", reinitialiser_joueur=False):
+    """Bouton de retour a l'ecran d'accueil, disponible sur tous les sous-menus."""
+    if st.button(libelle, key=f"home_{cle}", use_container_width=True):
+        st.session_state.espace = "accueil"
+        st.session_state.qcm_selectionne = None
+        st.session_state.quiz_started = False
+        st.session_state.answered = False
+        st.session_state.last_result = None
+        st.session_state.current_idx = 0
+        st.session_state.score_total = 0
+        st.session_state.max_points = 0
+        if reinitialiser_joueur:
+            st.session_state.joueur_nom = ""
+        for p in ("qcm", "session", "reorder"):
+            st.query_params.pop(p, None)
+        st.rerun()
+
+
+def barre_navigation(cle, reinitialiser_joueur=False, extra_label=None, extra_cle=None):
+    """Barre superieure : retour accueil (+ bouton secondaire optionnel)."""
+    if extra_label:
+        c1, c2, _ = st.columns([1, 1, 2])
+        with c1:
+            bouton_accueil(cle, reinitialiser_joueur=reinitialiser_joueur)
+        with c2:
+            clique = st.button(extra_label, key=f"extra_{extra_cle or cle}", use_container_width=True)
+        return clique
+    c1, _ = st.columns([1, 3])
+    with c1:
+        bouton_accueil(cle, reinitialiser_joueur=reinitialiser_joueur)
+    return False
+
+
 def afficher_code(code, label="Code de session", xl=False):
-    """Affiche le code a 6 chiffres sous forme de pavés lisibles à distance."""
     code = str(code)
     if code.lower().startswith("sess_"):
         st.markdown(f"**{label} :** `{code}`")
@@ -536,6 +690,7 @@ def afficher_code(code, label="Code de session", xl=False):
 
 
 def chrono(restant, total):
+    """Chrono statique (rafraichi par le fragment)."""
     pct = int(100 * restant / total) if total else 0
     st.markdown(
         f"""<div class="eno-timer">{'⏱️' if pct > 30 else '🔥'}<div class="eno-bar"><span style="width:{pct}%"></span></div>
@@ -544,27 +699,235 @@ def chrono(restant, total):
     )
 
 
-def leaderboard(joueurs, limite=10, titre="🏆 Classement"):
+def chrono_synchro(fin_timestamp, total, sonore=True, hauteur=74):
+    """
+    Chrono synchronise sur l'horloge SERVEUR : tous les joueurs voient la meme valeur.
+    Le decompte s'anime cote navigateur (1 img/s) a partir de l'ecart serveur/client,
+    sans attendre le rafraichissement du fragment.
+    Bip discret (WebAudio) sur les 5 dernieres secondes.
+    """
+    maintenant = time.time()
+    restant_serveur = max(0, int(round(fin_timestamp - maintenant)))
+    total = max(1, int(total))
+    pct = int(100 * restant_serveur / total)
+    bip = "true" if sonore else "false"
+    html = f"""
+<style>
+ body{{margin:0;background:transparent;font-family:Inter,system-ui,sans-serif}}
+ .t{{display:flex;align-items:center;gap:12px;font-weight:800;color:#0b1020;background:#fff;
+    border-radius:16px;padding:10px 16px;border:1px solid rgba(15,23,42,.08);box-shadow:0 6px 18px rgba(15,23,42,.06)}}
+ .b{{height:12px;border-radius:99px;background:#e2e8f0;overflow:hidden;flex:1}}
+ .b>span{{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6366f1,#ec4899);
+    transition:width .95s linear}}
+ .v{{min-width:52px;text-align:right;font-variant-numeric:tabular-nums}}
+ .urgent .v{{color:#dc2626}}
+ .urgent .b>span{{background:linear-gradient(90deg,#f97316,#ef4444)}}
+</style>
+<div class="t" id="w"><span id="ic">⏱️</span><div class="b"><span id="bar" style="width:{pct}%"></span></div>
+<div class="v" id="v">{restant_serveur}s</div></div>
+<script>
+ let r={restant_serveur}; const total={total}, sonore={bip};
+ const v=document.getElementById('v'), bar=document.getElementById('bar'),
+       w=document.getElementById('w'), ic=document.getElementById('ic');
+ let ctx=null;
+ function bip(){{
+   if(!sonore) return;
+   try{{
+     ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+     const o=ctx.createOscillator(), g=ctx.createGain();
+     o.frequency.value = r<=1 ? 880 : 620; o.type='sine';
+     g.gain.setValueAtTime(0.06, ctx.currentTime);
+     g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.18);
+     o.connect(g); g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+0.18);
+   }}catch(e){{}}
+ }}
+ function rendu(){{
+   v.textContent = r + 's';
+   bar.style.width = Math.max(0, Math.round(100*r/total)) + '%';
+   const urgent = r <= Math.max(5, total*0.25);
+   w.classList.toggle('urgent', urgent);
+   ic.textContent = urgent ? '🔥' : '⏱️';
+ }}
+ rendu();
+ const id=setInterval(()=>{{
+   if(r<=0){{ clearInterval(id); return; }}
+   r--; rendu(); if(r<=5 && r>=0) bip();
+ }}, 1000);
+</script>"""
+    components.html(html, height=hauteur)
+
+
+def leaderboard(joueurs, limite=10, titre="🏆 Classement", rangs_precedents=None):
+    """Classement ; si rangs_precedents est fourni, affiche le gain/perte de places."""
     st.markdown(f"#### {titre}")
     if not joueurs:
         st.info("Aucun joueur pour l'instant.")
         return
     medailles = {0: "🥇", 1: "🥈", 2: "🥉"}
+    lignes = []
     for i, j in enumerate(joueurs[:limite]):
-        st.markdown(
+        delta_html = ""
+        if rangs_precedents:
+            av = rangs_precedents.get(j.get("name"))
+            if av:
+                d = av - (i + 1)
+                if d > 0:
+                    delta_html = f'<span class="eno-delta eno-up">▲ {d}</span>'
+                elif d < 0:
+                    delta_html = f'<span class="eno-delta eno-down">▼ {abs(d)}</span>'
+                else:
+                    delta_html = '<span class="eno-delta eno-flat">=</span>'
+        lignes.append(
             f"""<div class="eno-row">
               <div class="eno-rank">{medailles.get(i, i+1)}</div>
-              <div class="eno-avatar">{avatar_de(j.get('name',''))}</div>
+              <div class="eno-avatar">{avatar_joueur(j)}</div>
               <div class="eno-name">{j.get('name','')}</div>
+              {delta_html}
               <div class="eno-score">{j.get('score',0)} pts</div>
-            </div>""",
-            unsafe_allow_html=True,
+            </div>"""
         )
+    st.markdown("".join(lignes), unsafe_allow_html=True)
 
 
-def entete_question(q, index, total, points_affiches=True):
+def podium_anime(joueurs, titre="🏆 Podium"):
+    """Podium 3 marches, anime a l'affichage."""
+    if not joueurs:
+        return
+    st.markdown(f"#### {titre}")
+    top = joueurs[:3]
+    ordre_visuel = []
+    if len(top) > 1:
+        ordre_visuel.append((top[1], 2, "eno-pod2"))
+    if top:
+        ordre_visuel.insert(1 if len(ordre_visuel) else 0, (top[0], 1, "eno-pod1"))
+    if len(top) > 2:
+        ordre_visuel.append((top[2], 3, "eno-pod3"))
+    blocs = "".join(
+        f"""<div class="eno-pod {cls}">
+              <div class="a">{avatar_joueur(j)}</div>
+              <div class="n">{j.get('name','')}</div>
+              <div class="s">{j.get('score',0)} pts</div>
+              <div style="opacity:.85;font-size:.8rem;margin-top:4px">{"🥇" if r==1 else ("🥈" if r==2 else "🥉")}</div>
+            </div>"""
+        for j, r, cls in ordre_visuel
+    )
+    st.markdown(f'<div class="eno-podium">{blocs}</div>', unsafe_allow_html=True)
+
+
+def nuage_de_mots(reponses, titre="☁️ Nuage de réponses", max_mots=28):
+    """
+    Nuage de mots pour les sondages et les reponses libres.
+    Les options de sondage sont comptees telles quelles ; le texte libre est decoupe en mots.
+    """
+    compteur = Counter()
+    for r in reponses:
+        if r is None:
+            continue
+        if isinstance(r, list):
+            for x in r:
+                if str(x).strip():
+                    compteur[str(x).strip()] += 1
+        else:
+            s = str(r).strip()
+            if not s:
+                continue
+            if len(s.split()) <= 3:
+                compteur[s] += 1
+            else:
+                for m in normaliser(s).split():
+                    if len(m) > 2 and m not in MOTS_VIDES:
+                        compteur[m] += 1
+    if not compteur:
+        st.info("Aucune réponse à afficher pour l'instant.")
+        return
+    st.markdown(f"#### {titre}")
+    items = compteur.most_common(max_mots)
+    vmax = items[0][1]
+    vmin = items[-1][1]
+    mots_html = []
+    for i, (mot, n) in enumerate(items):
+        ratio = 1.0 if vmax == vmin else (n - vmin) / (vmax - vmin)
+        taille = round(0.95 + 2.05 * ratio, 2)
+        couleur = TILE_COLORS[i % len(TILE_COLORS)]
+        opacite = round(0.62 + 0.38 * ratio, 2)
+        mots_html.append(
+            f'<span class="eno-word" style="font-size:{taille}rem;color:{couleur};opacity:{opacite}" '
+            f'title="{n} réponse(s)">{mot}</span>'
+        )
+    st.markdown(f'<div class="eno-cloud">{"".join(mots_html)}</div>', unsafe_allow_html=True)
+    st.caption(f"{sum(compteur.values())} réponse(s) · {len(compteur)} terme(s) distinct(s)")
+
+
+def collecter_reponses(joueurs, q_num):
+    """Recupere toutes les reponses des joueurs pour une question donnee (numero 1-based)."""
+    out = []
+    for j in joueurs:
+        for a in j.get("answers_detail", []):
+            if a.get("q_num") == q_num:
+                out.append(a.get("reponse"))
+    return out
+
+
+def afficher_reactions(joueurs, fenetre=25):
+    """Affiche les reactions emoji recentes envoyees par les joueurs."""
+    maintenant = time.time()
+    recentes = []
+    for j in joueurs:
+        r = j.get("reaction") or {}
+        if r.get("emoji") and maintenant - float(r.get("ts", 0)) <= fenetre:
+            recentes.append((r["ts"], avatar_joueur(j), j.get("name", ""), r["emoji"]))
+    if not recentes:
+        return
+    recentes.sort(reverse=True)
+    chips = "".join(
+        f'<span class="eno-react">{emoji} <span style="opacity:.6;font-size:.8rem">{av} {nom}</span></span>'
+        for _, av, nom, emoji in recentes[:12]
+    )
+    st.markdown(f'<div class="eno-reacts">{chips}</div>', unsafe_allow_html=True)
+
+
+def barre_reactions(sid, moi, cle):
+    """Boutons de reaction emoji pour un joueur."""
+    st.caption("Réagir :")
+    cols = st.columns(len(REACTIONS))
+    for i, emo in enumerate(REACTIONS):
+        with cols[i]:
+            if st.button(emo, key=f"react_{cle}_{i}", use_container_width=True):
+                moi["reaction"] = {"emoji": emo, "ts": time.time()}
+                sauver_joueur(sid, moi)
+                st.rerun()
+
+
+def selecteur_avatar(cle="insc"):
+    """Grille d'avatars selectionnables ; renvoie l'avatar retenu."""
+    st.session_state.setdefault("avatar_choisi", random.choice(AVATARS))
+    st.markdown("##### 🎭 Choisissez votre avatar")
+    par_ligne = 8
+    for debut in range(0, len(AVATARS), par_ligne):
+        ligne = AVATARS[debut:debut + par_ligne]
+        cols = st.columns(par_ligne)
+        for i, emo in enumerate(ligne):
+            idx = debut + i
+            actif = st.session_state.avatar_choisi == emo
+            with cols[i]:
+                prefixe = "avon" if actif else "av"
+                if st.button(emo, key=f"{prefixe}_{cle}_{idx}", use_container_width=True):
+                    st.session_state.avatar_choisi = emo
+                    st.rerun()
+    st.markdown(f"Avatar retenu : **{st.session_state.avatar_choisi}**")
+    return st.session_state.avatar_choisi
+
+
+def entete_question(q, index, total, points_affiches=True, multiplicateur=1):
     meta = TYPES_QUESTION.get(q.get("type", "qcm"), TYPES_QUESTION["qcm"])
-    pts = f'<span class="eno-badge">🏆 {q.get("points",10)} pts</span>' if points_affiches else ""
+    pts_base = int(q.get("points", 10))
+    pts = ""
+    if points_affiches and q.get("type") != "sondage":
+        if multiplicateur > 1:
+            pts = (f'<span class="eno-badge">🏆 {pts_base} pts</span>'
+                   f'<span class="eno-badge eno-badge-or">✖️ {multiplicateur} — {pts_base*multiplicateur} pts en jeu !</span>')
+        else:
+            pts = f'<span class="eno-badge">🏆 {pts_base} pts</span>'
     st.markdown(
         f"""<div class="eno-card" style="padding:14px 18px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -690,14 +1053,15 @@ def nettoyer_widgets(cle):
         st.session_state.pop(f"{p}{cle}", None)
 
 
-def afficher_feedback(q, correct, ratio, points_gagnes):
+def afficher_feedback(q, correct, ratio, points_gagnes, multiplicateur=1):
+    suffixe = f" (×{multiplicateur} 🔥)" if multiplicateur > 1 else ""
     if q.get("type") == "sondage":
         st.info("📊 Réponse enregistrée — merci !")
     elif correct:
-        st.markdown(f"<div class='eno-ok'>🎉 Bonne réponse ! +{points_gagnes} pts</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='eno-ok'>🎉 Bonne réponse ! +{points_gagnes} pts{suffixe}</div>", unsafe_allow_html=True)
     elif ratio > 0:
         st.markdown(f"<div class='eno-ok' style='background:linear-gradient(120deg,#f59e0b,#f97316)'>"
-                    f"➗ Partiellement juste — +{points_gagnes} pts</div>", unsafe_allow_html=True)
+                    f"➗ Partiellement juste — +{points_gagnes} pts{suffixe}</div>", unsafe_allow_html=True)
     else:
         st.markdown("<div class='eno-ko'>❌ Raté cette fois !</div>", unsafe_allow_html=True)
     if q.get("explication"):
@@ -713,7 +1077,7 @@ def generer_csv_session(sid):
     lignes = []
     for j in charger_tous_joueurs(sid):
         lignes.append({
-            "Participant": j.get("name"), "Score": j.get("score", 0),
+            "Participant": j.get("name"), "Avatar": avatar_joueur(j), "Score": j.get("score", 0),
             "Score max": j.get("max_points", 0),
             "Réussite %": round(100 * j.get("score", 0) / max(1, j.get("max_points", 1)), 1),
             "Statut": "Terminé" if j.get("finished") else "En cours",
@@ -721,7 +1085,7 @@ def generer_csv_session(sid):
         })
         for a in j.get("answers_detail", []):
             lignes.append({
-                "Participant": j.get("name"), "Score": "", "Score max": "", "Réussite %": "", "Statut": "",
+                "Participant": j.get("name"), "Avatar": "", "Score": "", "Score max": "", "Réussite %": "", "Statut": "",
                 "Question": f"Q{a.get('q_num')} — {a.get('consigne','')}",
                 "Réponse": texte_reponse(a.get("reponse")),
                 "Correct": "Oui" if a.get("correct") else "Non",
@@ -755,6 +1119,7 @@ def enregistrer_qcm_actuel():
         f.write(contenu)
     sauvegarder_fichier_github(f"QCM/{nom}", contenu)
 
+
 # ==========================================================
 # 7. ETAT APPLICATIF & NAVIGATION
 # ==========================================================
@@ -771,6 +1136,8 @@ ETATS_DEFAUT = {
     "question_start_time": time.time(),
     "declencher_son": None,
     "joueur_nom": "",
+    "avatar_choisi": None,
+    "rangs_precedents": {},
     "edit_nom_fichier": "nouveau_qcm.json",
     "edit_titre": "",
     "edit_desc": "",
@@ -811,10 +1178,10 @@ if "reorder" in query_params and st.session_state.get("edit_questions"):
     except Exception as e:
         print(f"[reorder] {e}")
 
-# --- Chargement d'un QCM solo via URL ---
+# --- Chargement d'un QCM solo via URL (uniquement si le quiz est publie) ---
 if url_qcm and not st.session_state.qcm_selectionne:
     chemin = os.path.join(DOSSIER_QUIZZES, url_qcm)
-    if os.path.exists(chemin):
+    if os.path.exists(chemin) and est_publie(url_qcm):
         banque = lire_json(chemin, {})
         st.session_state.banque = banque if isinstance(banque, dict) else {"quiz_info": {}, "questions": banque}
         st.session_state.qcm_selectionne = url_qcm
@@ -831,7 +1198,7 @@ ESPACES = {"accueil": "🏠 Accueil", "session": "🎮 Rejoindre", "solo": "🎧
 
 with st.sidebar:
     st.markdown("### 🚀 Enolou Quiz")
-    st.caption("v2.1 — jusqu'à 40 joueurs")
+    st.caption("v2.2 — jusqu'à 40 joueurs")
     nouveau = st.radio("Espace", list(ESPACES.values()), index=list(ESPACES).index(st.session_state.espace))
     cle_nouveau = [k for k, v in ESPACES.items() if v == nouveau][0]
     if cle_nouveau != st.session_state.espace:
@@ -843,7 +1210,8 @@ with st.sidebar:
         st.session_state.palette = pal
         st.rerun()
     if st.session_state.joueur_nom:
-        st.markdown(f"Connecté : **{avatar_de(st.session_state.joueur_nom)} {st.session_state.joueur_nom}**")
+        av = st.session_state.avatar_choisi or avatar_de(st.session_state.joueur_nom)
+        st.markdown(f"Connecté : **{av} {st.session_state.joueur_nom}**")
         if st.button("Se déconnecter", use_container_width=True):
             st.session_state.joueur_nom = ""
             st.rerun()
@@ -876,12 +1244,14 @@ if espace == "accueil":
                 st.session_state.espace = "session"
                 st.rerun()
 
+    nb_publies = len(lister_quiz_publies())
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="eno-card"><h3>🎧 Jouer en solo</h3>'
-                    '<p>Entraînez-vous à votre rythme sur un quiz partagé par votre formateur.</p></div>',
+        st.markdown(f'<div class="eno-card"><h3>🎧 Mode entraînement</h3>'
+                    f'<p>Révisez à votre rythme sur les quiz ouverts par votre formateur.</p>'
+                    f'<span class="eno-badge">📚 {nb_publies} quiz disponible(s)</span></div>',
                     unsafe_allow_html=True)
-        if st.button("Mode solo", use_container_width=True):
+        if st.button("S'entraîner", use_container_width=True):
             st.session_state.espace = "solo"
             st.rerun()
     with c2:
@@ -909,6 +1279,7 @@ if espace == "accueil":
 # ==========================================================
 elif espace == "session":
     if not url_session:
+        barre_navigation("sess_saisie", reinitialiser_joueur=True)
         hero("🎮 Rejoindre une partie", "Saisissez le code à 6 chiffres affiché par l'animateur, ou scannez son QR code.")
         code = st.text_input("Code de session", max_chars=11, placeholder="• • •   • • •")
         if st.button("Entrer dans le salon", type="primary", use_container_width=True):
@@ -925,6 +1296,7 @@ elif espace == "session":
     sid = url_session
     sess = charger_session(sid)
     if not sess:
+        barre_navigation("sess_introuvable", reinitialiser_joueur=True)
         st.error("❌ Partie introuvable ou terminée.")
         if st.button("Saisir un autre code"):
             st.query_params.clear()
@@ -934,21 +1306,24 @@ elif espace == "session":
     quiz_info = sess.get("quiz_info", {})
     mode_sess = sess.get("mode", "battle")
     questions = sess.get("questions", [])
+    bonus_finale = sess.get("bonus_finale", False)
     vol_mus = quiz_info.get("volume_musique", 0.5)
     vol_sfx = quiz_info.get("volume_sons", 0.8)
 
     # ---------- Inscription ----------
     if not st.session_state.joueur_nom:
+        barre_navigation("sess_inscription", reinitialiser_joueur=True)
         hero(quiz_info.get("titre", "Quiz"), quiz_info.get("description", ""),
              [f"Mode {mode_sess.upper()}", f"{len(questions)} questions", f"Code {sid}"])
         joueurs = charger_tous_joueurs(sid)
         st.markdown(f"**{len(joueurs)}/{MAX_JOUEURS}** joueurs déjà dans le salon.")
         if joueurs:
             st.markdown('<div class="eno-lobby">' + "".join(
-                f'<span class="eno-chip">{avatar_de(j["name"])} {j["name"]}</span>' for j in joueurs) + "</div>",
+                f'<span class="eno-chip">{avatar_joueur(j)} {j["name"]}</span>' for j in joueurs) + "</div>",
                 unsafe_allow_html=True)
         st.markdown("### ✍️ Choisissez votre pseudo")
         nom = st.text_input("Pseudo", placeholder="Ex : Yann Q.", label_visibility="collapsed")
+        avatar_retenu = selecteur_avatar("insc")
         if st.button("🚀 Entrer dans la partie", type="primary", use_container_width=True):
             nom = nom.strip()
             if not nom:
@@ -956,6 +1331,9 @@ elif espace == "session":
             elif len(joueurs) >= MAX_JOUEURS and not charger_joueur(sid, nom):
                 st.error(f"Salon complet ({MAX_JOUEURS} joueurs).")
             elif charger_joueur(sid, nom):
+                existant = charger_joueur(sid, nom)
+                existant["avatar"] = avatar_retenu
+                sauver_joueur(sid, existant)
                 st.session_state.joueur_nom = nom  # reconnexion
                 st.rerun()
             else:
@@ -963,11 +1341,12 @@ elif espace == "session":
                 if mode_sess == "examen" and sess.get("melanger", True):
                     random.Random(nom).shuffle(ordre)
                 sauver_joueur(sid, {
-                    "name": nom, "avatar": avatar_de(nom), "score": 0,
-                    "max_points": sum(int(q.get("points", 10)) for q in questions if q.get("type") != "sondage"),
+                    "name": nom, "avatar": avatar_retenu, "score": 0,
+                    "max_points": points_max_session(questions, bonus_finale),
                     "current_idx": 0, "answered": False, "answered_current": False,
                     "last_result": None, "finished": False, "serie": 0, "meilleure_serie": 0,
-                    "question_order": ordre, "answers_detail": [], "joined_at": time.time(),
+                    "question_order": ordre, "answers_detail": [], "reaction": {},
+                    "joined_at": time.time(),
                 })
                 st.session_state.joueur_nom = nom
                 st.balloons()
@@ -975,6 +1354,7 @@ elif espace == "session":
         st.stop()
 
     nom_joueur = st.session_state.joueur_nom
+    barre_navigation("sess_jeu", reinitialiser_joueur=True)
 
     son = st.session_state.get("declencher_son")
     son_path = quiz_info.get("son_good") if son == "good" else quiz_info.get("son_bad")
@@ -995,15 +1375,18 @@ elif espace == "session":
         statut = sess.get("status", "waiting")
         questions = sess.get("questions", [])
         mode_sess = sess.get("mode", "battle")
+        bonus_finale = sess.get("bonus_finale", False)
 
         if statut == "waiting":
             hero("⏳ Salon d'attente", "La partie démarre dès que l'animateur lance le compte à rebours.",
-                 [f"{avatar_de(nom_joueur)} {nom_joueur}", f"Code {sid}"])
+                 [f"{avatar_joueur(moi)} {nom_joueur}", f"Code {sid}"])
             joueurs = charger_tous_joueurs(sid)
             st.markdown(f"#### 👥 {len(joueurs)}/{MAX_JOUEURS} joueurs connectés")
             st.markdown('<div class="eno-lobby">' + "".join(
-                f'<span class="eno-chip">{avatar_de(j["name"])} {j["name"]}</span>' for j in joueurs) + "</div>",
+                f'<span class="eno-chip">{avatar_joueur(j)} {j["name"]}</span>' for j in joueurs) + "</div>",
                 unsafe_allow_html=True)
+            barre_reactions(sid, moi, "lobby")
+            afficher_reactions(joueurs)
             return
 
         if statut == "ended":
@@ -1012,7 +1395,8 @@ elif espace == "session":
             hero("🏁 Partie terminée !", f"Vous finissez **{rang}e** sur {len(joueurs)} joueurs.",
                  [f"Score : {moi.get('score',0)}/{moi.get('max_points',0)} pts",
                   f"Meilleure série : {moi.get('meilleure_serie',0)} 🔥"])
-            leaderboard(joueurs, 10, "🏆 Podium final")
+            podium_anime(joueurs)
+            leaderboard(joueurs, 10, "🏆 Classement final")
             return
 
         # =========== MODE BATTLE ===========
@@ -1023,8 +1407,16 @@ elif espace == "session":
             if sess.get("in_transition"):
                 reste = max(0, 6 - int(time.time() - sess.get("transition_start_time", time.time())))
                 st.markdown(f"### ⏸️ Manche terminée — suite dans {reste}s")
-                leaderboard(joueurs, 5, "🏆 Classement en direct")
+                podium_anime(joueurs, "🏆 Podium provisoire")
+                leaderboard(joueurs, 8, "Classement en direct", st.session_state.get("rangs_precedents"))
+                q_prec = questions[idx] if idx < len(questions) else None
+                if q_prec and q_prec.get("type") in ("sondage", "texte"):
+                    nuage_de_mots(collecter_reponses(joueurs, idx + 1),
+                                  "☁️ Ce que le groupe a répondu")
+                barre_reactions(sid, moi, f"trans{idx}")
+                afficher_reactions(joueurs)
                 if reste == 0 and prendre_verrou(sid, f"adv_{idx}"):
+                    st.session_state.rangs_precedents = {j["name"]: i + 1 for i, j in enumerate(joueurs)}
                     s = charger_session(sid)
                     s["current_global_idx"] = idx + 1
                     s["in_transition"] = False
@@ -1049,8 +1441,10 @@ elif espace == "session":
                 return
 
             q = questions[idx]
+            mult = multiplicateur_question(q, idx, len(questions), bonus_finale)
             timer_sec = int(q.get("timer_secondes", 30))
-            elapsed = int(time.time() - sess.get("question_start_time", time.time()))
+            debut = sess.get("question_start_time", time.time())
+            elapsed = int(time.time() - debut)
             restant = max(0, timer_sec - elapsed)
             deja = moi.get("answered_current", False)
             tous_repondu = bool(joueurs) and all(j.get("answered_current") for j in joueurs)
@@ -1063,8 +1457,12 @@ elif espace == "session":
                 st.rerun()
                 return
 
-            chrono(restant, timer_sec)
-            entete_question(q, idx + 1, len(questions))
+            if mult > 1:
+                st.markdown(
+                    '<div class="eno-ok" style="background:linear-gradient(120deg,#f59e0b,#f97316);padding:12px">'
+                    '⭐ Question bonus — points doublés !</div>', unsafe_allow_html=True)
+            chrono_synchro(debut + timer_sec, timer_sec, sonore=not deja)
+            entete_question(q, idx + 1, len(questions), multiplicateur=mult)
             afficher_medias(q, quiz_info)
             cle = f"b{idx}"
 
@@ -1073,15 +1471,19 @@ elif espace == "session":
                 if st.button("✅ Valider ma réponse", type="primary", use_container_width=True,
                              disabled=rep is None or (isinstance(rep, (list, dict)) and len(rep) == 0)):
                     correct, ratio = evaluer_reponse(q, rep)
-                    pts = calculer_points(q, ratio, elapsed, timer_sec, bonus_rapidite=True)
-                    serie = moi.get("serie", 0) + 1 if correct else 0
-                    if correct and serie >= 3:
+                    pts = calculer_points(q, ratio, elapsed, timer_sec, bonus_rapidite=True, multiplicateur=mult)
+                    # Un sondage ne fait ni gagner ni perdre la série en cours.
+                    if q.get("type") == "sondage":
+                        serie = moi.get("serie", 0)
+                    else:
+                        serie = moi.get("serie", 0) + 1 if correct else 0
+                    if correct and q.get("type") != "sondage" and serie >= 3:
                         pts = int(pts * 1.2)
                     moi["score"] += pts
                     moi["serie"] = serie
                     moi["meilleure_serie"] = max(moi.get("meilleure_serie", 0), serie)
                     moi["answered_current"] = True
-                    moi["last_result"] = {"correct": correct, "ratio": ratio, "points": pts}
+                    moi["last_result"] = {"correct": correct, "ratio": ratio, "points": pts, "mult": mult}
                     moi["answers_detail"].append({"q_num": idx + 1, "consigne": q.get("consigne", ""),
                                                   "type": q.get("type", "qcm"), "reponse": rep,
                                                   "correct": correct, "points": pts})
@@ -1091,9 +1493,11 @@ elif espace == "session":
                     st.rerun()
             else:
                 r = moi.get("last_result") or {}
-                afficher_feedback(q, r.get("correct"), r.get("ratio", 0), r.get("points", 0))
+                afficher_feedback(q, r.get("correct"), r.get("ratio", 0), r.get("points", 0), r.get("mult", 1))
                 st.info(f"⏳ {sum(1 for j in joueurs if j.get('answered_current'))}/{len(joueurs)} joueurs ont répondu…")
-                leaderboard(joueurs, 5, "🏆 Classement en direct")
+                barre_reactions(sid, moi, f"q{idx}")
+                afficher_reactions(joueurs)
+                leaderboard(joueurs, 5, "🏆 Classement en direct", st.session_state.get("rangs_precedents"))
             return
 
         # =========== MODE EXAMEN ===========
@@ -1107,8 +1511,13 @@ elif espace == "session":
                  [f"Score : {moi['score']}/{moi['max_points']} pts"])
             return
 
-        q = questions[ordre[i_etu]]
-        entete_question(q, i_etu + 1, len(ordre))
+        reel = ordre[i_etu]
+        q = questions[reel]
+        mult = multiplicateur_question(q, reel, len(questions), bonus_finale)
+        if mult > 1:
+            st.markdown('<div class="eno-ok" style="background:linear-gradient(120deg,#f59e0b,#f97316);padding:12px">'
+                        '⭐ Question bonus — points doublés !</div>', unsafe_allow_html=True)
+        entete_question(q, i_etu + 1, len(ordre), multiplicateur=mult)
         afficher_medias(q, quiz_info)
         cle = f"e{i_etu}"
         if not moi.get("answered"):
@@ -1116,11 +1525,11 @@ elif espace == "session":
             if st.button("✅ Valider ma réponse", type="primary", use_container_width=True,
                          disabled=rep is None or (isinstance(rep, (list, dict)) and len(rep) == 0)):
                 correct, ratio = evaluer_reponse(q, rep)
-                pts = calculer_points(q, ratio)
+                pts = calculer_points(q, ratio, multiplicateur=mult)
                 moi["score"] += pts
                 moi["answered"] = True
-                moi["last_result"] = {"correct": correct, "ratio": ratio, "points": pts}
-                moi["answers_detail"].append({"q_num": i_etu + 1, "consigne": q.get("consigne", ""),
+                moi["last_result"] = {"correct": correct, "ratio": ratio, "points": pts, "mult": mult}
+                moi["answers_detail"].append({"q_num": reel + 1, "consigne": q.get("consigne", ""),
                                               "type": q.get("type", "qcm"), "reponse": rep,
                                               "correct": correct, "points": pts})
                 sauver_joueur(sid, moi)
@@ -1130,7 +1539,7 @@ elif espace == "session":
         else:
             r = moi.get("last_result") or {}
             if sess.get("feedback_immediat", True):
-                afficher_feedback(q, r.get("correct"), r.get("ratio", 0), r.get("points", 0))
+                afficher_feedback(q, r.get("correct"), r.get("ratio", 0), r.get("points", 0), r.get("mult", 1))
             else:
                 st.success("Réponse enregistrée ✅")
             if st.button("Question suivante ➡️", type="primary", use_container_width=True):
@@ -1144,16 +1553,21 @@ elif espace == "session":
 
 
 # ==========================================================
-# 10. ESPACE SOLO
+# 10. ESPACE SOLO / MODE ENTRAINEMENT
+#     Seuls les quiz explicitement publies par l'animateur sont accessibles.
 # ==========================================================
 elif espace == "solo":
     if not st.session_state.qcm_selectionne:
-        fichiers = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith(".json")]
-        hero("🎧 Mode entraînement", "Choisissez un quiz et jouez à votre rythme.")
-        if not fichiers:
-            st.info("Aucun quiz disponible pour l'instant.")
+        barre_navigation("solo_galerie")
+        publies = lister_quiz_publies()
+        hero("🎧 Mode entraînement", "Révisez à votre rythme sur les quiz ouverts par votre formateur.",
+             [f"📚 {len(publies)} quiz disponible(s)"])
+        if url_qcm and url_qcm not in publies:
+            st.warning("🔒 Ce quiz n'est pas ouvert à l'entraînement. Demandez à votre formateur de le publier.")
+        if not publies:
+            st.info("Aucun quiz n'est ouvert à l'entraînement pour le moment.")
         cols = st.columns(3)
-        for i, f in enumerate(fichiers):
+        for i, f in enumerate(publies):
             data = lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {}
             info = data.get("quiz_info", {})
             with cols[i % 3]:
@@ -1183,29 +1597,28 @@ elif espace == "solo":
         st.session_state.declencher_son = None
 
     if not st.session_state.quiz_started:
+        retour_galerie = barre_navigation("solo_intro", extra_label="← Autres quiz", extra_cle="solo_intro")
+        if retour_galerie:
+            st.session_state.qcm_selectionne = None
+            st.query_params.pop("qcm", None)
+            st.rerun()
         hero(quiz_info.get("titre", "Quiz"), quiz_info.get("description", ""),
-             [f"{len(questions)} questions", f"{sum(int(q.get('points',10)) for q in questions)} points en jeu"])
+             [f"{len(questions)} questions", f"{points_max_session(questions)} points en jeu"])
         img = quiz_info.get("image")
         if img and os.path.exists(img):
             st.image(img, use_container_width=True)
         vid = quiz_info.get("video")
         if vid and os.path.exists(vid):
             st.video(vid)
-        c1, c2 = st.columns([2, 1])
-        with c1:
-            if st.button("🎵 Commencer", type="primary", use_container_width=True):
-                st.session_state.quiz_started = True
-                st.session_state.question_start_time = time.time()
-                st.rerun()
-        with c2:
-            if st.button("← Changer de quiz", use_container_width=True):
-                st.session_state.qcm_selectionne = None
-                st.query_params.pop("qcm", None)
-                st.rerun()
+        if st.button("🎵 Commencer", type="primary", use_container_width=True):
+            st.session_state.quiz_started = True
+            st.session_state.question_start_time = time.time()
+            st.rerun()
         st.stop()
 
     idx = st.session_state.current_idx
     if idx >= len(questions):
+        barre_navigation("solo_fin")
         pct = round(100 * st.session_state.score_total / max(1, st.session_state.max_points))
         st.balloons()
         hero("🎉 Évaluation terminée !",
@@ -1221,17 +1634,19 @@ elif espace == "solo":
                 st.session_state.answered = False
                 st.rerun()
         with c2:
-            if st.button("🏠 Autres quiz", use_container_width=True):
+            if st.button("📚 Autres quiz", use_container_width=True):
                 st.session_state.qcm_selectionne = None
                 st.session_state.quiz_started = False
                 st.query_params.pop("qcm", None)
                 st.rerun()
         st.stop()
 
+    barre_navigation("solo_jeu")
     q = questions[idx]
+    mult = multiplicateur_question(q)
     timer_sec = int(q.get("timer_secondes", 30))
-    elapsed = int(time.time() - st.session_state.question_start_time)
-    restant = max(0, timer_sec - elapsed)
+    debut = st.session_state.question_start_time
+    elapsed = int(time.time() - debut)
     st.progress(idx / len(questions), text=f"Progression {idx}/{len(questions)} — {st.session_state.score_total} pts")
 
     a_support = bool(q.get("document_texte") or (q.get("media", {}) or {}).get("image"))
@@ -1242,27 +1657,31 @@ elif espace == "solo":
             afficher_medias(q, quiz_info)
     with col_q:
         if not st.session_state.answered:
-            chrono(restant, timer_sec)
-        entete_question(q, idx + 1, len(questions))
+            chrono_synchro(debut + timer_sec, timer_sec, sonore=True)
+        if mult > 1:
+            st.markdown('<div class="eno-ok" style="background:linear-gradient(120deg,#f59e0b,#f97316);padding:12px">'
+                        '⭐ Question bonus — points doublés !</div>', unsafe_allow_html=True)
+        entete_question(q, idx + 1, len(questions), multiplicateur=mult)
         cle = f"s{idx}"
         if not st.session_state.answered:
             rep = widget_reponse(q, cle)
             if st.button("✅ Valider ma réponse", type="primary", use_container_width=True,
                          disabled=rep is None or (isinstance(rep, (list, dict)) and len(rep) == 0)):
                 correct, ratio = evaluer_reponse(q, rep)
-                pts = calculer_points(q, ratio)
+                pts = calculer_points(q, ratio, multiplicateur=mult)
                 if elapsed > timer_sec:
                     pts = pts // 2
                 st.session_state.score_total += pts
-                st.session_state.max_points += int(q.get("points", 10)) if q.get("type") != "sondage" else 0
+                if q.get("type") != "sondage":
+                    st.session_state.max_points += int(q.get("points", 10)) * mult
                 st.session_state.answered = True
-                st.session_state.last_result = (correct, ratio, pts)
+                st.session_state.last_result = (correct, ratio, pts, mult)
                 st.session_state.declencher_son = "good" if correct else "bad"
                 nettoyer_widgets(cle)
                 st.rerun()
         else:
-            correct, ratio, pts = st.session_state.last_result
-            afficher_feedback(q, correct, ratio, pts)
+            correct, ratio, pts, mult_prec = st.session_state.last_result
+            afficher_feedback(q, correct, ratio, pts, mult_prec)
             if st.button("Question suivante ➡️", type="primary", use_container_width=True):
                 st.session_state.current_idx += 1
                 st.session_state.answered = False
@@ -1275,32 +1694,79 @@ elif espace == "solo":
 # 11. ESPACE ANIMATEUR
 # ==========================================================
 elif espace == "prof":
+    barre_navigation("prof")
     hero("🛠️ Espace animateur", "Créez, lancez, pilotez et analysez vos quiz.",
-         ["Codes à 6 chiffres", f"Jusqu'à {MAX_JOUEURS} joueurs", "Export Excel"])
-    fichiers_existants = [f for f in os.listdir(DOSSIER_QUIZZES) if f.endswith(".json")]
-    tab_sess, tab_edit, tab_ecran = st.tabs(["🎮 Sessions en direct", "📝 Éditeur de quiz", "📺 Écran de projection"])
+         ["Codes à 6 chiffres", f"Jusqu'à {MAX_JOUEURS} joueurs", "Publication entraînement", "Export Excel"])
+    fichiers_existants = lister_fichiers_quiz()
+    tab_sess, tab_edit, tab_pub, tab_ecran = st.tabs(
+        ["🎮 Sessions en direct", "📝 Éditeur de quiz", "📚 Mode entraînement", "📺 Écran de projection"])
 
     def galerie(fichiers, prefixe, cle_etat):
         if not fichiers:
             st.info("Aucun quiz disponible.")
             return
+        mapping = charger_publication()
         cols = st.columns(3)
         for i, f in enumerate(fichiers):
             data = lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {}
             info = data.get("quiz_info", {})
             actif = st.session_state.get(cle_etat) == f
+            pub = mapping.get(f, False)
             with cols[i % 3]:
                 bord = "2px solid var(--c1)" if actif else "1px solid rgba(15,23,42,.06)"
+                badge_pub = ('<span class="eno-badge">🌐 Entraînement</span>' if pub
+                             else '<span class="eno-badge">🔒 Privé</span>')
                 st.markdown(
                     f"""<div class="eno-card" style="border:{bord}">
                     <div style="font-weight:800">{'✨ ' if actif else ''}{info.get('titre', f)}</div>
                     <div style="color:#64748b;font-size:.8rem;margin:6px 0;height:32px;overflow:hidden">{info.get('description','—')}</div>
                     <span class="eno-badge">⚡ {len(data.get('questions',[]))} Q</span>
+                    {badge_pub}
                     <span class="eno-badge">📄 {f}</span></div>""", unsafe_allow_html=True)
                 if st.button("Sélectionné ✓" if actif else "Sélectionner", key=f"{prefixe}_{i}",
                              disabled=actif, use_container_width=True):
                     st.session_state[cle_etat] = f
                     st.rerun()
+
+    # ================= ONGLET MODE ENTRAINEMENT (PUBLICATION) =================
+    with tab_pub:
+        st.subheader("📚 Quiz ouverts au mode entraînement")
+        st.caption("Cochez les quiz que les étudiants peuvent réviser en autonomie. "
+                   "Un quiz non coché reste strictement réservé aux sessions que vous pilotez.")
+        if not fichiers_existants:
+            st.info("Aucun quiz dans la bibliothèque.")
+        else:
+            mapping = charger_publication()
+            with st.form("form_publication"):
+                etats = {}
+                for i, f in enumerate(fichiers_existants):
+                    data = lire_json(os.path.join(DOSSIER_QUIZZES, f), {}) or {}
+                    info = data.get("quiz_info", {})
+                    nb_q = len(data.get("questions", []))
+                    etats[f] = st.checkbox(
+                        f"**{info.get('titre', f)}** — {nb_q} question(s) · `{f}`",
+                        value=bool(mapping.get(f, False)), key=f"pub_{i}")
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    valider = st.form_submit_button("💾 Enregistrer", type="primary", use_container_width=True)
+                with c2:
+                    tout = st.form_submit_button("✅ Tout ouvrir", use_container_width=True)
+                with c3:
+                    rien = st.form_submit_button("🔒 Tout fermer", use_container_width=True)
+                if valider or tout or rien:
+                    if tout:
+                        etats = {f: True for f in fichiers_existants}
+                    elif rien:
+                        etats = {f: False for f in fichiers_existants}
+                    sauver_publication(etats)
+                    st.success("Publication mise à jour.")
+                    st.rerun()
+
+            publies = lister_quiz_publies()
+            st.markdown(f"**{len(publies)}/{len(fichiers_existants)}** quiz ouverts à l'entraînement.")
+            if publies:
+                st.markdown('<div class="eno-lobby">' + "".join(
+                    f'<span class="eno-chip">🌐 {f}</span>' for f in publies) + "</div>", unsafe_allow_html=True)
 
     # ================= ONGLET SESSIONS =================
     with tab_sess:
@@ -1316,6 +1782,7 @@ elif espace == "prof":
                 mode_label = st.radio("Mode de jeu", [
                     "🎮 Battle — synchronisé, rapidité, podium",
                     "📝 Examen — autonome, export tableur"], key="mode_collec")
+                bonus_finale = st.toggle("⭐ Question bonus finale (points doublés)", value=True)
             with c2:
                 domaine_app = st.text_input("URL de l'application déployée", value=URL_APP_DEFAUT, key="dom_collec")
                 feedback_imm = st.toggle("Feedback immédiat (mode examen)", value=True)
@@ -1331,6 +1798,7 @@ elif espace == "prof":
                     "status": "waiting", "current_global_idx": 0, "question_start_time": 0,
                     "in_transition": False, "transition_start_time": 0,
                     "feedback_immediat": feedback_imm, "melanger": melanger,
+                    "bonus_finale": bonus_finale,
                     "max_joueurs": MAX_JOUEURS, "cree_le": time.time(),
                     "quiz_info": data.get("quiz_info", {}), "questions": data.get("questions", []),
                 })
@@ -1360,7 +1828,8 @@ elif espace == "prof":
                     afficher_code(sid, "Code à communiquer")
                     st.caption("Les joueurs peuvent aussi saisir ce code depuis la page d'accueil.")
                     st.markdown(f"**Lien direct :** [{url_complete}]({url_complete})")
-                    st.markdown(f"**Mode :** `{sess['mode'].upper()}` — **Statut :** `{sess['status'].upper()}`")
+                    st.markdown(f"**Mode :** `{sess['mode'].upper()}` — **Statut :** `{sess['status'].upper()}`"
+                                + (" — ⭐ bonus finale actif" if sess.get("bonus_finale") else ""))
 
                 @st.fragment(run_every=3)
                 def pilotage():
@@ -1369,15 +1838,17 @@ elif espace == "prof":
                         st.warning("Session supprimée.")
                         return
                     joueurs = charger_tous_joueurs(sid)
+                    qs = s.get("questions", [])
+                    idx = s.get("current_global_idx", 0)
                     m1, m2, m3 = st.columns(3)
                     m1.metric("👥 Joueurs", f"{len(joueurs)}/{MAX_JOUEURS}")
-                    m2.metric("❓ Question",
-                              f"{min(s.get('current_global_idx',0)+1, len(s.get('questions',[])))}/{len(s.get('questions',[]))}")
+                    m2.metric("❓ Question", f"{min(idx+1, len(qs))}/{len(qs)}")
                     m3.metric("✅ Ont répondu", sum(1 for j in joueurs if j.get("answered_current") or j.get("answered")))
                     if joueurs:
                         st.markdown('<div class="eno-lobby">' + "".join(
-                            f'<span class="eno-chip">{avatar_de(j["name"])} {j["name"]} · {j.get("score",0)}</span>'
+                            f'<span class="eno-chip">{avatar_joueur(j)} {j["name"]} · {j.get("score",0)}</span>'
                             for j in joueurs) + "</div>", unsafe_allow_html=True)
+                        afficher_reactions(joueurs)
                     else:
                         st.info("En attente des joueurs…")
                     b1, b2, b3 = st.columns(3)
@@ -1401,7 +1872,18 @@ elif espace == "prof":
                             sauver_session(sid, s)
                             st.rerun()
                     if joueurs:
+                        if s["status"] == "ended":
+                            podium_anime(joueurs)
                         leaderboard(joueurs, 10)
+                    # Nuage de mots : sondages et reponses libres
+                    q_nuage = [i for i, q in enumerate(qs) if q.get("type") in ("sondage", "texte")]
+                    if q_nuage and joueurs:
+                        st.markdown("---")
+                        choix_n = st.selectbox(
+                            "☁️ Nuage de mots — question", q_nuage,
+                            format_func=lambda i: f"Q{i+1} — {qs[i].get('consigne','')[:50]}",
+                            key=f"nuage_{sid}")
+                        nuage_de_mots(collecter_reponses(joueurs, choix_n + 1))
                 pilotage()
 
                 st.download_button("📥 Export des résultats (.csv Excel)", data=generer_csv_session(sid),
@@ -1434,22 +1916,37 @@ elif espace == "prof":
                 joueurs = charger_tous_joueurs(sid_p)
                 qs = s.get("questions", [])
                 idx = s.get("current_global_idx", 0)
+                bonus_finale = s.get("bonus_finale", False)
                 if s["status"] == "waiting":
                     hero("Rejoignez la partie !", "Rendez-vous sur l'application et saisissez le code ci-dessous.",
                          [f"{len(joueurs)}/{MAX_JOUEURS} joueurs"])
                     afficher_code(sid_p, "Code de la partie", xl=True)
                     st.markdown('<div class="eno-lobby">' + "".join(
-                        f'<span class="eno-chip" style="font-size:1.1rem">{avatar_de(j["name"])} {j["name"]}</span>'
+                        f'<span class="eno-chip" style="font-size:1.1rem">{avatar_joueur(j)} {j["name"]}</span>'
                         for j in joueurs) + "</div>", unsafe_allow_html=True)
+                    afficher_reactions(joueurs)
                 elif s["status"] == "ended":
                     hero("🏁 Résultats finaux", "Merci à tous les participants !")
-                    leaderboard(joueurs, 10, "🏆 Podium")
+                    podium_anime(joueurs)
+                    leaderboard(joueurs, 10, "🏆 Classement final")
+                elif s.get("in_transition"):
+                    reste = max(0, 6 - int(time.time() - s.get("transition_start_time", time.time())))
+                    hero("⏸️ Fin de la manche", f"Question suivante dans {reste} secondes.")
+                    podium_anime(joueurs, "🏆 Podium provisoire")
+                    leaderboard(joueurs, 8, "Classement en direct")
+                    if idx < len(qs) and qs[idx].get("type") in ("sondage", "texte"):
+                        nuage_de_mots(collecter_reponses(joueurs, idx + 1), "☁️ Réponses du groupe")
+                    afficher_reactions(joueurs)
                 elif idx < len(qs):
                     q = qs[idx]
+                    mult = multiplicateur_question(q, idx, len(qs), bonus_finale)
                     total = int(q.get("timer_secondes", 30))
-                    restant = max(0, total - int(time.time() - s.get("question_start_time", time.time())))
-                    chrono(restant, total)
-                    entete_question(q, idx + 1, len(qs))
+                    debut = s.get("question_start_time", time.time())
+                    if mult > 1:
+                        st.markdown('<div class="eno-ok" style="background:linear-gradient(120deg,#f59e0b,#f97316)">'
+                                    '⭐ QUESTION BONUS — POINTS DOUBLÉS</div>', unsafe_allow_html=True)
+                    chrono_synchro(debut + total, total, sonore=True, hauteur=80)
+                    entete_question(q, idx + 1, len(qs), multiplicateur=mult)
                     if q.get("type") in ("qcm", "sondage"):
                         opts = q.get("donnees", {}).get("options", [])
                         cols = st.columns(2)
@@ -1460,6 +1957,7 @@ elif espace == "prof":
                                     border-radius:18px;font-weight:800;font-size:1.2rem;margin-bottom:10px">
                                     {TILE_SHAPES[i%len(TILE_SHAPES)]} {o}</div>""", unsafe_allow_html=True)
                     st.metric("Réponses reçues", f"{sum(1 for j in joueurs if j.get('answered_current'))}/{len(joueurs)}")
+                    afficher_reactions(joueurs)
                     leaderboard(joueurs, 5, "🏆 Top 5")
             projection()
 
@@ -1501,6 +1999,17 @@ elif espace == "prof":
 
         suffix = re.sub(r"\W+", "_", choix_edition)
 
+        # --- Publication rapide du quiz en cours d'edition ---
+        if choix_edition != "✨ Nouveau quiz":
+            pub_actuel = est_publie(choix_edition)
+            nouveau_pub = st.checkbox(
+                "📚 Ouvrir ce quiz au mode entraînement (accessible aux étudiants en autonomie)",
+                value=pub_actuel, key=f"pub_edit_{suffix}")
+            if nouveau_pub != pub_actuel:
+                definir_publication(choix_edition, nouveau_pub)
+                st.success("Quiz ouvert à l'entraînement." if nouveau_pub else "Quiz retiré de l'entraînement.")
+                st.rerun()
+
         with st.expander("⚙️ Paramètres généraux du quiz", expanded=choix_edition == "✨ Nouveau quiz"):
             with st.form(f"form_meta_{suffix}"):
                 nom_fichier = st.text_input("Nom du fichier JSON", value=st.session_state.edit_nom_fichier)
@@ -1541,7 +2050,10 @@ elif espace == "prof":
                     st.rerun()
 
         if choix_edition != "✨ Nouveau quiz":
-            with st.expander("🔗 QR code & partage (mode solo)"):
+            with st.expander("🔗 QR code & partage (mode entraînement)"):
+                if not est_publie(choix_edition):
+                    st.warning("🔒 Ce quiz n'est pas ouvert à l'entraînement : le lien ci-dessous sera refusé "
+                               "aux étudiants tant que la case de publication n'est pas cochée.")
                 dom = st.text_input("URL de l'application", value=URL_APP_DEFAUT, key="dom_solo")
                 url_solo = f"{dom.strip('/')}/?qcm={choix_edition}"
                 buf = BytesIO()
@@ -1550,6 +2062,9 @@ elif espace == "prof":
                 if st.button(f"🗑️ Supprimer le quiz « {choix_edition} »"):
                     os.remove(os.path.join(DOSSIER_QUIZZES, choix_edition))
                     supprimer_fichier_github(f"QCM/{choix_edition}")
+                    mapping = charger_publication()
+                    mapping.pop(choix_edition, None)
+                    sauver_publication(mapping)
                     st.session_state.selected_edit_qcm = "✨ Nouveau quiz"
                     st.session_state.dernier_choix_edition = None
                     st.rerun()
@@ -1614,7 +2129,8 @@ elif espace == "prof":
             items = "".join(
                 f'<div class="drag-item" draggable="true" data-index="{i}">'
                 f'<span style="font-weight:800;color:#6366f1;margin-right:10px">☰ '
-                f'{TYPES_QUESTION.get(q.get("type","qcm"),{}).get("icone","❓")} Q{i+1}</span>'
+                f'{TYPES_QUESTION.get(q.get("type","qcm"),{}).get("icone","❓")} Q{i+1}'
+                f'{" ⭐" if q.get("double_points") else ""}</span>'
                 f'{(q.get("consigne","")[:60]).replace(chr(34), "&quot;")}…</div>'
                 for i, q in enumerate(st.session_state.edit_questions))
             dnd = """
@@ -1647,7 +2163,8 @@ elif espace == "prof":
 
             for i, q in enumerate(st.session_state.edit_questions):
                 meta = TYPES_QUESTION.get(q.get("type", "qcm"), TYPES_QUESTION["qcm"])
-                with st.expander(f"{meta['icone']} Q{i+1} — {q.get('consigne','')[:60]} ({q.get('points',10)} pts)"):
+                etoile = " ⭐" if q.get("double_points") else ""
+                with st.expander(f"{meta['icone']} Q{i+1}{etoile} — {q.get('consigne','')[:60]} ({q.get('points',10)} pts)"):
                     pfx = f"m_{suffix}_{i}"
                     type_q = st.selectbox("Type", list(TYPES_QUESTION),
                                           format_func=lambda k: f"{TYPES_QUESTION[k]['icone']} {TYPES_QUESTION[k]['label']}",
@@ -1662,6 +2179,8 @@ elif espace == "prof":
                         diff = st.selectbox("Difficulté", ["Facile", "Moyen", "Difficile"],
                                             index=["Facile", "Moyen", "Difficile"].index(q.get("difficulte", "Moyen")),
                                             key=f"{pfx}_diff")
+                    dbl = st.toggle("⭐ Question à points doublés", value=bool(q.get("double_points", False)),
+                                    key=f"{pfx}_dbl")
                     donnees, valide = champs_donnees(type_q, pfx, q.get("donnees", {}) if type_q == q.get("type") else {})
                     expl = st.text_area("Explication affichée après la réponse", value=q.get("explication", ""), key=f"{pfx}_exp")
                     c4, c5 = st.columns(2)
@@ -1675,7 +2194,8 @@ elif espace == "prof":
                             if consigne and valide:
                                 st.session_state.edit_questions[i] = {
                                     "id": i + 1, "consigne": consigne, "type": type_q, "difficulte": diff,
-                                    "points": int(pts), "tag": q.get("tag", "Général"), "timer_secondes": int(tmr),
+                                    "points": int(pts), "double_points": bool(dbl),
+                                    "tag": q.get("tag", "Général"), "timer_secondes": int(tmr),
                                     "donnees": donnees, "explication": expl,
                                     "document_texte": q.get("document_texte", ""),
                                     "media": {"image": img, "video": vid},
@@ -1706,9 +2226,9 @@ elif espace == "prof":
             "vrai_faux": "Duel express en deux tuiles — idéal pour rythmer une session.",
             "classement": "Les joueurs touchent les éléments dans l'ordre. Notation par paires bien ordonnées.",
             "association": "Relier deux colonnes. Crédit partiel proportionnel aux bonnes paires.",
-            "texte": "Saisie libre, comparaison insensible aux accents et majuscules.",
+            "texte": "Saisie libre, comparaison insensible aux accents et majuscules. Alimente le nuage de mots.",
             "curseur": "Estimation numérique avec tolérance : plus on est proche, plus on marque.",
-            "sondage": "Aucune bonne réponse, aucun point : pour lancer un débat.",
+            "sondage": "Aucune bonne réponse, aucun point : pour lancer un débat. Alimente le nuage de mots.",
         }[type_new])
         consigne_n = st.text_area("Consigne", key=f"{pfx}_cons")
         c1, c2, c3 = st.columns(3)
@@ -1718,6 +2238,7 @@ elif espace == "prof":
             tmr_n = st.number_input("Chrono (s)", 5, 300, 30, key=f"{pfx}_tmr")
         with c3:
             diff_n = st.selectbox("Difficulté", ["Facile", "Moyen", "Difficile"], index=1, key=f"{pfx}_diff")
+        dbl_n = st.toggle("⭐ Question à points doublés", value=False, key=f"{pfx}_dbl")
         donnees_n, valide_n = champs_donnees(type_new, pfx)
         expl_n = st.text_area("Explication", key=f"{pfx}_exp")
         c4, c5 = st.columns(2)
@@ -1729,7 +2250,8 @@ elif espace == "prof":
             if consigne_n and valide_n:
                 st.session_state.edit_questions.append({
                     "id": len(st.session_state.edit_questions) + 1, "consigne": consigne_n, "type": type_new,
-                    "difficulte": diff_n, "points": int(pts_n), "tag": "Général", "timer_secondes": int(tmr_n),
+                    "difficulte": diff_n, "points": int(pts_n), "double_points": bool(dbl_n),
+                    "tag": "Général", "timer_secondes": int(tmr_n),
                     "donnees": donnees_n, "explication": expl_n, "document_texte": "",
                     "media": {"image": img_n, "video": vid_n},
                 })
